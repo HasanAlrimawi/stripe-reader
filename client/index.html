@@ -6,11 +6,45 @@
       content="width=device-width, initial-scale=1.0"
       charset="UTF-8"
     />
+    <link rel="stylesheet" href="style.css" />
     <script src="https://js.stripe.com/terminal/v1/"></script>
   </head>
-  <body class="column-wise">
-    <button id="connect-reader">Connect Reader</button>
+  <body class="wrapper-horizontal">
+    <section class="card-horizontal">
+      <span>Reader Connection</span>
+      <div class="card-vertical">
+        <div class="card-horizontal">
+          <button class="beautified-btn" id="list-readers-btn">
+            List readers available
+          </button>
+          <input
+            type="text"
+            id="connection-status"
+            disabled="true"
+            value="No reader connected"
+          />
+        </div>
+        <div class="card-horizontal">
+          <label for="readers-available">Connect to:</label>
+          <select name="readers-available" id="readers-list"></select>
+        </div>
+      </div>
+    </section>
+
+    <section class="card-horizontal">
+      <span>Payment Details</span>
+      <div class="label-input-wrapper">
+        <label for="payment-amount">Amount:</label>
+        <input type="text" name="payment-amount" id="payment-amount" />
+      </div>
+      <div class="label-input-wrapper">
+        <button class="beautified-btn" id="pay-btn" disabled="true">Pay</button>
+        <input type="text" id="payment-status" value="No payment submitted" />
+      </div>
+    </section>
+    <!-- <button id="connect-reader">Connect Reader</button>
     <button id="pay">Pay</button>
+    <button id="capture">Capture</button> -->
   </body>
   <script src="client.js"></script>
 </html>

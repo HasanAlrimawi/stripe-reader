@@ -39,18 +39,26 @@ app.get("/", async (req, res) => {
 });
 
 app.post("/createReader", async (req, res) => {
-  const reader = await createReader(req.body.code);
-  res.json({ reader_info: reader });
+  try {
+    const reader = await createReader(req.body.code);
+    res.json({ reader_info: reader });
+  } catch (error) {
+    res.json({ error: error });
+  }
 });
 
 app.post("/startPayment", async (req, res) => {
-  const intent = await stripe.paymentIntents.create({
-    amount: req.body.amount,
-    currency: "usd",
-    payment_method_types: ["card_present"],
-    capture_method: "manual",
-  });
-  res.json({ payment_intent: intent });
+  try {
+    const intent = await stripe.paymentIntents.create({
+      amount: req.body.amount,
+      currency: "usd",
+      payment_method_types: ["card_present"],
+      capture_method: "automatic_async",
+    });
+    res.json({ payment_intent: intent });
+  } catch (err) {
+    res.json({ err: err });
+  }
 });
 
 // The ConnectionToken's secret lets you connect to any Stripe Terminal reader
@@ -58,9 +66,18 @@ app.post("/startPayment", async (req, res) => {
 // Be sure to authenticate the endpoint for creating connection tokens.
 app.post("/connectionToken", async (req, res) => {
   console.log("REACHED THE ENDPOINT");
-  let connectionToken = await stripe.terminal.connectionTokens.create();
-  res.json({ secret: connectionToken.secret });
+  try {
+    let connectionToken = await stripe.terminal.connectionTokens.create();
+    res.json({ secret: connectionToken.secret });
+  } catch (error) {
+    res.json({ error: error });
+  }
 });
+
+// app.post("/capturePayment", async (req, res) => {
+//   const intent = await stripe.paymentIntents.capture(req.body.intentId);
+//   res.json({ intent: intent });
+// });
 
 // app.post("/collectPaymentMethod", async (req, res) => {
 //   const result = await terminal.collectPaymentMethod(
