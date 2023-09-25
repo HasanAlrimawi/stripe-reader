@@ -26,7 +26,9 @@
         </div>
         <div class="card-horizontal">
           <label for="readers-available">Connect to:</label>
-          <select name="readers-available" id="readers-list"></select>
+          <select name="readers-available" id="readers-list">
+            <option value="" selected disabled hidden>Select reader</option>
+          </select>
         </div>
       </div>
     </section>
@@ -46,5 +48,6 @@
     <button id="pay">Pay</button>
     <button id="capture">Capture</button> -->
   </body>
-  <script src="client.js"></script>
+  <script type="module" src="client.js"></script>
+  <script type="module" src="main-controller.js"></script>
 </html>

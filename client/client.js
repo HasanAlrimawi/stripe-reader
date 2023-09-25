@@ -1,3 +1,6 @@
+// const { ReadersModel } = require("./readers-model");
+import { ReadersModel } from "./readers-model.js";
+
 var terminal = StripeTerminal.create({
   onFetchConnectionToken: fetchConnectionToken,
   onUnexpectedReaderDisconnect: unexpectedDisconnect,
@@ -27,32 +30,19 @@ function fetchConnectionToken() {
 
 // ----------------------- --------------------------------- -----------------------
 
-document
-  .getElementById("connect-reader")
-  .addEventListener("click", connectReader);
+// document
+//   .getElementById("connect-reader")
+//   .addEventListener("click", connectReader);
 
-document
-  .getElementById("pay")
-  .addEventListener("click", handleTransactionCycle);
+// document
+//   .getElementById("pay")
+//   .addEventListener("click", handleTransactionCycle);
 
-document.getElementById("capture").addEventListener("click", capturePayment);
+// document.getElementById("capture").addEventListener("click", capturePayment);
 
 let latestIntent = undefined;
 
-// async function getReadersAvailable(){
-//   const config = { simulated: true };
-//   const discoverResult = await terminal.discoverReaders(config);
-//   if (discoverResult.error) {
-//     console.log("Failed to discover: ", discoverResult.error);
-//   } else if (discoverResult.discoveredReaders.length === 0) {
-//     console.log("No available readers.");
-//   } else{
-//     const availableReaders = discoverResult.discoverReaders;
-//   }
-// }
-
-async function connectReader() {
-  // Handler for a "Connect Reader" button
+export async function getReadersAvailable() {
   const config = { simulated: true };
   const discoverResult = await terminal.discoverReaders(config);
   if (discoverResult.error) {
@@ -60,19 +50,27 @@ async function connectReader() {
   } else if (discoverResult.discoveredReaders.length === 0) {
     console.log("No available readers.");
   } else {
-    // Just select the first reader here.
+    const availableReaders = discoverResult.discoveredReaders;
+    ReadersModel.setReadersAvailable(availableReaders);
     const selectedReader = discoverResult.discoveredReaders[0];
-
-    const connectResult = await terminal.connectReader(selectedReader);
-    if (connectResult.error) {
-      console.log("Failed to connect: ", connectResult.error);
-    } else {
-      console.log("Connected to reader: ", connectResult.reader.label);
-    }
+    console.log(
+      `${selectedReader} while the size of available readers are: ${availableReaders.length}`
+    );
+    console.log(availableReaders);
+    return availableReaders;
   }
 }
 
-async function startIntent(amount) {
+export async function connectReader(selectedReader) {
+  const connectResult = await terminal.connectReader(selectedReader);
+  if (connectResult.error) {
+    console.log("Failed to connect: ", connectResult.error);
+  } else {
+    console.log("Connected to reader: ", connectResult.reader.label);
+  }
+}
+
+export async function startIntent(amount) {
   return await fetch("http://localhost:8085/startPayment", {
     method: "POST",
     headers: {
@@ -91,7 +89,7 @@ async function startIntent(amount) {
     });
 }
 
-async function collectProcessPayment(clientSecret) {
+export async function collectProcessPayment(clientSecret) {
   const updatedIntent = await terminal.collectPaymentMethod(clientSecret);
   latestIntent = updatedIntent;
 

@@ -1,7 +1,7 @@
 /**
  * @fileoverview Includes what readers are available, and which one is connnected.
  */
-export const readers = (function () {
+export const ReadersModel = (function () {
   let readersAvailable_ = undefined;
   let readerConnected_ = undefined;
 
