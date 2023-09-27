@@ -6,48 +6,43 @@
       content="width=device-width, initial-scale=1.0"
       charset="UTF-8"
     />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="shortcut icon" href="assets/favicon.png" type="image/x-icon" />
+    <link rel="stylesheet" href="styles/style.css" />
+    <link rel="stylesheet" href="styles/shared-style.css" />
     <script src="https://js.stripe.com/terminal/v1/"></script>
+    <script src="button.js"></script>
   </head>
   <body class="wrapper-horizontal">
-    <section class="card-horizontal">
-      <span>Reader Connection</span>
-      <div class="card-vertical">
-        <div class="card-horizontal">
-          <button class="beautified-btn" id="list-readers-btn">
-            List readers available
-          </button>
-          <input
-            type="text"
-            id="connection-status"
-            disabled="true"
-            value="No reader connected"
-          />
-        </div>
-        <div class="card-horizontal">
-          <label for="readers-available">Connect to:</label>
-          <select name="readers-available" id="readers-list">
-            <option value="" selected disabled hidden>Select reader</option>
-          </select>
-        </div>
-      </div>
-    </section>
+    <div class="card-vertical">
+      <section class="card-form">
+        <span class="subtitle">Reader Connection</span>
+        <custom-button
+          value="List readers available"
+          id="list-readers-btn"
+        ></custom-button>
+        <section style="position: static;"" id="available-readers-holder" class="card"></section>
+      </section>
 
-    <section class="card-horizontal">
-      <span>Payment Details</span>
-      <div class="label-input-wrapper">
-        <label for="payment-amount">Amount:</label>
-        <input type="text" name="payment-amount" id="payment-amount" />
-      </div>
-      <div class="label-input-wrapper">
-        <button class="beautified-btn" id="pay-btn" disabled="true">Pay</button>
-        <input type="text" id="payment-status" value="No payment submitted" />
-      </div>
-    </section>
+      <section class="card-form">
+        <span class="subtitle">Payment Details</span>
+        <div class="label-input-wrapper">
+          <label for="payment-amount">Amount:</label>
+          <input type="text" name="payment-amount" id="payment-amount" />
+        </div>
+        <div class="label-input-wrapper">
+          <custom-button
+            value="Pay"
+            id="pay-btn"
+            disabled="true"
+          ></custom-button>
+          <input type="text" id="payment-status" value="No payment submitted" />
+        </div>
+      </section>
+    </div>
     <!-- <button id="connect-reader">Connect Reader</button>
     <button id="pay">Pay</button>
     <button id="capture">Capture</button> -->
   </body>
-  <script type="module" src="client.js"></script>
+  <script type="module" src="communicator.js"></script>
   <script type="module" src="main-controller.js"></script>
 </html>

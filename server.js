@@ -38,6 +38,10 @@ app.get("/", async (req, res) => {
   res.json({ msg: "HELLO" });
 });
 
+/**
+ * API that adds reader to the server in order to permit client'a app access
+ *    to it, by taking its generated registration code contained within the body and location.
+ */
 app.post("/createReader", async (req, res) => {
   try {
     const reader = await createReader(req.body.code);
@@ -47,15 +51,20 @@ app.post("/createReader", async (req, res) => {
   }
 });
 
+/**
+ * Creats payment intent with the amount specified wthin body.
+ */
 app.post("/startPayment", async (req, res) => {
   try {
     const intent = await stripe.paymentIntents.create({
       amount: req.body.amount,
       currency: "usd",
       payment_method_types: ["card_present"],
+      // payment_method: "pm_card_us",
       capture_method: "automatic_async",
     });
     res.json({ payment_intent: intent });
+    console.log("made intent");
   } catch (err) {
     res.json({ err: err });
   }
@@ -74,6 +83,20 @@ app.post("/connectionToken", async (req, res) => {
   }
 });
 
+app.post("/cancelIntent", async (req, res) => {
+  try {
+    const intentCanceledResponse = await stripe.paymentIntents.cancel(
+      req.body.intentId
+    );
+    res.json({ canceled_intent: intentCanceledResponse });
+  } catch (error) {
+    res.json({ error: error });
+  }
+});
+
+app.listen(8085, () => {
+  console.log("Listening");
+});
 // app.post("/capturePayment", async (req, res) => {
 //   const intent = await stripe.paymentIntents.capture(req.body.intentId);
 //   res.json({ intent: intent });
@@ -98,10 +121,6 @@ app.post("/connectionToken", async (req, res) => {
 //     res.json({ success: result });
 //   }
 // });
-
-app.listen(8085, () => {
-  console.log("Listening");
-});
 
 // createReader("simulated-wpe").then((reader) => {
 //   console.log(reader);

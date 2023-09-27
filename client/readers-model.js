@@ -2,14 +2,14 @@
  * @fileoverview Includes what readers are available, and which one is connnected.
  */
 export const ReadersModel = (function () {
-  let readersAvailable_ = undefined;
+  let readersList_ = undefined;
   let readerConnected_ = undefined;
 
-  function getReadersAvailable() {
-    return readersAvailable_;
+  function getReadersList() {
+    return readersList_;
   }
-  function setReadersAvailable(newAvailableReaders) {
-    readersAvailable_ = newAvailableReaders;
+  function setReadersList(newListReaders) {
+    readersList_ = newListReaders;
   }
 
   function getReaderConnected() {
@@ -21,8 +21,8 @@ export const ReadersModel = (function () {
   }
 
   return {
-    getReadersAvailable,
-    setReadersAvailable,
+    getReadersList,
+    setReadersList,
     getReaderConnected,
     setReaderConnected,
   };
