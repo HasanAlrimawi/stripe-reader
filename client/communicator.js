@@ -8,7 +8,6 @@ export const communicator = (function () {
     onUnexpectedReaderDisconnect: unexpectedDisconnect,
   });
 
-  
   function unexpectedDisconnect() {
     // In this function, your app should notify the user that the reader disconnected.
     // You can also include a way to attempt to reconnect to a reader.
@@ -137,54 +136,57 @@ export const communicator = (function () {
    */
   async function collectProcessPayment(clientSecret) {
     try {
-      const updatedIntent = await terminal.collectPaymentMethod(clientSecret);
-      // latestIntent = updatedIntent;
+      // const updatedIntent = await terminal.collectPaymentMethod(clientSecret);
+      // // latestIntent = updatedIntent;
 
-      if (updatedIntent.error) {
-        console.log({
-          stage: "Collect payment method",
-          state: "Failure",
-          error: updatedIntent.error,
-          try_again: false,
-        });
-      } else {
-        let result = await terminal.processPayment(updatedIntent.paymentIntent);
-        // latestIntent = updatedIntent;
-        // checks whether a Failure occured in order to address it
-        if (result.paymentIntent.status === "requires_payment_method") {
-          console.log({
-            stage: "Process payment",
-            state: "Failure",
-            error: "Payment Method not working, try another",
-            try_again: false,
-          });
-        } else if (
-          result.paymentIntent.status === "requires_confirmation" ||
-          result.paymentIntent.status === null ||
-          result.paymentIntent.status === undefined
-        ) {
-          console.log({
-            stage: "Process payment",
-            state: "Failure",
-            error: "Connectivity problem, try again",
-            try_again: true,
-          });
-        }
-        if (result.error) {
-          console.log({
-            stage: "Process payment",
-            state: "Failure",
-            error: result.error,
-            try_again: false,
-          });
-        } else {
-          console.log({
-            stage: "Payment collection and processing",
-            state: "Success",
-          });
-        }
-      }
+      // if (updatedIntent.error) {
+      //   console.log({
+      //     stage: "Collect payment method",
+      //     state: "Failure",
+      //     error: updatedIntent.error,
+      //     try_again: false,
+      //   });
+      // }
+      //   else {
+      //   console.log("to payment process");
+      //   let result = await terminal.processPayment(updatedIntent.paymentIntent);
+      //   // latestIntent = updatedIntent;
+      //   // checks whether a Failure occured in order to address it
+      //   if (result.paymentIntent.status === "requires_payment_method") {
+      //     console.log({
+      //       stage: "Process payment",
+      //       state: "Failure",
+      //       error: "Payment Method not working, try another",
+      //       try_again: false,
+      //     });
+      //   } else if (
+      //     result.paymentIntent.status === "requires_confirmation" ||
+      //     result.paymentIntent.status === null ||
+      //     result.paymentIntent.status === undefined
+      //   ) {
+      //     console.log({
+      //       stage: "Process payment",
+      //       state: "Failure",
+      //       error: "Connectivity problem, try again",
+      //       try_again: true,
+      //     });
+      //   }
+      //   if (result.error) {
+      //     console.log({
+      //       stage: "Process payment",
+      //       state: "Failure",
+      //       error: result.error,
+      //       try_again: false,
+      //     });
+      //   } else {
+      //     console.log({
+      //       stage: "Payment collection and processing",
+      //       state: "Success",
+      //     });
+      //   }
+      // }
     } catch (error) {
+      console.log("CAUGHT");
       return {
         stage: "Payment collection and processing",
         state: "Failure",

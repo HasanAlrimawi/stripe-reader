@@ -91,8 +91,17 @@ input[type="text"] {
   text-wrap: wrap;
 }
 
+textarea {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: var(--white-to-black);
+  text-wrap: wrap;
+}
+
 #list-of-scanned-products input[type="text"] {
-  width: 10em;
+  min-width: 10em;
 }
 
 .peripherals-list {
@@ -208,7 +217,7 @@ li {
   background-color: #fff;
 }
 
-#available-readers-holder{
+#available-readers-holder {
   width: 300px;
 }
 

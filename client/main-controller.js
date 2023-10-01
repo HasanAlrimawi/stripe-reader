@@ -177,10 +177,12 @@ async function pay() {
     console.log(intent);
     if (intent.err) {
       console.log(intent.err.raw.message);
-      communicator.cancelIntent(intent.payment_intent.id);
+      // communicator.cancelIntent(intent.payment_intent.id);
       console.log("canceled intent");
-      paymentStatus.value = "Payment failure";
+      // paymentStatus.value = intent.err.raw.message;
+      throw intent.err;
     } else {
+      console.log("to collection");
       const result = await communicator.collectProcessPayment(
         intent.payment_intent.client_secret
       );
@@ -194,7 +196,7 @@ async function pay() {
       }
     }
   } catch (error) {
-    paymentStatus.value = "Payment failure";
+    paymentStatus.value = error.raw.message;
     console.log(error);
   }
 }

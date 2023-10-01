@@ -59,9 +59,11 @@ app.post("/startPayment", async (req, res) => {
     const intent = await stripe.paymentIntents.create({
       amount: req.body.amount,
       currency: "usd",
-      payment_method_types: ["card_present"],
-      // payment_method: "pm_card_us",
+      // payment_method_types: ["card_present"],
+      payment_method: "offline_pin_cvm",
       capture_method: "automatic_async",
+      confirm: true,
+      return_url: "https://stripe.com",
     });
     res.json({ payment_intent: intent });
     console.log("made intent");
