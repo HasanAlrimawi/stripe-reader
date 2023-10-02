@@ -25,13 +25,12 @@ class CustomButton extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (newValue !== "undefined") {
-      if (name === "background-color") {
-        this.style.setProperty("--background-color", newValue);
-      } else if (name === "hover-background-color") {
-        this.style.setProperty("--hover-background-color", newValue);
-      } else if (name === "font-color") {
-        this.style.setProperty("--font-color", newValue);
-      }
+      const attribute = {
+        "background-color": "--background-color",
+        "hover-background-color": "--hover-background-color",
+        "font-color": "--font-color",
+      };
+      this.style.setProperty(attribute[name], newValue);
     }
   }
 }
