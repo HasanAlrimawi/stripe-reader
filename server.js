@@ -51,7 +51,7 @@ app.post("/createReader", async (req, res) => {
   }
 });
 
-/**
+/** ***DONE***
  * Creats payment intent with the amount specified wthin body.
  */
 app.post("/startPayment", async (req, res) => {
@@ -72,6 +72,7 @@ app.post("/startPayment", async (req, res) => {
   }
 });
 
+// ***DONE***
 // The ConnectionToken's secret lets you connect to any Stripe Terminal reader
 // and take payments with your Stripe account.
 // Be sure to authenticate the endpoint for creating connection tokens.
@@ -85,6 +86,7 @@ app.post("/connectionToken", async (req, res) => {
   }
 });
 
+// ***DONE***
 app.post("/cancelIntent", async (req, res) => {
   try {
     const intentCanceledResponse = await stripe.paymentIntents.cancel(

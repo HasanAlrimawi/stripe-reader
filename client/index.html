@@ -16,11 +16,13 @@
     <div class="card-vertical">
       <section class="card-form">
         <span class="subtitle">Reader Connection</span>
-        <custom-button
+        <input
+          class="button"
+          type="button"
           value="List readers available"
           id="list-readers-btn"
-        ></custom-button>
-        <section style="position: static;"" id="available-readers-holder" class="card"></section>
+        />
+        <section id="available-readers-holder" class="card"></section>
       </section>
 
       <section class="card-form">
@@ -30,12 +32,16 @@
           <input type="text" name="payment-amount" id="payment-amount" />
         </div>
         <div class="label-input-wrapper">
-          <custom-button
-            value="Pay"
-            id="pay-btn"
+          <input class="button" type="button" value="Pay" id="pay-btn" disabled/>
+          <textarea
+            type="text"
             disabled="true"
-          ></custom-button>
-          <textarea type="text" disabled="true" id="payment-status" value="No payment submitted" rows="2" cols="20"> </textarea>
+            id="payment-status"
+            value="No payment submitted"
+            rows="2"
+            cols="20"
+          >
+          </textarea>
         </div>
       </section>
     </div>

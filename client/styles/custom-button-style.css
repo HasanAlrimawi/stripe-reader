@@ -13,8 +13,10 @@
   cursor: pointer;
   transition: background-color 0.2s ease;
   align-self: flex-start;
+  width: fit-content;
 }
 
 .button:hover {
   background-color: var(--hover-background-color);
 }
+

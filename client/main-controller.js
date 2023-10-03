@@ -14,6 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
  *     and the dropdown list if they had any reader included before.
  */
 async function getListReadersAvailable() {
+  if (ReadersModel.getReaderConnected()) {
+    communicator.disonnectReader(ReadersModel.getReaderConnected());
+  }
   ReadersModel.setReadersList(undefined);
   const availableReaders = await communicator.getReadersAvailable();
   const selectionElement = document.getElementById("available-readers-holder");
@@ -22,8 +25,6 @@ async function getListReadersAvailable() {
     for (const reader of availableReaders) {
       selectionElement.appendChild(makeOptionElement(reader.id));
     }
-    // document.getElementById("connection-status").value =
-    //   "Listed available readers";
   }
 }
 // async function getListReadersAvailable() {
@@ -76,17 +77,20 @@ function makeOptionElement(readerId) {
 }
 
 function createConnectButton(readerId) {
-  const connectButton = document.createElement("custom-button");
+  const connectButton = document.createElement("input");
   connectButton.setAttribute("id", readerId);
   connectButton.setAttribute("value", "Connect");
-  connectButton.setAttribute("class", "connect-button");
+  connectButton.setAttribute("class", "connect-button button");
+  connectButton.setAttribute("type", "button");
   return connectButton;
 }
 
 function createDisconnectButton(readerId) {
-  const disconnectButton = document.createElement("custom-button");
+  const disconnectButton = document.createElement("input");
   disconnectButton.setAttribute("id", readerId);
   disconnectButton.setAttribute("value", "Disconnect");
+  disconnectButton.setAttribute("class", "button");
+  disconnectButton.setAttribute("type", "button");
   return disconnectButton;
 }
 
@@ -97,16 +101,22 @@ function createDisconnectButton(readerId) {
  * @param {string} readerId
  */
 async function connectToReader(readerId) {
-  // const connectionStatus = document.getElementById("connection-status");
-  // connectionStatus.value = "Connection pending...";
+  console.log(readerId);
+  const paymentButton = document.getElementById(readerId);
+
+  paymentButton.setAttribute("value", "Connecting");
   const readers = ReadersModel.getReadersList();
   const selectedReader = readers.filter((element) => element.id === readerId);
   try {
-    await communicator.connectReader(selectedReader[0]);
-    ReadersModel.setReaderConnected(selectedReader[0]);
-    // todo remove the connect button for the connected reader and replace it with disconnect button, then disable all connect buttons for other readers;
-    document.getElementById("pay-btn").disabled = false;
-    controlConnectButtons(readerId, "disable");
+    const connectResult = await communicator.connectReader(selectedReader[0]);
+    if (connectResult.error) {
+      console.log(connectResult.error);
+    } else {
+      ReadersModel.setReaderConnected(selectedReader[0]);
+      document.getElementById("pay-btn").removeAttribute("disabled");
+      // todo remove the connect button for the connected reader and replace it with disconnect button, then disable all connect buttons for other readers;
+      controlConnectButtons(readerId, "disable");
+    }
   } catch (error) {
     // connectionStatus.value = "Connection failed";
     console.log({ error: error });
@@ -116,6 +126,10 @@ async function connectToReader(readerId) {
 /**
  * Replaces the connect button of the just connected reader with a disconnect
  *     button, and disables the other readers' connect buttons.
+ *
+ * @param {string} mode to specify what to do with buttons, whether enable or
+ *     disable
+ * @param {string} readerId
  */
 function controlConnectButtons(readerId, mode) {
   let disconnectButton;
@@ -142,7 +156,7 @@ function controlConnectButtons(readerId, mode) {
       disconnectButton.replaceWith(connectButton);
       connectButtons = document.getElementsByClassName("connect-button");
       connectButtons.forEach((button) => {
-        button.setAttribute("disabled", false);
+        button.removeAttribute("disabled");
       });
       connectButton.addEventListener("click", () => {
         connectToReader(readerId);
@@ -151,13 +165,17 @@ function controlConnectButtons(readerId, mode) {
   }
 }
 
+/**
+ * Disconnects the connected reader off the stripe terminal
+ *
+ * @param {string} readerId
+ */
 async function disconnectReader(readerId) {
   try {
     //
     const readers = ReadersModel.getReadersList();
     const selectedReader = readers.filter((element) => element.id === readerId);
-    const result = await communicator.disonnectReader(selectedReader);
-    console.log(result);
+    await communicator.disonnectReader(selectedReader);
     controlConnectButtons(readerId, "enable");
   } catch (error) {
     console.log(error);
@@ -172,6 +190,10 @@ async function pay() {
   const paymentStatus = document.getElementById("payment-status");
   paymentStatus.value = "Payment pending...";
   const amount = document.getElementById("payment-amount").value;
+  if (isNaN(amount) || !amount) {
+    paymentStatus.value = "Make sure to enter a numeric amount";
+    return;
+  }
   try {
     const intent = await communicator.startIntent(amount);
     console.log(intent);
@@ -182,21 +204,21 @@ async function pay() {
       // paymentStatus.value = intent.err.raw.message;
       throw intent.err;
     } else {
-      console.log("to collection");
+      console.log(`to collection \n${intent.client_secret}`);
       const result = await communicator.collectProcessPayment(
-        intent.payment_intent.client_secret
+        intent.client_secret
       );
 
       if (result?.error) {
         paymentStatus.value = "Payment failure";
-        console.log(await communicator.cancelIntent(intent.payment_intent.id));
+        console.log(await communicator.cancelIntent(intent.id));
         console.log("canceled intent");
       } else {
         paymentStatus.value = "Payment success";
       }
     }
   } catch (error) {
-    paymentStatus.value = error.raw.message;
+    paymentStatus.value = error.raw;
     console.log(error);
   }
 }

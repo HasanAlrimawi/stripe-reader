@@ -6,6 +6,8 @@
   --label-color: #777;
   --white-to-black: #fff;
   --black-to-white: #000;
+  --background-color: #007bff;
+  --hover-background-color: #0056b3;
 }
 
 [page-theme="dark"] {
@@ -233,4 +235,26 @@ li {
   border-color: #e4e1e1;
   background-color: var(--white-to-black);
   color: var(--black-to-white);
+}
+
+.button {
+  background-color: var(--background-color);
+  color: var(--font-color);
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  align-self: flex-start;
+  width: fit-content;
+}
+
+.button:hover {
+  background-color: var(--hover-background-color);
+}
+
+.button:disabled{
+  background-color: #91c0f7;
+  cursor: default;
 }

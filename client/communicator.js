@@ -1,4 +1,4 @@
-// const { ReadersModel } = require("./readers-model");
+import { stripeConnectionDetails } from "./constants/stripe-connection.js";
 import { ReadersModel } from "./readers-model.js";
 
 export const communicator = (function () {
@@ -21,18 +21,27 @@ export const communicator = (function () {
    */
   async function fetchConnectionToken() {
     // Do not cache or hardcode the ConnectionToken. The SDK manages the ConnectionToken's lifecycle.
-    return await fetch("http://localhost:8085/connectionToken", {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((data) => {
-        return data.secret;
-      });
+    try {
+      return await fetch(
+        `${stripeConnectionDetails.STRIPE_API_URL}terminal/connection_tokens`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
+          },
+        }
+      )
+        .then((response) => {
+          console.log(response);
+          return response.json();
+        })
+        .then((data) => {
+          console.log(data);
+          return data.secret;
+        });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   // ----------------------- --------------------------------- -----------------------
@@ -54,7 +63,6 @@ export const communicator = (function () {
     } else {
       const availableReaders = discoverResult.discoveredReaders;
       ReadersModel.setReadersList(availableReaders);
-      console.log(`Available readers are: ${availableReaders}`);
       return availableReaders;
     }
   }
@@ -72,6 +80,7 @@ export const communicator = (function () {
     } else {
       console.log("Connected to reader: ", connectResult.reader.label);
     }
+    return connectResult;
   }
 
   /**
@@ -85,7 +94,6 @@ export const communicator = (function () {
       const disconnectionResult = await terminal.disconnectReader(
         selectedReader
       );
-      console.log(disconnectionResult);
       if (disconnectionResult.error) {
         console.log("Failed to connect: ", connectResult.error);
       } else {
@@ -102,16 +110,17 @@ export const communicator = (function () {
    */
   async function startIntent(amount) {
     try {
-      return await fetch("http://localhost:8085/startPayment", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: amount,
-        }),
-      })
+      return await fetch(
+        `${stripeConnectionDetails.STRIPE_API_URL}payment_intents`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: `amount=${amount}&currency=usd&payment_method_types[]=card_present`,
+        }
+      )
         .then((res) => {
           return res.json();
         })
@@ -136,55 +145,53 @@ export const communicator = (function () {
    */
   async function collectProcessPayment(clientSecret) {
     try {
-      // const updatedIntent = await terminal.collectPaymentMethod(clientSecret);
-      // // latestIntent = updatedIntent;
-
-      // if (updatedIntent.error) {
-      //   console.log({
-      //     stage: "Collect payment method",
-      //     state: "Failure",
-      //     error: updatedIntent.error,
-      //     try_again: false,
-      //   });
-      // }
-      //   else {
-      //   console.log("to payment process");
-      //   let result = await terminal.processPayment(updatedIntent.paymentIntent);
-      //   // latestIntent = updatedIntent;
-      //   // checks whether a Failure occured in order to address it
-      //   if (result.paymentIntent.status === "requires_payment_method") {
-      //     console.log({
-      //       stage: "Process payment",
-      //       state: "Failure",
-      //       error: "Payment Method not working, try another",
-      //       try_again: false,
-      //     });
-      //   } else if (
-      //     result.paymentIntent.status === "requires_confirmation" ||
-      //     result.paymentIntent.status === null ||
-      //     result.paymentIntent.status === undefined
-      //   ) {
-      //     console.log({
-      //       stage: "Process payment",
-      //       state: "Failure",
-      //       error: "Connectivity problem, try again",
-      //       try_again: true,
-      //     });
-      //   }
-      //   if (result.error) {
-      //     console.log({
-      //       stage: "Process payment",
-      //       state: "Failure",
-      //       error: result.error,
-      //       try_again: false,
-      //     });
-      //   } else {
-      //     console.log({
-      //       stage: "Payment collection and processing",
-      //       state: "Success",
-      //     });
-      //   }
-      // }
+      const updatedIntent = await terminal.collectPaymentMethod(clientSecret);
+      // latestIntent = updatedIntent;
+      if (updatedIntent.error) {
+        console.log({
+          stage: "Collect payment method",
+          state: "Failure",
+          error: updatedIntent.error,
+          try_again: false,
+        });
+      } else {
+        console.log("to payment process");
+        let result = await terminal.processPayment(updatedIntent.paymentIntent);
+        // latestIntent = updatedIntent;
+        // checks whether a Failure occured in order to address it
+        if (result.paymentIntent.status === "requires_payment_method") {
+          console.log({
+            stage: "Process payment",
+            state: "Failure",
+            error: "Payment Method not working, try another",
+            try_again: false,
+          });
+        } else if (
+          result.paymentIntent.status === "requires_confirmation" ||
+          result.paymentIntent.status === null ||
+          result.paymentIntent.status === undefined
+        ) {
+          console.log({
+            stage: "Process payment",
+            state: "Failure",
+            error: "Connectivity problem, try again",
+            try_again: true,
+          });
+        }
+        if (result.error) {
+          console.log({
+            stage: "Process payment",
+            state: "Failure",
+            error: result.error,
+            try_again: false,
+          });
+        } else {
+          console.log({
+            stage: "Payment collection and processing",
+            state: "Success",
+          });
+        }
+      }
     } catch (error) {
       console.log("CAUGHT");
       return {
@@ -199,24 +206,94 @@ export const communicator = (function () {
    * Cancels the specified intent in some failure cases.
    *
    * @param {string} intentId
-   * @returns {object} The intent canceled
+   * @returns {object} The intent that has been canceled
    */
   const cancelIntent = async function (intentId) {
     try {
       const canceledIntentReturned = await fetch(
-        "http://localhost:8085/cancelIntent",
+        `${stripeConnectionDetails.STRIPE_API_URL}payment_intents/${intentId}/cancel`,
         {
           method: "POST",
           headers: {
             Accept: "application/json",
-            "Content-Type": "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
           },
-          body: JSON.stringify({
-            intentId: intentId,
-          }),
         }
       );
       return canceledIntentReturned;
+    } catch (error) {
+      return { error: error };
+    }
+  };
+
+  /**
+   * Creates a reader object to register it for a client account.
+   *
+   * @param {!Object} readerDetails
+   *     @property {string} registrationCode Represents the code that is
+   *         generated on the reader in order to save it as a reader for client
+   *     @property {string} label Acts as a name for the reader
+   *     @property {string} locationId
+   *
+   * @returns {object} if successful then it represents the reader object
+   *     registered, if failed then it represents the error occured
+   */
+  const createReader = async function (readerDetails) {
+    try {
+      const createdReader = await fetch(
+        `${stripeConnectionDetails.STRIPE_API_URL}readers`,
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
+          },
+          body: `registration_code=${readerDetails.registrationCode}&
+          label=${readerDetails.label}&location=${readerDetails.locationId}`,
+        }
+      );
+      return createdReader;
+    } catch (error) {
+      return { error: error };
+    }
+  };
+
+  /**
+   * Creates a location object
+   *
+   * @param {!object} locationDetails Represents the details of the location
+   *     to be created
+   *     @property {string} displayName
+   *     @property {string} line
+   *     @property {string} city
+   *     @property {number} postalCode
+   *     @property {string} state
+   *     @property {string} country
+   * @returns {object} if successful then it represents the location object
+   *     registered, if failed then it represents the error occured
+   */
+  const createLocation = async function (locationDetails) {
+    try {
+      const createdLocation = await fetch(
+        `${stripeConnectionDetails.STRIPE_API_URL}locations`,
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
+          },
+          body: `display_name=${locationDetails.displayName}&
+          address[line1]=${locationDetails.line}&
+          address[city]=${locationDetails.city}&
+          address[postal_code]=${locationDetails.postalCode}&
+          address[state]=${locationDetails.state}&
+          address[country]=${locationDetails.country}`,
+        }
+      );
+      return createdLocation;
     } catch (error) {
       return { error: error };
     }
@@ -230,6 +307,8 @@ export const communicator = (function () {
     getReadersAvailable,
     cancelIntent,
     disonnectReader,
+    createLocation,
+    createReader,
   };
 })();
 
