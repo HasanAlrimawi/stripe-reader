@@ -1,5 +1,4 @@
 import { stripeConnectionDetails } from "./constants/stripe-connection.js";
-import { ReadersModel } from "./readers-model.js";
 
 export const communicator = (function () {
   // initiate stripe terminal object to access its funtionalities
@@ -62,7 +61,6 @@ export const communicator = (function () {
       console.log("No available readers.");
     } else {
       const availableReaders = discoverResult.discoveredReaders;
-      ReadersModel.setReadersList(availableReaders);
       return availableReaders;
     }
   }
@@ -95,11 +93,13 @@ export const communicator = (function () {
         selectedReader
       );
       if (disconnectionResult.error) {
-        console.log("Failed to connect: ", connectResult.error);
+        console.log("Failed to connect: ", disconnectionResult.error);
       } else {
-        console.log("Connected to reader: ", connectResult.reader.label);
+        console.log("Disconnected from reader");
       }
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   /**

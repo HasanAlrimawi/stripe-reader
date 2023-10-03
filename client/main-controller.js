@@ -14,41 +14,30 @@ document.addEventListener("DOMContentLoaded", () => {
  *     and the dropdown list if they had any reader included before.
  */
 async function getListReadersAvailable() {
+  // Make sure to disonnect the connected reader before findnig other readers
   if (ReadersModel.getReaderConnected()) {
-    communicator.disonnectReader(ReadersModel.getReaderConnected());
+    await disconnectReader(ReadersModel.getReaderConnected().id);
   }
   ReadersModel.setReadersList(undefined);
   const availableReaders = await communicator.getReadersAvailable();
-  const selectionElement = document.getElementById("available-readers-holder");
-  selectionElement.innerHTML = "";
+  ReadersModel.setReadersList(availableReaders);
+  const readersHolderElement = document.getElementById(
+    "available-readers-holder"
+  );
+  readersHolderElement.innerHTML = "";
   if (availableReaders) {
     for (const reader of availableReaders) {
-      selectionElement.appendChild(makeOptionElement(reader.id));
+      readersHolderElement.appendChild(makeOptionElement(reader.id));
     }
   }
 }
-// async function getListReadersAvailable() {
-//   ReadersModel.setReadersList(undefined);
-//   const availableReaders = await communicator.getReadersAvailable();
-//   const selectionElement = document.getElementById("readers-list");
-//   while (selectionElement.childElementCount > 1) {
-//     selectionElement.removeChild(selectionElement.lastChild);
-//   }
-//   if (availableReaders) {
-//     for (const reader of availableReaders) {
-//       selectionElement.appendChild(makeOptionElement(reader.id));
-//     }
-//     document.getElementById("connection-status").value =
-//       "Listed available readers";
-//   }
-// }
 
 /**
+ * Creates the reader holder that exposes the reader id and connect button.
  *
  * @param {string} readerId represents the reader's id
  * @returns {HTMLElement} Represents the html element containing the reader
  */
-// function makeOptionElement(themeUsed, readerId) {
 function makeOptionElement(readerId) {
   const readerWrapper = document.createElement("div");
   const readerLabel = document.createElement("label");
@@ -64,18 +53,18 @@ function makeOptionElement(readerId) {
     },
     { once: true }
   );
-  // if (themeUsed) {
-  //   connectButton.setAttribute("background-color", themeUsed?.BACKGROUND_COLOR);
-  //   connectButton.setAttribute(
-  //     "hover-background-color",
-  //     themeUsed?.HOVER_BACKGROUND_COLOR
-  //   );
-  // }
   readerWrapper.appendChild(readerLabel);
   readerWrapper.appendChild(connectButton);
   return readerWrapper;
 }
 
+/**
+ * Creates HTML connect button with event listener to connect to the wanted
+ *     reader when selected.
+ *
+ * @param {string} readerId holds the ID of the reader to expose for connection
+ * @returns {HTMLElement}
+ */
 function createConnectButton(readerId) {
   const connectButton = document.createElement("input");
   connectButton.setAttribute("id", readerId);
@@ -85,6 +74,13 @@ function createConnectButton(readerId) {
   return connectButton;
 }
 
+/**
+ * Creates HTML disconnect button with event listener to disconnect the already
+ *     connected reader when selected.
+ *
+ * @param {string} readerId holds the ID of the reader to expose for disconnection
+ * @returns {HTMLElement}
+ */
 function createDisconnectButton(readerId) {
   const disconnectButton = document.createElement("input");
   disconnectButton.setAttribute("id", readerId);
@@ -101,9 +97,7 @@ function createDisconnectButton(readerId) {
  * @param {string} readerId
  */
 async function connectToReader(readerId) {
-  console.log(readerId);
   const paymentButton = document.getElementById(readerId);
-
   paymentButton.setAttribute("value", "Connecting");
   const readers = ReadersModel.getReadersList();
   const selectedReader = readers.filter((element) => element.id === readerId);
@@ -114,11 +108,9 @@ async function connectToReader(readerId) {
     } else {
       ReadersModel.setReaderConnected(selectedReader[0]);
       document.getElementById("pay-btn").removeAttribute("disabled");
-      // todo remove the connect button for the connected reader and replace it with disconnect button, then disable all connect buttons for other readers;
       controlConnectButtons(readerId, "disable");
     }
   } catch (error) {
-    // connectionStatus.value = "Connection failed";
     console.log({ error: error });
   }
 }
@@ -145,7 +137,6 @@ function controlConnectButtons(readerId, mode) {
         button.setAttribute("disabled", true);
       });
       disconnectButton.addEventListener("click", () => {
-        console.log("PRESSED");
         disconnectReader(readerId);
       });
       break;
@@ -175,8 +166,9 @@ async function disconnectReader(readerId) {
     //
     const readers = ReadersModel.getReadersList();
     const selectedReader = readers.filter((element) => element.id === readerId);
-    await communicator.disonnectReader(selectedReader);
+    await communicator.disonnectReader(selectedReader[0]);
     controlConnectButtons(readerId, "enable");
+    document.getElementById("pay-btn").setAttribute("disabled", true);
   } catch (error) {
     console.log(error);
   }
@@ -199,9 +191,7 @@ async function pay() {
     console.log(intent);
     if (intent.err) {
       console.log(intent.err.raw.message);
-      // communicator.cancelIntent(intent.payment_intent.id);
       console.log("canceled intent");
-      // paymentStatus.value = intent.err.raw.message;
       throw intent.err;
     } else {
       console.log(`to collection \n${intent.client_secret}`);

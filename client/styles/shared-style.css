@@ -226,7 +226,7 @@ li {
 .vertical-wrapper {
   display: flex;
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   padding: 10px 20px;
   width: 300px;
