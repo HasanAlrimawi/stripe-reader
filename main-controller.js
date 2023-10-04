@@ -99,10 +99,13 @@ function createDisconnectButton(readerId) {
 async function connectToReader(readerId) {
   const paymentButton = document.getElementById(readerId);
   paymentButton.setAttribute("value", "Connecting");
+  paymentButton.setAttribute("disabled", true);
   const readers = ReadersModel.getReadersList();
   const selectedReader = readers.filter((element) => element.id === readerId);
+
   try {
     const connectResult = await communicator.connectReader(selectedReader[0]);
+
     if (connectResult.error) {
       console.log(connectResult.error);
     } else {
@@ -179,6 +182,7 @@ async function disconnectReader(readerId) {
  *     payment collection and processing.
  */
 async function pay() {
+  const payButton = document.getElementById("pay-btn");
   const paymentStatus = document.getElementById("payment-status");
   paymentStatus.value = "Payment pending...";
   const amount = document.getElementById("payment-amount").value;
@@ -186,13 +190,12 @@ async function pay() {
     paymentStatus.value = "Make sure to enter a numeric amount";
     return;
   }
+  payButton.setAttribute("disabled", true);
   try {
     const intent = await communicator.startIntent(amount);
-    console.log(intent);
-    if (intent.err) {
-      console.log(intent.err.raw.message);
-      console.log("canceled intent");
-      throw intent.err;
+    if (intent.error) {
+      payButton.removeAttribute("disabled");
+      throw intent.error.code;
     } else {
       console.log(`to collection \n${intent.client_secret}`);
       const result = await communicator.collectProcessPayment(
@@ -200,15 +203,16 @@ async function pay() {
       );
 
       if (result?.error) {
-        paymentStatus.value = "Payment failure";
         console.log(await communicator.cancelIntent(intent.id));
-        console.log("canceled intent");
+        throw "Payment failure";
       } else {
         paymentStatus.value = "Payment success";
+        payButton.removeAttribute("disabled");
       }
     }
   } catch (error) {
-    paymentStatus.value = error.raw;
+    paymentStatus.value = error;
     console.log(error);
+    payButton.removeAttribute("disabled");
   }
 }

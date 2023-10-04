@@ -201,7 +201,6 @@ export const communicator = (function () {
       };
     }
   }
-
   /**
    * Cancels the specified intent in some failure cases.
    *

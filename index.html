@@ -13,7 +13,7 @@
     <script src="https://js.stripe.com/terminal/v1/"></script>
     <script src="button.js"></script>
   </head>
-  <body class="wrapper-horizontal">
+  <body>
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker
@@ -29,47 +29,52 @@
           });
       }
     </script>
-    <div class="card-vertical">
-      <section class="card-form">
-        <span class="subtitle">Reader Connection</span>
-        <input
-          class="button"
-          type="button"
-          value="List readers available"
-          id="list-readers-btn"
-        />
-        <section id="available-readers-holder" class="card"></section>
-      </section>
-
-      <section class="card-form">
-        <span class="subtitle">Payment Details</span>
-        <div class="label-input-wrapper">
-          <label for="payment-amount">Amount:</label>
-          <input type="text" name="payment-amount" id="payment-amount" />
-        </div>
-        <div class="label-input-wrapper">
+    <div class="header-bar">
+      <h1>Stripe Card Reader</h1>
+    </div>
+    <div class="wrapper-horizontal">
+      <div class="card-vertical">
+        <section class="card-form">
+          <span class="subtitle">Reader Connection</span>
           <input
             class="button"
             type="button"
-            value="Pay"
-            id="pay-btn"
-            disabled
+            value="List readers available"
+            id="list-readers-btn"
           />
-          <textarea
-            type="text"
-            disabled="true"
-            id="payment-status"
-            value="No payment submitted"
-            rows="2"
-            cols="20"
-          >
-          </textarea>
-        </div>
-      </section>
-    </div>
-    <!-- <button id="connect-reader">Connect Reader</button>
+          <section id="available-readers-holder" class="card"></section>
+        </section>
+
+        <section class="card-form">
+          <span class="subtitle">Payment Details</span>
+          <div class="label-input-wrapper">
+            <label for="payment-amount">Amount:</label>
+            <input type="text" name="payment-amount" id="payment-amount" />
+          </div>
+          <div class="label-input-wrapper">
+            <input
+              class="button"
+              type="button"
+              value="Pay"
+              id="pay-btn"
+              disabled
+            />
+            <textarea
+              type="text"
+              disabled="true"
+              id="payment-status"
+              value="No payment submitted"
+              rows="2"
+              cols="20"
+            >
+            </textarea>
+          </div>
+        </section>
+      </div>
+      <!-- <button id="connect-reader">Connect Reader</button>
     <button id="pay">Pay</button>
     <button id="capture">Capture</button> -->
+    </div>
   </body>
   <script type="module" src="communicator.js"></script>
   <script type="module" src="main-controller.js"></script>
