@@ -6,6 +6,7 @@
       content="width=device-width, initial-scale=1.0"
       charset="UTF-8"
     />
+    <link rel="manifest" href="manifest.json" />
     <link rel="shortcut icon" href="assets/favicon.png" type="image/x-icon" />
     <link rel="stylesheet" href="styles/style.css" />
     <link rel="stylesheet" href="styles/shared-style.css" />
@@ -13,6 +14,21 @@
     <script src="button.js"></script>
   </head>
   <body class="wrapper-horizontal">
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("/service-worker.js")
+          .then((registration) => {
+            console.log(
+              "Service Worker registered with scope:",
+              registration.scope
+            );
+          })
+          .catch((error) => {
+            console.error("Service Worker registration failed:", error);
+          });
+      }
+    </script>
     <div class="card-vertical">
       <section class="card-form">
         <span class="subtitle">Reader Connection</span>
@@ -32,7 +48,13 @@
           <input type="text" name="payment-amount" id="payment-amount" />
         </div>
         <div class="label-input-wrapper">
-          <input class="button" type="button" value="Pay" id="pay-btn" disabled/>
+          <input
+            class="button"
+            type="button"
+            value="Pay"
+            id="pay-btn"
+            disabled
+          />
           <textarea
             type="text"
             disabled="true"
