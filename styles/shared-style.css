@@ -265,3 +265,8 @@ li {
   background-color: #91c0f7;
   cursor: default;
 }
+
+textarea{
+  background-color: #ccc;
+  border-style: none;
+}

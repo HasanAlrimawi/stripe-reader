@@ -49,9 +49,8 @@
           <span class="subtitle">Payment Details</span>
           <div class="label-input-wrapper">
             <label for="payment-amount">Amount:</label>
-            <input type="text" name="payment-amount" id="payment-amount" />
+            <input type="text" placeholder="Enter transaction amount" name="payment-amount" id="payment-amount" />
           </div>
-          <div class="label-input-wrapper">
             <input
               class="button"
               type="button"
@@ -59,16 +58,18 @@
               id="pay-btn"
               disabled
             />
-            <textarea
-              type="text"
-              disabled="true"
-              id="payment-status"
-              value="No payment submitted"
-              rows="2"
-              cols="20"
-            >
-            </textarea>
-          </div>
+            <div class="label-input-wrapper">
+              <label for="payment-status">Payment Status</label>
+              <textarea
+                type="text"
+                disabled="true"
+                id="payment-status"
+                value="No payment submitted"
+                rows="2"
+                cols="20"
+              >
+              </textarea>
+            
         </section>
       </div>
       <!-- <button id="connect-reader">Connect Reader</button>

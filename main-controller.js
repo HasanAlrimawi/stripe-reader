@@ -195,7 +195,7 @@ async function pay() {
     const intent = await communicator.startIntent(amount);
     if (intent.error) {
       payButton.removeAttribute("disabled");
-      throw intent.error.code;
+      throw `Payment failed: ${intent.error.code}`;
     } else {
       console.log(`to collection \n${intent.client_secret}`);
       const result = await communicator.collectProcessPayment(
