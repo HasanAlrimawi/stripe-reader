@@ -148,48 +148,48 @@ export const communicator = (function () {
       const updatedIntent = await terminal.collectPaymentMethod(clientSecret);
       // latestIntent = updatedIntent;
       if (updatedIntent.error) {
-        console.log({
+        return {
           stage: "Collect payment method",
           state: "Failure",
           error: updatedIntent.error,
           try_again: false,
-        });
+        };
       } else {
         console.log("to payment process");
         let result = await terminal.processPayment(updatedIntent.paymentIntent);
         // latestIntent = updatedIntent;
         // checks whether a Failure occured in order to address it
         if (result.paymentIntent.status === "requires_payment_method") {
-          console.log({
+          return {
             stage: "Process payment",
             state: "Failure",
             error: "Payment Method not working, try another",
             try_again: false,
-          });
+          };
         } else if (
           result.paymentIntent.status === "requires_confirmation" ||
           result.paymentIntent.status === null ||
           result.paymentIntent.status === undefined
         ) {
-          console.log({
+          return {
             stage: "Process payment",
             state: "Failure",
             error: "Connectivity problem, try again",
             try_again: true,
-          });
+          };
         }
         if (result.error) {
-          console.log({
+          return {
             stage: "Process payment",
             state: "Failure",
             error: result.error,
             try_again: false,
-          });
+          };
         } else {
-          console.log({
+          return {
             stage: "Payment collection and processing",
             state: "Success",
-          });
+          };
         }
       }
     } catch (error) {
@@ -201,6 +201,7 @@ export const communicator = (function () {
       };
     }
   }
+  
   /**
    * Cancels the specified intent in some failure cases.
    *

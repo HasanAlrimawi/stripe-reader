@@ -194,6 +194,7 @@ async function pay() {
   try {
     const intent = await communicator.startIntent(amount);
     if (intent.error) {
+      console.log("INTENT CREATION LEVEL ERROR");
       payButton.removeAttribute("disabled");
       throw `Payment failed: ${intent.error.code}`;
     } else {
@@ -202,9 +203,9 @@ async function pay() {
         intent.client_secret
       );
 
-      if (result?.error) {
+      if (result?.error && intent.status !== "succeeded") {
         console.log(await communicator.cancelIntent(intent.id));
-        throw "Payment failure";
+        throw `Payment failed: ${result.error}`;
       } else {
         paymentStatus.value = "Payment success";
         payButton.removeAttribute("disabled");
