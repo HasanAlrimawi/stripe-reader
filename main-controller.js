@@ -1,4 +1,5 @@
 import { communicator } from "./communicator.js";
+import { stripeReaderView } from "./main-view.js";
 import { ReadersModel } from "./readers-model.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -27,7 +28,7 @@ async function getListReadersAvailable() {
   readersHolderElement.innerHTML = "";
   if (availableReaders) {
     for (const reader of availableReaders) {
-      readersHolderElement.appendChild(makeOptionElement(reader.id));
+      readersHolderElement.appendChild(makeReaderOptionElement(reader.id));
     }
   }
 }
@@ -38,56 +39,23 @@ async function getListReadersAvailable() {
  * @param {string} readerId represents the reader's id
  * @returns {HTMLElement} Represents the html element containing the reader
  */
-function makeOptionElement(readerId) {
-  const readerWrapper = document.createElement("div");
-  const readerLabel = document.createElement("label");
-  const connectButton = createConnectButton(readerId);
-
-  readerWrapper.setAttribute("class", "vertical-wrapper");
-  readerLabel.textContent = readerId;
-
-  connectButton.addEventListener(
+function makeReaderOptionElement(readerId) {
+  const readerWrapper = stripeReaderView.createAvailableReaderElement(readerId);
+  // connectButton.addEventListener(
+  //   "click",
+  //   () => {
+  //     connectToReader(readerId);
+  //   },
+  //   { once: true }
+  // );
+  readerWrapper.lastElementChild.addEventListener(
     "click",
     () => {
       connectToReader(readerId);
     },
     { once: true }
   );
-  readerWrapper.appendChild(readerLabel);
-  readerWrapper.appendChild(connectButton);
   return readerWrapper;
-}
-
-/**
- * Creates HTML connect button with event listener to connect to the wanted
- *     reader when selected.
- *
- * @param {string} readerId holds the ID of the reader to expose for connection
- * @returns {HTMLElement}
- */
-function createConnectButton(readerId) {
-  const connectButton = document.createElement("input");
-  connectButton.setAttribute("id", readerId);
-  connectButton.setAttribute("value", "Connect");
-  connectButton.setAttribute("class", "connect-button button");
-  connectButton.setAttribute("type", "button");
-  return connectButton;
-}
-
-/**
- * Creates HTML disconnect button with event listener to disconnect the already
- *     connected reader when selected.
- *
- * @param {string} readerId holds the ID of the reader to expose for disconnection
- * @returns {HTMLElement}
- */
-function createDisconnectButton(readerId) {
-  const disconnectButton = document.createElement("input");
-  disconnectButton.setAttribute("id", readerId);
-  disconnectButton.setAttribute("value", "Disconnect");
-  disconnectButton.setAttribute("class", "button");
-  disconnectButton.setAttribute("type", "button");
-  return disconnectButton;
 }
 
 /**
@@ -133,7 +101,7 @@ function controlConnectButtons(readerId, mode) {
   switch (mode) {
     case "disable":
       connectButton = document.getElementById(readerId);
-      disconnectButton = createDisconnectButton(readerId);
+      disconnectButton = stripeReaderView.createDisconnectButton(readerId);
       connectButton.replaceWith(disconnectButton);
       connectButtons = document.getElementsByClassName("connect-button");
       connectButtons.forEach((button) => {
@@ -146,7 +114,7 @@ function controlConnectButtons(readerId, mode) {
 
     case "enable":
       disconnectButton = document.getElementById(readerId);
-      connectButton = createConnectButton(readerId);
+      connectButton = stripeReaderView.createConnectButton(readerId);
       disconnectButton.replaceWith(connectButton);
       connectButtons = document.getElementsByClassName("connect-button");
       connectButtons.forEach((button) => {
@@ -186,13 +154,16 @@ async function pay() {
   const paymentStatus = document.getElementById("payment-status");
   paymentStatus.value = "Payment pending...";
   const amount = document.getElementById("payment-amount").value;
+
   if (isNaN(amount) || !amount) {
     paymentStatus.value = "Make sure to enter a numeric amount";
     return;
   }
   payButton.setAttribute("disabled", true);
+
   try {
     const intent = await communicator.startIntent(amount);
+    
     if (intent.error) {
       console.log("INTENT CREATION LEVEL ERROR");
       payButton.removeAttribute("disabled");
