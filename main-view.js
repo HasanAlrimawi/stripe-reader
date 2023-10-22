@@ -13,13 +13,13 @@ export const stripeReaderView = (function () {
    * @param {string} readerName
    * @returns HTMLElement
    */
-  const createAvailableReaderElement = function (readerName) {
+  const createAvailableReaderElement = function (reader) {
     const readerWrapper = document.createElement("div");
     const readerLabel = document.createElement("label");
-    const connectButton = createConnectButton(readerName);
+    const connectButton = createConnectButton(reader.id);
 
     readerWrapper.setAttribute("class", "vertical-wrapper");
-    readerLabel.textContent = readerName;
+    readerLabel.textContent = reader.label;
 
     readerWrapper.appendChild(readerLabel);
     readerWrapper.appendChild(connectButton);
@@ -33,9 +33,9 @@ export const stripeReaderView = (function () {
    * @param {string} readerName Represents the name to be given for the reader
    * @returns {HTMLElement}
    */
-  function createDisconnectButton(readerName) {
+  function createDisconnectButton(readerId) {
     const disconnectButton = document.createElement("input");
-    disconnectButton.setAttribute("id", readerName);
+    disconnectButton.setAttribute("id", readerId);
     disconnectButton.setAttribute("value", "Disconnect");
     disconnectButton.setAttribute("class", "button");
     disconnectButton.setAttribute("type", "button");
@@ -49,9 +49,9 @@ export const stripeReaderView = (function () {
    * @param {string} readerName Represents the name to be given for the reader
    * @returns {HTMLElement}
    */
-  function createConnectButton(readerName) {
+  function createConnectButton(readerId) {
     const connectButton = document.createElement("input");
-    connectButton.setAttribute("id", readerName);
+    connectButton.setAttribute("id", readerId);
     connectButton.setAttribute("value", "Connect");
     connectButton.setAttribute("class", "connect-button button");
     connectButton.setAttribute("type", "button");

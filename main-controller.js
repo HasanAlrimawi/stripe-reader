@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function getListReadersAvailable() {
   // Make sure to disonnect the connected reader before findnig other readers
   if (ReadersModel.getReaderConnected()) {
-    await disconnectReader(ReadersModel.getReaderConnected().id);
+    await disconnectReader(ReadersModel.getReaderConnected());
   }
   ReadersModel.setReadersList(undefined);
   const availableReaders = await communicator.getReadersAvailable();
@@ -28,7 +28,7 @@ async function getListReadersAvailable() {
   readersHolderElement.innerHTML = "";
   if (availableReaders) {
     for (const reader of availableReaders) {
-      readersHolderElement.appendChild(makeReaderOptionElement(reader.id));
+      readersHolderElement.appendChild(makeReaderOptionElement(reader));
     }
   }
 }
@@ -39,19 +39,12 @@ async function getListReadersAvailable() {
  * @param {string} readerId represents the reader's id
  * @returns {HTMLElement} Represents the html element containing the reader
  */
-function makeReaderOptionElement(readerId) {
-  const readerWrapper = stripeReaderView.createAvailableReaderElement(readerId);
-  // connectButton.addEventListener(
-  //   "click",
-  //   () => {
-  //     connectToReader(readerId);
-  //   },
-  //   { once: true }
-  // );
+function makeReaderOptionElement(reader) {
+  const readerWrapper = stripeReaderView.createAvailableReaderElement(reader);
   readerWrapper.lastElementChild.addEventListener(
     "click",
     () => {
-      connectToReader(readerId);
+      connectToReader(reader);
     },
     { once: true }
   );
@@ -64,22 +57,30 @@ function makeReaderOptionElement(readerId) {
  *
  * @param {string} readerId
  */
-async function connectToReader(readerId) {
-  const paymentButton = document.getElementById(readerId);
+async function connectToReader(reader) {
+  const paymentButton = document.getElementById(reader.id);
   paymentButton.setAttribute("value", "Connecting");
   paymentButton.setAttribute("disabled", true);
-  const readers = ReadersModel.getReadersList();
-  const selectedReader = readers.filter((element) => element.id === readerId);
+  // const readers = ReadersModel.getReadersList();
+  // const selectedReader = readers.filter((element) => element.id === readerId);
 
   try {
-    const connectResult = await communicator.connectReader(selectedReader[0]);
+    const connectResult = await communicator.connectReader(reader);
 
     if (connectResult.error) {
-      console.log(connectResult.error);
+      paymentButton.setAttribute(
+        "value",
+        `${connectResult.error.code}\nTry again...`
+      );
+      setTimeout(function () {
+        paymentButton.setAttribute("value", "Connect");
+        paymentButton.removeAttribute("disabled");
+      }, 3000);
+      // console.log(connectResult.error);
     } else {
-      ReadersModel.setReaderConnected(selectedReader[0]);
+      ReadersModel.setReaderConnected(reader);
       document.getElementById("pay-btn").removeAttribute("disabled");
-      controlConnectButtons(readerId, "disable");
+      controlConnectButtons(reader, "disable");
     }
   } catch (error) {
     console.log({ error: error });
@@ -94,34 +95,34 @@ async function connectToReader(readerId) {
  *     disable
  * @param {string} readerId
  */
-function controlConnectButtons(readerId, mode) {
+function controlConnectButtons(reader, mode) {
   let disconnectButton;
   let connectButton;
   let connectButtons;
   switch (mode) {
     case "disable":
-      connectButton = document.getElementById(readerId);
-      disconnectButton = stripeReaderView.createDisconnectButton(readerId);
+      connectButton = document.getElementById(reader.id);
+      disconnectButton = stripeReaderView.createDisconnectButton(reader.id);
       connectButton.replaceWith(disconnectButton);
       connectButtons = document.getElementsByClassName("connect-button");
       connectButtons.forEach((button) => {
         button.setAttribute("disabled", true);
       });
       disconnectButton.addEventListener("click", () => {
-        disconnectReader(readerId);
+        disconnectReader(reader);
       });
       break;
 
     case "enable":
-      disconnectButton = document.getElementById(readerId);
-      connectButton = stripeReaderView.createConnectButton(readerId);
+      disconnectButton = document.getElementById(reader.id);
+      connectButton = stripeReaderView.createConnectButton(reader.id);
       disconnectButton.replaceWith(connectButton);
       connectButtons = document.getElementsByClassName("connect-button");
       connectButtons.forEach((button) => {
         button.removeAttribute("disabled");
       });
       connectButton.addEventListener("click", () => {
-        connectToReader(readerId);
+        connectToReader(reader);
       });
       break;
   }
@@ -132,13 +133,13 @@ function controlConnectButtons(readerId, mode) {
  *
  * @param {string} readerId
  */
-async function disconnectReader(readerId) {
+async function disconnectReader(reader) {
   try {
     //
-    const readers = ReadersModel.getReadersList();
-    const selectedReader = readers.filter((element) => element.id === readerId);
-    await communicator.disonnectReader(selectedReader[0]);
-    controlConnectButtons(readerId, "enable");
+    // const readers = ReadersModel.getReadersList();
+    // const selectedReader = readers.filter((element) => element.id === readerId);
+    await communicator.disonnectReader(reader);
+    controlConnectButtons(reader, "enable");
     document.getElementById("pay-btn").setAttribute("disabled", true);
   } catch (error) {
     console.log(error);
@@ -163,18 +164,20 @@ async function pay() {
 
   try {
     const intent = await communicator.startIntent(amount);
-    
+
     if (intent.error) {
+      console.log(intent);
       console.log("INTENT CREATION LEVEL ERROR");
       payButton.removeAttribute("disabled");
-      throw `Payment failed: ${intent.error.code}`;
+      throw `Payment failed: ${intent.error.message}`;
     } else {
       console.log(`to collection \n${intent.client_secret}`);
-      const result = await communicator.collectProcessPayment(
-        intent.client_secret
-      );
-
-      if (result?.error && intent.status !== "succeeded") {
+      // const result = await communicator.collectProcessPayment(
+      //   intent.client_secret
+      // );
+      const result = await collectAndProcess(intent.client_secret);
+      console.log(result);
+      if (result?.error && intent?.status !== "succeeded") {
         console.log(await communicator.cancelIntent(intent.id));
         throw `Payment failed: ${result.error}`;
       } else {
@@ -183,8 +186,53 @@ async function pay() {
       }
     }
   } catch (error) {
+    // console.log(error.response);
     paymentStatus.value = error;
-    console.log(error);
+    // console.log(error);
     payButton.removeAttribute("disabled");
   }
+}
+
+/**
+ * Consumes the collect API of the stripe's to make the reader ready for entry.
+ *
+ * @param {string} clientSecret Represents the intent created secret
+ * @returns {object} collectionIntent Represents the payment intent that
+ *     was returned by the stripe's terminal collect API
+ */
+async function collectionPayment(clientSecret) {
+  const collectionIntent = await communicator.collectPayment(clientSecret);
+  if (collectionIntent.error) {
+    throw `Payment failed: ${intent.error.message}`;
+  }
+  return collectionIntent;
+}
+
+/**
+ * Handles the payment collection and process stages, to make sure that
+ *     to give the transaction a second chance if a sudden network issue
+ *     happened or the payment method didn't succeed.
+ *
+ * @param {string} clientSecret Represents the intent created secret
+ * @returns {object} processResult Represents the final result of the
+ *     transaction
+ */
+async function collectAndProcess(clientSecret) {
+  let collectionIntent = await collectionPayment(clientSecret);
+  console.log(collectionIntent);
+  let processResult = await communicator.processPayment(collectionIntent);
+  if (processResult.error) {
+    if (processResult.intent?.status === "requires_payment_method") {
+      const paymentStatus = document.getElementById("payment-status");
+      paymentStatus.value = "Try using another payment method";
+      collectionIntent = await collectionPayment(clientSecret);
+      paymentStatus.value = "Payment pending...";
+      processResult = await communicator.processPayment(collectionIntent);
+    }
+    if (processResult.intent?.status === "requires_confirmation") {
+      processResult = await communicator.processPayment(collectionIntent);
+      return processResult;
+    }
+  }
+  return processResult;
 }

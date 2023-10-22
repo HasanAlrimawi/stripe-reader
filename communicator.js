@@ -109,99 +109,168 @@ export const communicator = (function () {
    * @returns {object}
    */
   async function startIntent(amount) {
-    try {
-      return await fetch(
-        `${stripeConnectionDetails.STRIPE_API_URL}payment_intents`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: `amount=${amount}&currency=usd&payment_method_types[]=card_present`,
+    return await fetch(
+      `${stripeConnectionDetails.STRIPE_API_URL}payment_intents`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: `amount=${amount}&currency=usd&payment_method_types[]=card_present`,
+        // body: `amount=${amount}&currency=usd&confirm=true&payment_method=pm_card_visa&automatic_payment_methods[enabled]=true&automatic_payment_methods[allow_redirects]=never`,
+
+        // body: `amount=${amount}&currency=usd&payment_method=pm_card_visa_debit`,
+        // body: `amount=${amount}&currency=usd&confirm=true&payment_method=visa&automatic_payment_methods[allow_redirects]=never&automatic_payment_methods[enabled]=true`,
+        // body: `amount=${amount}&currency=usd&automatic_payment_methods[enabled]=true&return_url=https://stripe.com`,
+        // body: `amount=${amount}&currency=usd&payment_method_types[]=card_present`,
+        // body: `amount=${amount}&currency=usd&payment_method=offline_pin_cvm&payment_method_types[]=card_present&capture_method=automatic_async&confirm=true&return_url=https://stripe.com`,
+      }
+    )
+      .then((res) => {
+        console.log("First then");
+        if (!res.ok) {
+          // console.log(res.json());
+          console.log("Not ok response");
+          throw res.json();
         }
-      )
-        .then((res) => {
-          return res.json();
-        })
-        .catch((err) => {
-          return {
-            stage: "Make intent",
-            state: "Failure",
-            error: err,
-          };
-        });
-    } catch (error) {
-      console.log({ stage: "Make Intent", state: "Failure", error: error });
-      return { stage: "Make Intent", state: "Failure", error: error };
-    }
+        return res.json();
+      })
+      .then((data) => {
+        console.log("Second then");
+        return data;
+      })
+      .catch((err) => {
+        console.log("inner throw");
+        return err;
+      });
   }
 
   /**
-   * Handles payment collection and process stages.
+   * Handles payment collection stage.
    *
    * @param {string} clientSecret Represents the intent created secret
-   * @returns {object}
+   * @returns {object} paymentIntent Represents the payment intent returned from
+   *     the collect payment API in success case.
    */
-  async function collectProcessPayment(clientSecret) {
+  async function collectPayment(clientSecret) {
     try {
       const updatedIntent = await terminal.collectPaymentMethod(clientSecret);
-      // latestIntent = updatedIntent;
+      console.log(updatedIntent);
       if (updatedIntent.error) {
         return {
           stage: "Collect payment method",
-          state: "Failure",
+          status: "Failure",
           error: updatedIntent.error,
-          try_again: false,
         };
       } else {
-        console.log("to payment process");
-        let result = await terminal.processPayment(updatedIntent.paymentIntent);
-        // latestIntent = updatedIntent;
-        // checks whether a Failure occured in order to address it
-        if (result.paymentIntent.status === "requires_payment_method") {
-          return {
-            stage: "Process payment",
-            state: "Failure",
-            error: "Payment Method not working, try another",
-            try_again: false,
-          };
-        } else if (
-          result.paymentIntent.status === "requires_confirmation" ||
-          result.paymentIntent.status === null ||
-          result.paymentIntent.status === undefined
-        ) {
-          return {
-            stage: "Process payment",
-            state: "Failure",
-            error: "Connectivity problem, try again",
-            try_again: true,
-          };
-        }
-        if (result.error) {
-          return {
-            stage: "Process payment",
-            state: "Failure",
-            error: result.error,
-            try_again: false,
-          };
-        } else {
-          return {
-            stage: "Payment collection and processing",
-            state: "Success",
-          };
-        }
+        return updatedIntent.paymentIntent;
       }
     } catch (error) {
-      console.log("CAUGHT");
       return {
-        stage: "Payment collection and processing",
-        state: "Failure",
+        stage: "Collect payment method",
+        status: "Failure",
         error: error,
       };
     }
   }
-  
+
+  /**
+   * Handles the process of the payment
+   *
+   * @param {object} paymentIntent Represents the payment intent returned from
+   *     the collect payment API
+   * @returns {object} intent Represents the returned intent from the process
+   *     payment if successful, and the error object if it failed
+   */
+  async function processPayment(paymentIntent) {
+    console.log(paymentIntent);
+    try {
+      let result = await terminal.processPayment(paymentIntent);
+      console.log(result);
+
+      if (result.error) {
+        return {
+          stage: "Process payment",
+          status: "Failure",
+          error: result.error.message,
+          intent: result.paymentIntent,
+        };
+      } else {
+        return {
+          stage: "Payment collection and processing",
+          status: "Success",
+        };
+      }
+    } catch (error) {
+      return {
+        stage: "Payment collection and processing",
+        status: "Failure",
+        error: error,
+        intent: result?.paymentIntent,
+      };
+    }
+  }
+
+  // /**
+  //  * Handles payment collection and process stages.
+  //  *
+  //  * @param {string} clientSecret Represents the intent created secret
+  //  * @returns {object}
+  //  */
+  // async function collectProcessPayment(clientSecret) {
+  //   try {
+  //     const updatedIntent = await terminal.collectPaymentMethod(clientSecret);
+  //     console.log(updatedIntent);
+  //     if (updatedIntent.error) {
+  //       return {
+  //         stage: "Collect payment method",
+  //         status: "Failure",
+  //         error: updatedIntent.error,
+  //       };
+  //     } else {
+  //       console.log("to payment process");
+  //       let numberOfTries = 0;
+
+  //       while (numberOfTries < 2) {
+  //         numberOfTries++;
+  //         let result = await terminal.processPayment(
+  //           updatedIntent.paymentIntent
+  //         );
+  //         console.log(result);
+
+  //         if (result.error) {
+  //           if (
+  //             numberOfTries < 2 &&
+  //             result.paymentIntent.status === "requires_confirmation"
+  //           ) {
+  //             continue;
+  //           }
+  //           numberOfTries = 2;
+  //           console.log("error caused");
+  //           return {
+  //             stage: "Process payment",
+  //             status: "Failure",
+  //             error: result.error.message,
+  //           };
+  //         } else {
+  //           return {
+  //             stage: "Payment collection and processing",
+  //             status: "Success",
+  //           };
+  //         }
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.log("CAUGHT");
+  //     return {
+  //       stage: "Payment collection and processing",
+  //       status: "Failure",
+  //       error: error,
+  //     };
+  //   }
+  // }
+
   /**
    * Cancels the specified intent in some failure cases.
    *
@@ -209,106 +278,109 @@ export const communicator = (function () {
    * @returns {object} The intent that has been canceled
    */
   const cancelIntent = async function (intentId) {
-    try {
-      const canceledIntentReturned = await fetch(
-        `${stripeConnectionDetails.STRIPE_API_URL}payment_intents/${intentId}/cancel`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
-          },
-        }
-      );
-      return canceledIntentReturned;
-    } catch (error) {
-      return { error: error };
-    }
+    return await fetch(
+      `${stripeConnectionDetails.STRIPE_API_URL}payment_intents/${intentId}/cancel`,
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
+        },
+      }
+    )
+      .then((res) => {
+        return res.json();
+      })
+      .catch((error) => {
+        return error;
+      });
   };
 
-  /**
-   * Creates a reader object to register it for a client account.
-   *
-   * @param {!Object} readerDetails
-   *     @property {string} registrationCode Represents the code that is
-   *         generated on the reader in order to save it as a reader for client
-   *     @property {string} label Acts as a name for the reader
-   *     @property {string} locationId
-   *
-   * @returns {object} if successful then it represents the reader object
-   *     registered, if failed then it represents the error occured
-   */
-  const createReader = async function (readerDetails) {
-    try {
-      const createdReader = await fetch(
-        `${stripeConnectionDetails.STRIPE_API_URL}readers`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
-          },
-          body: `registration_code=${readerDetails.registrationCode}&
-          label=${readerDetails.label}&location=${readerDetails.locationId}`,
-        }
-      );
-      return createdReader;
-    } catch (error) {
-      return { error: error };
-    }
-  };
+  // /**
+  //  * Creates a reader object to register it for a client account.
+  //  *
+  //  * @param {!Object} readerDetails
+  //  *     @property {string} registrationCode Represents the code that is
+  //  *         generated on the reader in order to save it as a reader for client
+  //  *     @property {string} label Acts as a name for the reader
+  //  *     @property {string} locationId
+  //  *
+  //  * @returns {object} if successful then it represents the reader object
+  //  *     registered, if failed then it represents the error occured
+  //  */
+  // const createReader = async function (readerDetails) {
+  //   try {
+  //     const createdReader = await fetch(
+  //       `${stripeConnectionDetails.STRIPE_API_URL}readers`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           Accept: "application/json",
+  //           "Content-Type": "application/x-www-form-urlencoded",
+  //           Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
+  //         },
+  //         body: `registration_code=${readerDetails.registrationCode}&
+  //         label=${readerDetails.label}&location=${readerDetails.locationId}`,
+  //       }
+  //     );
+  //     return createdReader;
+  //   } catch (error) {
+  //     return { error: error };
+  //   }
+  // };
 
-  /**
-   * Creates a location object
-   *
-   * @param {!object} locationDetails Represents the details of the location
-   *     to be created
-   *     @property {string} displayName
-   *     @property {string} line
-   *     @property {string} city
-   *     @property {number} postalCode
-   *     @property {string} state
-   *     @property {string} country
-   * @returns {object} if successful then it represents the location object
-   *     registered, if failed then it represents the error occured
-   */
-  const createLocation = async function (locationDetails) {
-    try {
-      const createdLocation = await fetch(
-        `${stripeConnectionDetails.STRIPE_API_URL}locations`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
-          },
-          body: `display_name=${locationDetails.displayName}&
-          address[line1]=${locationDetails.line}&
-          address[city]=${locationDetails.city}&
-          address[postal_code]=${locationDetails.postalCode}&
-          address[state]=${locationDetails.state}&
-          address[country]=${locationDetails.country}`,
-        }
-      );
-      return createdLocation;
-    } catch (error) {
-      return { error: error };
-    }
-  };
+  // /**
+  //  * Creates a location object
+  //  *
+  //  * @param {!object} locationDetails Represents the details of the location
+  //  *     to be created
+  //  *     @property {string} displayName
+  //  *     @property {string} line
+  //  *     @property {string} city
+  //  *     @property {number} postalCode
+  //  *     @property {string} state
+  //  *     @property {string} country
+  //  * @returns {object} if successful then it represents the location object
+  //  *     registered, if failed then it represents the error occured
+  //  */
+  // const createLocation = async function (locationDetails) {
+  //   try {
+  //     const createdLocation = await fetch(
+  //       `${stripeConnectionDetails.STRIPE_API_URL}locations`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           Accept: "application/json",
+  //           "Content-Type": "application/x-www-form-urlencoded",
+  //           Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
+  //         },
+  //         body: `display_name=${locationDetails.displayName}&
+  //         address[line1]=${locationDetails.line}&
+  //         address[city]=${locationDetails.city}&
+  //         address[postal_code]=${locationDetails.postalCode}&
+  //         address[state]=${locationDetails.state}&
+  //         address[country]=${locationDetails.country}`,
+  //       }
+  //     );
+  //     return createdLocation;
+  //   } catch (error) {
+  //     return { error: error };
+  //   }
+  // };
 
   //todo add a function that fetches API from server to close intent
   return {
-    collectProcessPayment,
+    // collectProcessPayment,
     startIntent,
     connectReader,
     getReadersAvailable,
     cancelIntent,
     disonnectReader,
-    createLocation,
-    createReader,
+    collectPayment,
+    processPayment,
+    // createLocation,
+    // createReader,
   };
 })();
 
