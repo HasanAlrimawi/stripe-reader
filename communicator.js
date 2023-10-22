@@ -2,10 +2,17 @@ import { stripeConnectionDetails } from "./constants/stripe-connection.js";
 
 export const communicator = (function () {
   // initiate stripe terminal object to access its funtionalities
-  var terminal = StripeTerminal.create({
-    onFetchConnectionToken: fetchConnectionToken,
-    onUnexpectedReaderDisconnect: unexpectedDisconnect,
-  });
+  var terminal = undefined;
+  try {
+    terminal = StripeTerminal.create({
+      onFetchConnectionToken: fetchConnectionToken,
+      onUnexpectedReaderDisconnect: unexpectedDisconnect,
+    });
+  } catch (error) {
+    console.log(
+      `Make sure to be connected to the internet.\nstripe terminal creation error: ${error}`
+    );
+  }
 
   function unexpectedDisconnect() {
     // In this function, your app should notify the user that the reader disconnected.
@@ -20,27 +27,23 @@ export const communicator = (function () {
    */
   async function fetchConnectionToken() {
     // Do not cache or hardcode the ConnectionToken. The SDK manages the ConnectionToken's lifecycle.
-    try {
-      return await fetch(
-        `${stripeConnectionDetails.STRIPE_API_URL}terminal/connection_tokens`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
-          },
-        }
-      )
-        .then((response) => {
-          console.log(response);
-          return response.json();
-        })
-        .then((data) => {
-          console.log(data);
-          return data.secret;
-        });
-    } catch (error) {
-      console.log(error);
-    }
+    return await fetch(
+      `${stripeConnectionDetails.STRIPE_API_URL}terminal/connection_tokens`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${stripeConnectionDetails.SECRET_KEY}`,
+        },
+      }
+    )
+      .then((response) => {
+        console.log(response);
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        return data.secret;
+      });
   }
 
   // ----------------------- --------------------------------- -----------------------
@@ -53,7 +56,7 @@ export const communicator = (function () {
    * @returns {object<string, string} The availabe readers registered to terminal
    */
   async function getReadersAvailable() {
-    const config = { simulated: true };
+    const config = { simulated: false };
     const discoverResult = await terminal.discoverReaders(config);
     if (discoverResult.error) {
       console.log("Failed to discover: ", discoverResult.error);
@@ -74,7 +77,7 @@ export const communicator = (function () {
   async function connectReader(selectedReader) {
     const connectResult = await terminal.connectReader(selectedReader);
     if (connectResult.error) {
-      console.log("Failed to connect: ", connectResult.error);
+      console.log("Failed to connect to reader: ", connectResult.error);
     } else {
       console.log("Connected to reader: ", connectResult.reader.label);
     }
@@ -118,7 +121,7 @@ export const communicator = (function () {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: `amount=${amount}&currency=usd&payment_method_types[]=card_present`,
-        // body: `amount=${amount}&currency=usd&confirm=true&payment_method=pm_card_visa&automatic_payment_methods[enabled]=true&automatic_payment_methods[allow_redirects]=never`,
+        // body: `amount=${amount}&currency=usd&payment_method=pm_card_cvcCheckFail&capture_method=automatic_async&automatic_payment_methods[enabled]=true&automatic_payment_methods[allow_redirects]=never`,
 
         // body: `amount=${amount}&currency=usd&payment_method=pm_card_visa_debit`,
         // body: `amount=${amount}&currency=usd&confirm=true&payment_method=visa&automatic_payment_methods[allow_redirects]=never&automatic_payment_methods[enabled]=true`,
