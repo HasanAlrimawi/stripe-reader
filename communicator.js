@@ -1,4 +1,6 @@
+import { OBSERVER_TOPICS } from "./constants/observer-topics.js";
 import { stripeConnectionDetails } from "./constants/stripe-connection.js";
+import { observer } from "./observer.js";
 
 export const communicator = (function () {
   // initiate stripe terminal object to access its funtionalities
@@ -17,6 +19,7 @@ export const communicator = (function () {
   function unexpectedDisconnect() {
     // In this function, your app should notify the user that the reader disconnected.
     // You can also include a way to attempt to reconnect to a reader.
+    observer.publish(OBSERVER_TOPICS.CONNECTION_LOST, "");
     console.log("Disconnected from reader");
   }
 
@@ -41,6 +44,7 @@ export const communicator = (function () {
         return response.json();
       })
       .then((data) => {
+        observer.publish(OBSERVER_TOPICS.CONNECTION_TOKEN_CREATION_ERROR, data.secret);
         console.log(data);
         return data.secret;
       });
@@ -56,7 +60,7 @@ export const communicator = (function () {
    * @returns {object<string, string} The availabe readers registered to terminal
    */
   async function getReadersAvailable() {
-    const config = { simulated: false };
+    const config = { simulated: true };
     const discoverResult = await terminal.discoverReaders(config);
     if (discoverResult.error) {
       console.log("Failed to discover: ", discoverResult.error);

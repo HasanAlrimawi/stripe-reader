@@ -1,14 +1,97 @@
 import { communicator } from "./communicator.js";
+import { OBSERVER_TOPICS } from "./constants/observer-topics.js";
+import { stripeConnectionDetails } from "./constants/stripe-connection.js";
 import { stripeReaderView } from "./main-view.js";
+import { observer } from "./observer.js";
 import { ReadersModel } from "./readers-model.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+  handleAPIKey();
   document
     .getElementById("list-readers-btn")
     .addEventListener("click", getListReadersAvailable);
-
   document.getElementById("pay-btn").addEventListener("click", pay);
+  observer.subscribe(OBSERVER_TOPICS.CONNECTION_LOST, handleDisonncetion);
+  observer.subscribe(
+    OBSERVER_TOPICS.CONNECTION_TOKEN_CREATION_ERROR,
+    failureConnectionToken
+  );
+  document
+    .getElementById("secretKeyCardAdditionButton")
+    .addEventListener("click", showSecretKeyCard);
 });
+
+function failureConnectionToken() {
+  console.log("Subcriptiopn worked");
+}
+
+function showSecretKeyCard() {
+  const secretKeyCardAdditionButton = document.getElementById(
+    "secretKeyCardAdditionButton"
+  );
+  secretKeyCardAdditionButton.setAttribute("disabled", true);
+  document
+    .getElementsByClassName("wrapper-horizontal")[0]
+    .appendChild(stripeReaderView.createSecretKeySetterCard());
+  document
+    .getElementById("secretKeyButton")
+    .addEventListener("click", setAPISecretKey);
+}
+
+function setAPISecretKey() {
+  const secretKeyButton = document.getElementById("secretKeyButton");
+  const secretKeyInput = document.getElementById("secretKeyInput");
+  const secretKey = secretKeyInput.value;
+  if (secretKey) {
+    stripeConnectionDetails.SECRET_KEY = secretKey;
+    secretKeyButton.value = "The new key has been successfully set.";
+    secretKeyButton.setAttribute("disabled", true);
+    setTimeout(() => {
+      // secretKeyButton.value = "Set key";
+      // secretKeyButton.removeAttribute("disabled");
+      document
+        .getElementById("secretKeyCardAdditionButton")
+        .removeAttribute("disabled");
+      document.getElementById("secretKeyCard").remove();
+    }, 3000);
+  } else {
+    secretKeyButton.value =
+      "Make sure to fill the field before setting the key.";
+    secretKeyButton.setAttribute("disabled", true);
+    setTimeout(() => {
+      secretKeyButton.value = "Set key";
+      secretKeyButton.removeAttribute("disabled");
+    }, 3000);
+  }
+}
+
+/**
+ * Handles the sudden reader disconnection to notify the app user.
+ */
+function handleDisonncetion() {
+  alert("Connection lost, make sure the reader is connected to internet");
+}
+
+/**
+ * Configures the API secret key to be used, it checks whether a key has been
+ *     assigned from previous app use to use it, and if not then it uses
+ *     the default secret key specified
+ */
+function handleAPIKey() {
+  console.log("SHOULD BE FIRST");
+  if (
+    localStorage.getItem(stripeConnectionDetails.LOCAL_STORAGE_API_KEY) === null
+  ) {
+    localStorage.setItem(
+      stripeConnectionDetails.LOCAL_STORAGE_API_KEY,
+      stripeConnectionDetails.SECRET_KEY
+    );
+  } else {
+    stripeConnectionDetails.SECRET_KEY = localStorage.getItem(
+      stripeConnectionDetails.LOCAL_STORAGE_API_KEY
+    );
+  }
+}
 
 /**
  * Adds the readers' Ids to the dropdown list, after clearing the readers model
@@ -45,13 +128,9 @@ async function getListReadersAvailable() {
  */
 function makeReaderOptionElement(reader) {
   const readerWrapper = stripeReaderView.createAvailableReaderElement(reader);
-  readerWrapper.lastElementChild.addEventListener(
-    "click",
-    () => {
-      connectToReader(reader);
-    },
-    { once: true }
-  );
+  readerWrapper.lastElementChild.addEventListener("click", () => {
+    connectToReader(reader);
+  });
   return readerWrapper;
 }
 
@@ -87,6 +166,9 @@ async function connectToReader(reader) {
       controlConnectButtons(reader, "disable");
     }
   } catch (error) {
+    alert(`${error.message}.`);
+    paymentButton.setAttribute("value", "Connect");
+    paymentButton.removeAttribute("disabled");
     console.log({ error: error });
   }
 }

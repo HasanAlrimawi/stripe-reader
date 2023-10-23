@@ -29,8 +29,10 @@
       }
     </script>
     <div class="header-bar">
-      <h1>Stripe Card Reader</h1>
+        <h1>Stripe Card Reader</h1>
+      <input class="button" type="button" id="secretKeyCardAdditionButton" value="Set API secret key">
     </div>
+    
     <div class="wrapper-horizontal">
       <div class="card-vertical">
         <section class="card-form">
@@ -68,9 +70,14 @@
                 cols="20"
               >
               </textarea>
-            
+          
         </section>
       </div>
+      <!-- <section class="card-form">
+        <label class="subtitle" for="secretKey">Set API secret key</label>
+        <input type="text" name="secretKey" id="secretKeyInput">
+        <input type="button" class="button" id="secretKeyButton" value="Set key">
+      </section> -->
       <!-- <button id="connect-reader">Connect Reader</button>
     <button id="pay">Pay</button>
     <button id="capture">Capture</button> -->

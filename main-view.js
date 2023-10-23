@@ -58,10 +58,25 @@ export const stripeReaderView = (function () {
     return connectButton;
   }
 
+  function createSecretKeySetterCard() {
+    const wrapper = document.createElement("section");
+    wrapper.setAttribute("class", "card-form");
+    wrapper.setAttribute("id", "secretKeyCard");
+    wrapper.insertAdjacentHTML(
+      "beforeend",
+      `<label class="subtitle" for="secretKey">Set API secret key</label>
+    <input type="text" name="secretKey" id="secretKeyInput">
+    <input type="button" class="button" id="secretKeyButton"
+     value="Set key">`
+    );
+    return wrapper;
+  }
+
   return {
     addReader,
     createAvailableReaderElement,
     createDisconnectButton,
     createConnectButton,
+    createSecretKeySetterCard,
   };
 })();
