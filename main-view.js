@@ -1,12 +1,4 @@
 export const stripeReaderView = (function () {
-  const addReader = function (themeUsed) {
-    return `
-        <div class="vertical-wrapper">
-            <label>SIMULATOR</label>
-            <custom-button value="Connect"></custom-button>
-        </div>`;
-  };
-
   /**
    * Creates an HTML element that holds a reader available for use.
    *
@@ -58,6 +50,12 @@ export const stripeReaderView = (function () {
     return connectButton;
   }
 
+  /**
+   * Creates the HTMLElement that represents the view that will take a new API
+   *     secret key to use with connecting to stripe's terminal.
+   *
+   * @returns {HTMLElement}
+   */
   function createSecretKeySetterCard() {
     const wrapper = document.createElement("section");
     wrapper.setAttribute("class", "card-form");
@@ -65,7 +63,8 @@ export const stripeReaderView = (function () {
     wrapper.insertAdjacentHTML(
       "beforeend",
       `<label class="subtitle" for="secretKey">Set API secret key</label>
-    <input type="text" name="secretKey" id="secretKeyInput">
+    <input type="text" name="secretKey" id="secretKeyInput"
+    placeholder="Setting a new key will overwrite the already used one.">
     <input type="button" class="button" id="secretKeyButton"
      value="Set key">`
     );
@@ -73,7 +72,6 @@ export const stripeReaderView = (function () {
   }
 
   return {
-    addReader,
     createAvailableReaderElement,
     createDisconnectButton,
     createConnectButton,

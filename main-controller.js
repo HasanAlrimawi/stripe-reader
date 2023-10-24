@@ -5,31 +5,88 @@ import { stripeReaderView } from "./main-view.js";
 import { observer } from "./observer.js";
 import { ReadersModel } from "./readers-model.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   handleAPIKey();
+  observer.subscribe(OBSERVER_TOPICS.CONNECTION_LOST, handleDisonncetion);
+  observer.subscribe(
+    OBSERVER_TOPICS.CONNECTION_TOKEN_CREATION_ERROR,
+    (error) => {
+      failureConnectionToken(error);
+    }
+  );
+  // The following try catch statements handle loading the stripe JS SDK
+  try {
+    await loadConnectStripeSDK("https://js.stripe.com/terminal/v1/");
+  } catch (error) {
+    document.getElementById("stripe-sdk").remove();
+    alert(`${error}`);
+  }
   document
     .getElementById("list-readers-btn")
     .addEventListener("click", getListReadersAvailable);
   document.getElementById("pay-btn").addEventListener("click", pay);
-  observer.subscribe(OBSERVER_TOPICS.CONNECTION_LOST, handleDisonncetion);
-  observer.subscribe(
-    OBSERVER_TOPICS.CONNECTION_TOKEN_CREATION_ERROR,
-    failureConnectionToken
-  );
+
   document
     .getElementById("secretKeyCardAdditionButton")
     .addEventListener("click", showSecretKeyCard);
 });
 
-function failureConnectionToken() {
-  console.log("Subcriptiopn worked");
+/**
+ * Handles the failure of the request of connection token. Gets invoked by
+ *     being the callback function of subscription.
+ * @param {string} error
+ */
+function failureConnectionToken(error) {
+  alert(error.message);
 }
 
+/**
+ * Adds the needed script of the Stripe SDK as a tag to the document
+ *
+ * @param {string} url The URL of the script to be loaded
+ * @returns {Promise}
+ */
+function loadScriptFile(url) {
+  return new Promise((resolve, reject) => {
+    const stripeJSSDK = document.createElement("script");
+    stripeJSSDK.type = "text/javascript";
+    stripeJSSDK.src = url;
+    stripeJSSDK.async = false;
+    stripeJSSDK.setAttribute("id", "stripe-sdk");
+    stripeJSSDK.addEventListener("load", (done) => {
+      resolve({ status: "success" });
+    });
+
+    stripeJSSDK.addEventListener("error", () => {
+      reject("Check internet connection and try again");
+    });
+    document.body.appendChild(stripeJSSDK);
+  });
+}
+
+/**
+ * Calls the method responsible for SDK loading, then initiates connection
+ *     with stripe terminal.
+ *
+ * @param {string} url The URL of the script to be loaded
+ */
+async function loadConnectStripeSDK(url) {
+  const stripeSDKLoad = await loadScriptFile(url);
+  console.log(stripeSDKLoad);
+  console.log("HELLO loadConnectStripeSDK");
+  if (stripeSDKLoad.status === "success") {
+    console.log("success");
+    await communicator.createStripeTerminal();
+  }
+}
+
+/**
+ * Handles Showing part of the view responsible for setting API secret key.
+ */
 function showSecretKeyCard() {
-  const secretKeyCardAdditionButton = document.getElementById(
-    "secretKeyCardAdditionButton"
-  );
-  secretKeyCardAdditionButton.setAttribute("disabled", true);
+  document
+    .getElementById("secretKeyCardAdditionButton")
+    .setAttribute("disabled", true);
   document
     .getElementsByClassName("wrapper-horizontal")[0]
     .appendChild(stripeReaderView.createSecretKeySetterCard());
@@ -38,22 +95,38 @@ function showSecretKeyCard() {
     .addEventListener("click", setAPISecretKey);
 }
 
-function setAPISecretKey() {
+/**
+ * Handles setting the new API secret key and initating new connection
+ *     with the stripe terminal using the new key.
+ */
+async function setAPISecretKey() {
   const secretKeyButton = document.getElementById("secretKeyButton");
   const secretKeyInput = document.getElementById("secretKeyInput");
   const secretKey = secretKeyInput.value;
+
   if (secretKey) {
     stripeConnectionDetails.SECRET_KEY = secretKey;
+    localStorage.setItem(
+      stripeConnectionDetails.LOCAL_STORAGE_API_KEY,
+      secretKey
+    );
     secretKeyButton.value = "The new key has been successfully set.";
     secretKeyButton.setAttribute("disabled", true);
     setTimeout(() => {
-      // secretKeyButton.value = "Set key";
-      // secretKeyButton.removeAttribute("disabled");
       document
         .getElementById("secretKeyCardAdditionButton")
         .removeAttribute("disabled");
       document.getElementById("secretKeyCard").remove();
-    }, 3000);
+    }, 2000);
+    // The following try catch statements handle loading the stripe JS SDK
+    //     and connecting to the stripe terminal using the new key added
+    try {
+      document.getElementById("stripe-sdk").remove();
+      await loadConnectStripeSDK("https://js.stripe.com/terminal/v1/");
+      console.log("HELLO");
+    } catch (error) {
+      alert(`${error}`);
+    }
   } else {
     secretKeyButton.value =
       "Make sure to fill the field before setting the key.";
@@ -61,7 +134,7 @@ function setAPISecretKey() {
     setTimeout(() => {
       secretKeyButton.value = "Set key";
       secretKeyButton.removeAttribute("disabled");
-    }, 3000);
+    }, 2000);
   }
 }
 
@@ -78,7 +151,6 @@ function handleDisonncetion() {
  *     the default secret key specified
  */
 function handleAPIKey() {
-  console.log("SHOULD BE FIRST");
   if (
     localStorage.getItem(stripeConnectionDetails.LOCAL_STORAGE_API_KEY) === null
   ) {
@@ -98,8 +170,13 @@ function handleAPIKey() {
  *     and the dropdown list if they had any reader included before.
  */
 async function getListReadersAvailable() {
-  // Make sure to disonnect the connected reader before findnig other readers
   try {
+    // To load the SDK script and connect to the terminal if the user connected
+    //     to internet after opening the app.
+    if (!communicator.isConnectedToTerminal()) {
+      await loadConnectStripeSDK("https://js.stripe.com/terminal/v1/");
+    }
+    // Make sure to disonnect the connected reader before findnig other readers
     if (ReadersModel.getReaderConnected()) {
       await disconnectReader(ReadersModel.getReaderConnected());
     }
@@ -116,7 +193,11 @@ async function getListReadersAvailable() {
       }
     }
   } catch (error) {
-    console.log("Check your internet connection and try again");
+    // If still no internet connection, the SDK script will be removed
+    if (!communicator.isConnectedToTerminal()) {
+      document.getElementById("stripe-sdk").remove();
+    }
+    alert("Check internet connection and try again");
   }
 }
 
@@ -144,8 +225,6 @@ async function connectToReader(reader) {
   const paymentButton = document.getElementById(reader.id);
   paymentButton.setAttribute("value", "Connecting");
   paymentButton.setAttribute("disabled", true);
-  // const readers = ReadersModel.getReadersList();
-  // const selectedReader = readers.filter((element) => element.id === readerId);
 
   try {
     const connectResult = await communicator.connectReader(reader);
@@ -158,18 +237,18 @@ async function connectToReader(reader) {
       setTimeout(function () {
         paymentButton.setAttribute("value", "Connect");
         paymentButton.removeAttribute("disabled");
-      }, 3000);
-      // console.log(connectResult.error);
+      }, 2000);
     } else {
       ReadersModel.setReaderConnected(reader);
       document.getElementById("pay-btn").removeAttribute("disabled");
       controlConnectButtons(reader, "disable");
     }
   } catch (error) {
-    alert(`${error.message}.`);
-    paymentButton.setAttribute("value", "Connect");
-    paymentButton.removeAttribute("disabled");
-    console.log({ error: error });
+    paymentButton.setAttribute("value", `Check Internet`);
+    setTimeout(function () {
+      paymentButton.setAttribute("value", "Connect");
+      paymentButton.removeAttribute("disabled");
+    }, 2000);
   }
 }
 
@@ -283,6 +362,7 @@ async function pay() {
  */
 async function collectionPayment(clientSecret) {
   const collectionIntent = await communicator.collectPayment(clientSecret);
+  
   if (collectionIntent.error) {
     throw `Payment failed: ${intent.error.message}`;
   }
@@ -302,6 +382,7 @@ async function collectAndProcess(clientSecret) {
   let collectionIntent = await collectionPayment(clientSecret);
   // console.log(collectionIntent);
   let processResult = await communicator.processPayment(collectionIntent);
+
   if (processResult.error) {
     // console.log("process came into error");
     if (processResult.intent?.status === "requires_payment_method") {
