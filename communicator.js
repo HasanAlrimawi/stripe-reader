@@ -35,7 +35,7 @@ export const communicator = (function () {
     // In this function, your app should notify the user that the reader disConnected_.
     // You can also include a way to attempt to reconnect to a reader.
     observer.publish(OBSERVER_TOPICS.CONNECTION_LOST, "");
-    console.log("Disconnected_ from reader");
+    console.log("Disconnected");
   }
 
   /**
@@ -64,6 +64,7 @@ export const communicator = (function () {
             OBSERVER_TOPICS.CONNECTION_TOKEN_CREATION_ERROR,
             data.error
           );
+          console.log(data.error.message);
           return data.error.message;
         }
         console.log(data);
@@ -83,7 +84,7 @@ export const communicator = (function () {
    */
   function isConnectedToTerminal() {
     return isConnected_;
-  };
+  }
 
   /**
    * Gets the readers that are registered to the stripe terminal
@@ -94,7 +95,7 @@ export const communicator = (function () {
     if (!isConnected_) {
       createStripeTerminal();
     }
-    const config = { simulated: true };
+    const config = { simulated: false };
     const discoverResult = await terminal.discoverReaders(config);
 
     if (discoverResult.error) {
@@ -117,7 +118,7 @@ export const communicator = (function () {
     const connectResult = await terminal.connectReader(selectedReader);
 
     if (connectResult.error) {
-      console.log("Failed to connect to reader: ", connectResult.error);
+      throw connectResult.error;
     } else {
       console.log("Connected to reader: ", connectResult.reader.label);
     }
@@ -164,24 +165,9 @@ export const communicator = (function () {
         body: `amount=${amount}&currency=usd&payment_method_types[]=card_present`,
         // body: `amount=${amount}&currency=usd&payment_method=pm_card_cvcCheckFail&capture_method=automatic_async&automatic_payment_methods[enabled]=true&automatic_payment_methods[allow_redirects]=never`,
       }
-    )
-      .then((res) => {
-        console.log("First then");
-        if (!res.ok) {
-          // console.log(res.json());
-          console.log("Not ok response");
-          throw res.json();
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Second then");
-        return data;
-      })
-      .catch((err) => {
-        console.log("inner throw");
-        return err;
-      });
+    ).then((res) => {
+      return res.json();
+    });
   }
 
   /**
@@ -197,6 +183,7 @@ export const communicator = (function () {
       console.log(updatedIntent);
 
       if (updatedIntent.error) {
+        console.log(updatedIntent);
         return {
           stage: "Collect payment method",
           status: "Failure",
@@ -257,7 +244,7 @@ export const communicator = (function () {
    * @param {string} intentId
    * @returns {object} The intent that has been canceled
    */
-  async function cancelIntent (intentId) {
+  async function cancelIntent(intentId) {
     return await fetch(
       `${stripeConnectionDetails.STRIPE_API_URL}payment_intents/${intentId}/cancel`,
       {
@@ -275,7 +262,7 @@ export const communicator = (function () {
       .catch((error) => {
         return error;
       });
-  };
+  }
 
   return {
     createStripeTerminal,

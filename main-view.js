@@ -5,7 +5,7 @@ export const stripeReaderView = (function () {
    * @param {string} readerName
    * @returns HTMLElement
    */
-  const createAvailableReaderElement = function (reader) {
+  function createAvailableReaderElement(reader) {
     const readerWrapper = document.createElement("div");
     const readerLabel = document.createElement("label");
     const connectButton = createConnectButton(reader.id);
@@ -16,7 +16,7 @@ export const stripeReaderView = (function () {
     readerWrapper.appendChild(readerLabel);
     readerWrapper.appendChild(connectButton);
     return readerWrapper;
-  };
+  }
 
   /**
    * Creates HTML disconnect button with event listener to disconnect the already

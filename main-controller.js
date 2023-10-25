@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   );
   // The following try catch statements handle loading the stripe JS SDK
   try {
-    await loadConnectStripeSDK("https://js.stripe.com/terminal/v1/");
+    await loadConnectStripeSDK(stripeConnectionDetails.STRIPE_API_JS_SDK_URL);
   } catch (error) {
     document.getElementById("stripe-sdk").remove();
     alert(`${error}`);
@@ -117,13 +117,20 @@ async function setAPISecretKey() {
         .getElementById("secretKeyCardAdditionButton")
         .removeAttribute("disabled");
       document.getElementById("secretKeyCard").remove();
-    }, 2000);
+    }, 1500);
     // The following try catch statements handle loading the stripe JS SDK
     //     and connecting to the stripe terminal using the new key added
     try {
-      document.getElementById("stripe-sdk").remove();
-      await loadConnectStripeSDK("https://js.stripe.com/terminal/v1/");
-      console.log("HELLO");
+      document.getElementById("stripe-sdk")?.remove();
+      await loadConnectStripeSDK(stripeConnectionDetails.STRIPE_API_JS_SDK_URL);
+      ReadersModel.setReadersList(undefined);
+      ReadersModel.setReaderConnected(undefined);
+      document.getElementById("available-readers-holder").innerHTML = "";
+      const paymentButton = document.getElementById("pay-btn");
+
+      if (!paymentButton.hasAttribute("disabled")) {
+        paymentButton.setAttribute("disabled", true);
+      }
     } catch (error) {
       alert(`${error}`);
     }
@@ -142,7 +149,9 @@ async function setAPISecretKey() {
  * Handles the sudden reader disconnection to notify the app user.
  */
 function handleDisonncetion() {
-  alert("Connection lost, make sure the reader is connected to internet");
+  alert(
+    "Connection lost, make sure the reader and the PC are connected to internet"
+  );
 }
 
 /**
@@ -170,34 +179,46 @@ function handleAPIKey() {
  *     and the dropdown list if they had any reader included before.
  */
 async function getListReadersAvailable() {
+  /** Represents if connection with stripe terminal has been
+   *     successfully established */
+  let exitFunction = true;
+
   try {
     // To load the SDK script and connect to the terminal if the user connected
     //     to internet after opening the app.
     if (!communicator.isConnectedToTerminal()) {
-      await loadConnectStripeSDK("https://js.stripe.com/terminal/v1/");
+      await loadConnectStripeSDK(stripeConnectionDetails.STRIPE_API_JS_SDK_URL);
     }
-    // Make sure to disonnect the connected reader before findnig other readers
-    if (ReadersModel.getReaderConnected()) {
-      await disconnectReader(ReadersModel.getReaderConnected());
-    }
-    ReadersModel.setReadersList(undefined);
-    const availableReaders = await communicator.getReadersAvailable();
-    ReadersModel.setReadersList(availableReaders);
-    const readersHolderElement = document.getElementById(
-      "available-readers-holder"
-    );
-    readersHolderElement.innerHTML = "";
-    if (availableReaders) {
-      for (const reader of availableReaders) {
-        readersHolderElement.appendChild(makeReaderOptionElement(reader));
-      }
-    }
+    exitFunction = false;
   } catch (error) {
-    // If still no internet connection, the SDK script will be removed
-    if (!communicator.isConnectedToTerminal()) {
-      document.getElementById("stripe-sdk").remove();
+    alert(error);
+  }
+
+  if (!exitFunction) {
+    try {
+      // Make sure to disonnect the connected reader before findnig other readers
+      if (ReadersModel.getReaderConnected()) {
+        await disconnectReader(ReadersModel.getReaderConnected());
+      }
+      ReadersModel.setReadersList(undefined);
+      const availableReaders = await communicator.getReadersAvailable();
+      ReadersModel.setReadersList(availableReaders);
+      const readersHolderElement = document.getElementById(
+        "available-readers-holder"
+      );
+      readersHolderElement.innerHTML = "";
+      if (availableReaders) {
+        for (const reader of availableReaders) {
+          readersHolderElement.appendChild(makeReaderOptionElement(reader));
+        }
+      }
+    } catch (error) {
+      // If still no internet connection, the SDK script will be removed
+      if (!communicator.isConnectedToTerminal()) {
+        document.getElementById("stripe-sdk").remove();
+      }
+      alert(`${error}`);
     }
-    alert("Check internet connection and try again");
   }
 }
 
@@ -244,6 +265,8 @@ async function connectToReader(reader) {
       controlConnectButtons(reader, "disable");
     }
   } catch (error) {
+    // address the issue where the reader can't be reached
+    alert(error.message);
     paymentButton.setAttribute("value", `Check Internet`);
     setTimeout(function () {
       paymentButton.setAttribute("value", "Connect");
@@ -303,11 +326,10 @@ async function disconnectReader(reader) {
   try {
     await communicator.disonnectReader(reader);
     controlConnectButtons(reader, "enable");
+    ReadersModel.setReaderConnected(undefined);
     document.getElementById("pay-btn").setAttribute("disabled", true);
   } catch (error) {
-    console.log(
-      `Make sure you are connected to internet and try again ${error}`
-    );
+    alert("Disconnecting from reader failed");
   }
 }
 
@@ -329,8 +351,8 @@ async function pay() {
 
   try {
     const intent = await communicator.startIntent(amount);
-
-    if (intent.error) {
+    console.log(intent);
+    if (intent?.error) {
       console.log(intent);
       console.log("INTENT CREATION LEVEL ERROR");
       payButton.removeAttribute("disabled");
@@ -348,6 +370,10 @@ async function pay() {
       }
     }
   } catch (error) {
+    console.log(error);
+    if (error === "TypeError: Failed to fetch") {
+      error = "Payment failed: make sure you're connected to internet.";
+    }
     paymentStatus.value = error;
     payButton.removeAttribute("disabled");
   }
@@ -362,9 +388,9 @@ async function pay() {
  */
 async function collectionPayment(clientSecret) {
   const collectionIntent = await communicator.collectPayment(clientSecret);
-  
+  console.log(collectionIntent);
   if (collectionIntent.error) {
-    throw `Payment failed: ${intent.error.message}`;
+    throw `Payment failed: ${collectionIntent.error.message}`;
   }
   return collectionIntent;
 }
