@@ -72,10 +72,8 @@ function loadScriptFile(url) {
  */
 async function loadConnectStripeSDK(url) {
   const stripeSDKLoad = await loadScriptFile(url);
-  console.log(stripeSDKLoad);
-  console.log("HELLO loadConnectStripeSDK");
+
   if (stripeSDKLoad.status === "success") {
-    console.log("success");
     await communicator.createStripeTerminal();
   }
 }
@@ -267,6 +265,7 @@ async function connectToReader(reader) {
   } catch (error) {
     // address the issue where the reader can't be reached
     alert(error.message);
+    console.log(error.message);
     paymentButton.setAttribute("value", `Check Internet`);
     setTimeout(function () {
       paymentButton.setAttribute("value", "Connect");
@@ -351,18 +350,14 @@ async function pay() {
 
   try {
     const intent = await communicator.startIntent(amount);
-    console.log(intent);
+
     if (intent?.error) {
-      console.log(intent);
-      console.log("INTENT CREATION LEVEL ERROR");
       payButton.removeAttribute("disabled");
       throw `Payment failed: ${intent.error.message}`;
     } else {
-      console.log(`to collection \n${intent.client_secret}`);
       const result = await collectAndProcess(intent.client_secret);
-      console.log(result);
       if (result?.error && intent?.status !== "succeeded") {
-        console.log(await communicator.cancelIntent(intent.id));
+        await communicator.cancelIntent(intent.id);
         throw `Payment failed: ${result.error}`;
       } else {
         paymentStatus.value = "Payment success";
@@ -370,8 +365,7 @@ async function pay() {
       }
     }
   } catch (error) {
-    console.log(error);
-    if (error === "TypeError: Failed to fetch") {
+    if (error == "TypeError: Failed to fetch") {
       error = "Payment failed: make sure you're connected to internet.";
     }
     paymentStatus.value = error;
@@ -388,7 +382,7 @@ async function pay() {
  */
 async function collectionPayment(clientSecret) {
   const collectionIntent = await communicator.collectPayment(clientSecret);
-  console.log(collectionIntent);
+
   if (collectionIntent.error) {
     throw `Payment failed: ${collectionIntent.error.message}`;
   }
@@ -406,13 +400,10 @@ async function collectionPayment(clientSecret) {
  */
 async function collectAndProcess(clientSecret) {
   let collectionIntent = await collectionPayment(clientSecret);
-  // console.log(collectionIntent);
   let processResult = await communicator.processPayment(collectionIntent);
 
   if (processResult.error) {
-    // console.log("process came into error");
     if (processResult.intent?.status === "requires_payment_method") {
-      // console.log("Collection repeated");
       const paymentStatus = document.getElementById("payment-status");
       paymentStatus.value = "Try using another payment method";
       collectionIntent = await collectionPayment(clientSecret);
@@ -420,7 +411,6 @@ async function collectAndProcess(clientSecret) {
       processResult = await communicator.processPayment(collectionIntent);
     }
     if (processResult.intent?.status === "requires_confirmation") {
-      // console.log("Process repeated");
       processResult = await communicator.processPayment(collectionIntent);
       return processResult;
     }

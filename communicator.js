@@ -15,16 +15,13 @@ export const communicator = (function () {
    *     to communicate with stripe terminal.
    */
   async function createStripeTerminal() {
-    console.log("CREATING>>>");
     try {
       terminal = await StripeTerminal.create({
         onFetchConnectionToken: fetchConnectionToken,
         onUnexpectedReaderDisconnect: unexpectedDisconnect,
       });
-      // console.log(`HI ${stripeConnectionDetails.SECRET_KEY}`);
       isConnected_ = true;
     } catch (error) {
-      console.log(`${error}`);
     }
   }
 
@@ -35,7 +32,6 @@ export const communicator = (function () {
     // In this function, your app should notify the user that the reader disConnected_.
     // You can also include a way to attempt to reconnect to a reader.
     observer.publish(OBSERVER_TOPICS.CONNECTION_LOST, "");
-    console.log("Disconnected");
   }
 
   /**
@@ -55,7 +51,6 @@ export const communicator = (function () {
       }
     )
       .then((response) => {
-        console.log(response);
         return response.json();
       })
       .then((data) => {
@@ -64,10 +59,8 @@ export const communicator = (function () {
             OBSERVER_TOPICS.CONNECTION_TOKEN_CREATION_ERROR,
             data.error
           );
-          console.log(data.error.message);
           return data.error.message;
         }
-        console.log(data);
         return data.secret;
       });
   }
@@ -180,10 +173,8 @@ export const communicator = (function () {
   async function collectPayment(clientSecret) {
     try {
       const updatedIntent = await terminal.collectPaymentMethod(clientSecret);
-      console.log(updatedIntent);
 
       if (updatedIntent.error) {
-        console.log(updatedIntent);
         return {
           stage: "Collect payment method",
           status: "Failure",
@@ -210,10 +201,8 @@ export const communicator = (function () {
    *     payment if successful, and the error object if it failed
    */
   async function processPayment(paymentIntent) {
-    console.log(paymentIntent);
     try {
       let result = await terminal.processPayment(paymentIntent);
-      console.log(result);
 
       if (result.error) {
         return {
