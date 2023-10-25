@@ -21,8 +21,7 @@ export const communicator = (function () {
         onUnexpectedReaderDisconnect: unexpectedDisconnect,
       });
       isConnected_ = true;
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   /**
@@ -173,7 +172,6 @@ export const communicator = (function () {
   async function collectPayment(clientSecret) {
     try {
       const updatedIntent = await terminal.collectPaymentMethod(clientSecret);
-
       if (updatedIntent.error) {
         return {
           stage: "Collect payment method",

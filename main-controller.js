@@ -121,14 +121,7 @@ async function setAPISecretKey() {
     try {
       document.getElementById("stripe-sdk")?.remove();
       await loadConnectStripeSDK(stripeConnectionDetails.STRIPE_API_JS_SDK_URL);
-      ReadersModel.setReadersList(undefined);
-      ReadersModel.setReaderConnected(undefined);
-      document.getElementById("available-readers-holder").innerHTML = "";
-      const paymentButton = document.getElementById("pay-btn");
-
-      if (!paymentButton.hasAttribute("disabled")) {
-        paymentButton.setAttribute("disabled", true);
-      }
+      restoreDefault();
     } catch (error) {
       alert(`${error}`);
     }
@@ -150,6 +143,8 @@ function handleDisonncetion() {
   alert(
     "Connection lost, make sure the reader and the PC are connected to internet"
   );
+  controlConnectButtons(ReadersModel.getReaderConnected(), "enable");
+  document.getElementById("pay-btn").setAttribute("disabled", true);
 }
 
 /**
@@ -180,6 +175,9 @@ async function getListReadersAvailable() {
   /** Represents if connection with stripe terminal has been
    *     successfully established */
   let exitFunction = true;
+  const listReadersButton = document.getElementById("list-readers-btn");
+  listReadersButton.setAttribute("disabled", true);
+  listReadersButton.value = "Getting readers...";
 
   try {
     // To load the SDK script and connect to the terminal if the user connected
@@ -210,11 +208,15 @@ async function getListReadersAvailable() {
           readersHolderElement.appendChild(makeReaderOptionElement(reader));
         }
       }
+      listReadersButton.removeAttribute("disabled");
+      listReadersButton.value = "List readers registered";
     } catch (error) {
       // If still no internet connection, the SDK script will be removed
       if (!communicator.isConnectedToTerminal()) {
         document.getElementById("stripe-sdk").remove();
       }
+      listReadersButton.value = "List readers registered";
+      listReadersButton.removeAttribute("disabled");
       alert(`${error}`);
     }
   }
@@ -232,6 +234,17 @@ function makeReaderOptionElement(reader) {
     connectToReader(reader);
   });
   return readerWrapper;
+}
+
+/**
+ * Clears the retrieved readers from the model and the view, disables the pay
+ *     button when the reader gets disconnected.
+ */
+function restoreDefault() {
+  ReadersModel.setReaderConnected(undefined);
+  ReadersModel.setReadersList(undefined);
+  document.getElementById("pay-btn").setAttribute("disabled", true);
+  document.getElementById("available-readers-holder").innerHTML = "";
 }
 
 /**
@@ -265,7 +278,6 @@ async function connectToReader(reader) {
   } catch (error) {
     // address the issue where the reader can't be reached
     alert(error.message);
-    console.log(error.message);
     paymentButton.setAttribute("value", `Check Internet`);
     setTimeout(function () {
       paymentButton.setAttribute("value", "Connect");
@@ -347,12 +359,13 @@ async function pay() {
     return;
   }
   payButton.setAttribute("disabled", true);
+  let intent = undefined;
 
   try {
-    const intent = await communicator.startIntent(amount);
-
+    intent = await communicator.startIntent(amount);
     if (intent?.error) {
       payButton.removeAttribute("disabled");
+      await communicator.cancelIntent(intent.id);
       throw `Payment failed: ${intent.error.message}`;
     } else {
       const result = await collectAndProcess(intent.client_secret);
@@ -365,8 +378,24 @@ async function pay() {
       }
     }
   } catch (error) {
+    // Changed the error message to be more meaningful.
     if (error == "TypeError: Failed to fetch") {
       error = "Payment failed: make sure you're connected to internet.";
+    }
+    const errorMessagePartitioned = error.split(":");
+    const toCheckForCancelation = errorMessagePartitioned[1]
+      .split(".")[0]
+      .trim();
+    // This message 'toCheckForCancelation' conveys that the transaction hasn't 
+    //     been completed due to reader disconnection or difficulties
+    //     in communication
+    const cancelFailedIntent =
+      toCheckForCancelation == "Could not communicate with the Reader";
+    if (cancelFailedIntent) {
+      await communicator.cancelIntent(intent.id);
+      paymentStatus.value = error;
+      restoreDefault();
+      return;
     }
     paymentStatus.value = error;
     payButton.removeAttribute("disabled");
@@ -382,7 +411,6 @@ async function pay() {
  */
 async function collectionPayment(clientSecret) {
   const collectionIntent = await communicator.collectPayment(clientSecret);
-
   if (collectionIntent.error) {
     throw `Payment failed: ${collectionIntent.error.message}`;
   }
@@ -401,7 +429,6 @@ async function collectionPayment(clientSecret) {
 async function collectAndProcess(clientSecret) {
   let collectionIntent = await collectionPayment(clientSecret);
   let processResult = await communicator.processPayment(collectionIntent);
-
   if (processResult.error) {
     if (processResult.intent?.status === "requires_payment_method") {
       const paymentStatus = document.getElementById("payment-status");
