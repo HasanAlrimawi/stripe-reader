@@ -123,6 +123,7 @@ async function setAPISecretKey() {
       await loadConnectStripeSDK(stripeConnectionDetails.STRIPE_API_JS_SDK_URL);
       restoreDefault();
     } catch (error) {
+      document.getElementById("stripe-sdk")?.remove();
       alert(`${error}`);
     }
   } else {
@@ -187,6 +188,9 @@ async function getListReadersAvailable() {
     }
     exitFunction = false;
   } catch (error) {
+    document.getElementById("stripe-sdk").remove();
+    listReadersButton.removeAttribute("disabled");
+    listReadersButton.value = "List readers registered";
     alert(error);
   }
 
@@ -386,7 +390,7 @@ async function pay() {
     const toCheckForCancelation = errorMessagePartitioned[1]
       .split(".")[0]
       .trim();
-    // This message 'toCheckForCancelation' conveys that the transaction hasn't 
+    // This message 'toCheckForCancelation' conveys that the transaction hasn't
     //     been completed due to reader disconnection or difficulties
     //     in communication
     const cancelFailedIntent =
