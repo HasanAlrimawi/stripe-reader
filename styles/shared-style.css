@@ -1,5 +1,5 @@
 :root {
-  --bar-background-color: rgb(204, 141, 6);
+  --bar-background-color: #ff9800;
   --main-color: #f4f4f4;
   --peripheral-selection: #ff9800;
   --subtitle-color: #3e3e3e;
@@ -44,11 +44,28 @@ body {
   width: 100%;
 }
 
-/* .header-bar{
+.wrapper-horizontal {
+  padding: 50px 20px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 40px;
   align-items: center;
-}  */
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.card-vertical {
+  display: flex;
+  flex-direction: row;
+  gap: 30px;
+}
+
+.label-input-wrapper{
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    justify-content: space-between;
+}
 
 .card {
   background-color: var(--white-to-black);

@@ -4,7 +4,6 @@ const urlsToCache = [
   "/assets/logo192.png",
   "/assets/logo512.png",
   "/constants/stripe-connection.js",
-  "/styles/style.css",
   "/styles/shared-style.css",
   "/communicator.js",
   "/main-controller.js",
