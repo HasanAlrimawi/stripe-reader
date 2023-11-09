@@ -1,7 +1,7 @@
 /**
  * @fileoverview Includes what readers are available, and which one is connnected.
  */
-export const ReadersModel = (function () {
+export const stripeReadersModel = (function () {
   let readersList_ = undefined;
   let readerConnected_ = undefined;
 

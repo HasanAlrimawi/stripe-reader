@@ -1,5 +1,5 @@
 import { OBSERVER_TOPICS } from "./constants/observer-topics.js";
-import { stripeConnectionDetails } from "./constants/stripe-connection.js";
+import { stripeConnectionDetails } from "./constants/stripe-connection-details.js";
 import { observer } from "./observer.js";
 
 export const communicator = (function () {
@@ -140,7 +140,7 @@ export const communicator = (function () {
   }
 
   /**
-   * Creates payment intent with the specifed amount.
+   * Creates payment intent with the specifed amount in cents.
    *
    * @param {string} amount represents the amount of the transaction to take place
    * @returns {object}
