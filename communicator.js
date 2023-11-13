@@ -84,9 +84,10 @@ export const communicator = (function () {
    * @returns {object<string, string} The availabe readers registered to terminal
    */
   async function getReadersAvailable() {
-    if (!isConnected_) {
-      createStripeTerminal();
-    }
+    // mostly no need becasue it is addressed in the controller -- following commented out lines to be deleted
+    // if (!isConnected_) {
+    //   createStripeTerminal();
+    // }
     const config = { simulated: false };
     const discoverResult = await terminal.discoverReaders(config);
 

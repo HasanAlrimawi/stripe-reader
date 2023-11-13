@@ -1,21 +1,37 @@
+import { stripeReadersModel } from "./stripe-readers-model.js";
+
 export const stripeReaderView = (function () {
   /**
-   * Creates an HTML element that holds a reader available for use.
+   * Creates HTML elements that hold readers available for use showing
+   *     the connect button and append them to the readers list.
    *
    * @param {string} readerName
    * @returns HTMLElement
    */
-  function createAvailableReaderElement(reader) {
-    const readerWrapper = document.createElement("div");
-    const readerLabel = document.createElement("label");
-    const connectButton = createConnectButton(reader.id);
+  function createAvailableReadersList(connectToReader) {
+    const availableReaders = stripeReadersModel.getReadersList();
+    const readersHolderElement = document.getElementById(
+      "available-readers-holder"
+    );
+    readersHolderElement.innerHTML = "";
 
-    readerWrapper.setAttribute("class", "vertical-wrapper");
-    readerLabel.textContent = reader.label;
+    if (availableReaders) {
+      for (const reader of availableReaders) {
+        const readerWrapper = document.createElement("div");
+        const readerLabel = document.createElement("label");
+        const connectButton = createConnectButton(reader.id);
+        connectButton.addEventListener("click", () => {
+          connectToReader(reader);
+        });
 
-    readerWrapper.appendChild(readerLabel);
-    readerWrapper.appendChild(connectButton);
-    return readerWrapper;
+        readerWrapper.setAttribute("class", "vertical-wrapper");
+        readerLabel.textContent = reader.label;
+
+        readerWrapper.appendChild(readerLabel);
+        readerWrapper.appendChild(connectButton);
+        readersHolderElement.appendChild(readerWrapper);
+      }
+    }
   }
 
   /**
@@ -71,10 +87,60 @@ export const stripeReaderView = (function () {
     return wrapper;
   }
 
+  /**
+   * Replaces the connect button of the just connected reader with a disconnect
+   *     button, and disables the other readers' connect buttons.
+   *
+   * @param {string} mode To specify what to do with connect/disconnect buttons
+   *     of all the readers except the one its button has been clicked,
+   *     whether to enable or disable the buttons
+   * @param {string} reader Represents the reader its button has just been clicked
+   *     to exchange its button whether to connect/disconnect button
+   */
+  function controlConnectButtons(
+    reader,
+    mode,
+    connectToReader,
+    disconnectReader
+  ) {
+    let disconnectButton;
+    let connectButton;
+    /** Represents the connect buttons of the readers apart from the one its
+     *      button recently clicked */
+    let connectButtons;
+
+    switch (mode) {
+      case "disable":
+        connectButton = document.getElementById(reader.id);
+        disconnectButton = createDisconnectButton(reader.id);
+        connectButton.replaceWith(disconnectButton);
+        connectButtons = document.getElementsByClassName("connect-button");
+        connectButtons.forEach((button) => {
+          button.setAttribute("disabled", true);
+        });
+        disconnectButton.addEventListener("click", () => {
+          disconnectReader(reader);
+        });
+        break;
+
+      case "enable":
+        disconnectButton = document.getElementById(reader.id);
+        connectButton = createConnectButton(reader.id);
+        disconnectButton.replaceWith(connectButton);
+        connectButtons = document.getElementsByClassName("connect-button");
+        connectButtons.forEach((button) => {
+          button.removeAttribute("disabled");
+        });
+        connectButton.addEventListener("click", () => {
+          connectToReader(reader);
+        });
+        break;
+    }
+  }
+
   return {
-    createAvailableReaderElement,
-    createDisconnectButton,
-    createConnectButton,
+    createAvailableReadersList,
     createSecretKeySetterCard,
+    controlConnectButtons,
   };
 })();

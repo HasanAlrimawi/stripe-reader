@@ -144,7 +144,12 @@ function handleDisonncetion() {
   alert(
     "Connection lost, make sure the reader and the PC are connected to internet"
   );
-  controlConnectButtons(stripeReadersModel.getReaderConnected(), "enable");
+  stripeReaderView.controlConnectButtons(
+    stripeReadersModel.getReaderConnected(),
+    "enable",
+    connectToReader,
+    disconnectReader
+  );
   document.getElementById("pay-btn").setAttribute("disabled", true);
 }
 
@@ -169,14 +174,11 @@ function handleAPIKey() {
 }
 
 /**
- * Checks if connection to stripe was successful and tries to do so if there 
+ * Checks if connection to stripe was successful and tries to do so if there
  *     isn't, adds the readers' Ids to the dropdown list, after clearing the readers model
  *     and the dropdown list if they had any reader included before.
  */
 async function getListReadersAvailable() {
-  /** Represents if connection with stripe terminal has been
-   *     successfully established */
-  let exitFunction = true;
   const listReadersButton = document.getElementById("list-readers-btn");
   listReadersButton.setAttribute("disabled", true);
   listReadersButton.value = "Getting readers...";
@@ -187,7 +189,6 @@ async function getListReadersAvailable() {
     if (!communicator.isConnectedToTerminal()) {
       await loadConnectStripeSDK(stripeConnectionDetails.STRIPE_API_JS_SDK_URL);
     }
-    exitFunction = false;
   } catch (error) {
     document.getElementById("stripe-sdk").remove();
     listReadersButton.removeAttribute("disabled");
@@ -195,25 +196,16 @@ async function getListReadersAvailable() {
     alert(error);
   }
 
-  if (!exitFunction) {
+  if (communicator.isConnectedToTerminal()) {
     try {
-      // Make sure to disonnect the connected reader before findnig other readers
+      // Make sure to disonnect the connected reader before finding other readers
       if (stripeReadersModel.getReaderConnected()) {
         await disconnectReader(stripeReadersModel.getReaderConnected());
       }
       stripeReadersModel.setReadersList(undefined);
       const availableReaders = await communicator.getReadersAvailable();
       stripeReadersModel.setReadersList(availableReaders);
-      const readersHolderElement = document.getElementById(
-        "available-readers-holder"
-      );
-      readersHolderElement.innerHTML = "";
-
-      if (availableReaders) {
-        for (const reader of availableReaders) {
-          readersHolderElement.appendChild(makeReaderOptionElement(reader));
-        }
-      }
+      stripeReaderView.createAvailableReadersList(connectToReader);
       listReadersButton.removeAttribute("disabled");
       listReadersButton.value = "List readers registered";
     } catch (error) {
@@ -226,21 +218,6 @@ async function getListReadersAvailable() {
       alert(`${error}`);
     }
   }
-}
-
-/**
- * Creates the reader holder that exposes the reader id and connect button,
- *     and adds an event listener on the connect button click.
- *
- * @param {string} readerId represents the reader's id
- * @returns {HTMLElement} Represents the html element containing the reader
- */
-function makeReaderOptionElement(reader) {
-  const readerWrapper = stripeReaderView.createAvailableReaderElement(reader);
-  readerWrapper.lastElementChild.addEventListener("click", () => {
-    connectToReader(reader);
-  });
-  return readerWrapper;
 }
 
 /**
@@ -260,7 +237,7 @@ function restoreDefault() {
  *
  * @param {string} readerId
  */
-async function connectToReader(reader) {
+const connectToReader = async (reader) => {
   const connectButton = document.getElementById(reader.id);
   connectButton.setAttribute("value", "Connecting");
   connectButton.setAttribute("disabled", true);
@@ -280,7 +257,12 @@ async function connectToReader(reader) {
     } else {
       stripeReadersModel.setReaderConnected(reader);
       document.getElementById("pay-btn").removeAttribute("disabled");
-      controlConnectButtons(reader, "disable");
+      stripeReaderView.controlConnectButtons(
+        reader,
+        "disable",
+        connectToReader,
+        disconnectReader
+      );
     }
   } catch (error) {
     // address the issue where the reader can't be reached
@@ -291,69 +273,28 @@ async function connectToReader(reader) {
       connectButton.removeAttribute("disabled");
     }, 2000);
   }
-}
-
-/**
- * Replaces the connect button of the just connected reader with a disconnect
- *     button, and disables the other readers' connect buttons.
- *
- * @param {string} mode To specify what to do with connect/disconnect buttons
- *     of all the readers except the one its button has been clicked,
- *     whether to enable or disable the buttons
- * @param {string} reader Represents the reader its button has just been clicked
- *     to exchange its button whether to connect/disconnect button
- */
-function controlConnectButtons(reader, mode) {
-  let disconnectButton;
-  let connectButton;
-  /** Represents the connect buttons of the readers apart from the one its
-   *      button recently clicked */
-  let connectButtons;
-
-  switch (mode) {
-    case "disable":
-      connectButton = document.getElementById(reader.id);
-      disconnectButton = stripeReaderView.createDisconnectButton(reader.id);
-      connectButton.replaceWith(disconnectButton);
-      connectButtons = document.getElementsByClassName("connect-button");
-      connectButtons.forEach((button) => {
-        button.setAttribute("disabled", true);
-      });
-      disconnectButton.addEventListener("click", () => {
-        disconnectReader(reader);
-      });
-      break;
-
-    case "enable":
-      disconnectButton = document.getElementById(reader.id);
-      connectButton = stripeReaderView.createConnectButton(reader.id);
-      disconnectButton.replaceWith(connectButton);
-      connectButtons = document.getElementsByClassName("connect-button");
-      connectButtons.forEach((button) => {
-        button.removeAttribute("disabled");
-      });
-      connectButton.addEventListener("click", () => {
-        connectToReader(reader);
-      });
-      break;
-  }
-}
+};
 
 /**
  * Disconnects the connected reader off the stripe terminal
  *
  * @param {string} readerId
  */
-async function disconnectReader(reader) {
+const disconnectReader = async (reader) => {
   try {
     await communicator.disonnectReader(reader);
-    controlConnectButtons(reader, "enable");
+    stripeReaderView.controlConnectButtons(
+      reader,
+      "enable",
+      connectToReader,
+      disconnectReader
+    );
     stripeReadersModel.setReaderConnected(undefined);
     document.getElementById("pay-btn").setAttribute("disabled", true);
   } catch (error) {
     alert("Disconnecting from reader failed");
   }
-}
+};
 
 /**
  * Takes the responsibility of the payment flow from intent making to
@@ -377,7 +318,11 @@ async function pay() {
 
     if (intent?.error) {
       payButton.removeAttribute("disabled");
-      await communicator.cancelIntent(intent.id);
+
+      // In this case the intent has been created but should be canceled
+      if (intent.error.code == !"amount_too_small") {
+        await communicator.cancelIntent(intent.id);
+      }
       throw `Payment failed: ${intent.error.message}`;
     } else {
       const result = await collectAndProcess(intent.client_secret);
@@ -424,6 +369,7 @@ async function pay() {
  */
 async function collectionPayment(clientSecret) {
   const collectionIntent = await communicator.collectPayment(clientSecret);
+
   if (collectionIntent.error) {
     throw `Payment failed: ${collectionIntent.error.message}`;
   }
