@@ -1,6 +1,6 @@
-import { OBSERVER_TOPICS } from "./constants/observer-topics.js";
-import { stripeConnectionDetails } from "./constants/stripe-connection-details.js";
-import { observer } from "./observer.js";
+import { OBSERVER_TOPICS } from "../constants/observer-topics.js";
+import { stripeConnectionDetails } from "../constants/stripe-connection-details.js";
+import { observer } from "../observer.js";
 
 export const communicator = (function () {
   // Declare stripe terminal object to access its funtionalities
