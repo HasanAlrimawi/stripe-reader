@@ -7,7 +7,7 @@ import { stripeReadersModel } from "./stripe-readers-model.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   handleAPIKey();
-  observer.subscribe(OBSERVER_TOPICS.CONNECTION_LOST, handleDisonncetion);
+  observer.subscribe(OBSERVER_TOPICS.CONNECTION_LOST, handleDisconnetion);
   observer.subscribe(
     OBSERVER_TOPICS.CONNECTION_TOKEN_CREATION_ERROR,
     (error) => {
@@ -140,7 +140,7 @@ async function setAPISecretKey() {
 /**
  * Handles the sudden reader disconnection to notify the app user.
  */
-function handleDisonncetion() {
+function handleDisconnetion() {
   alert(
     "Connection lost, make sure the reader and the PC are connected to internet"
   );
@@ -210,9 +210,9 @@ async function getListReadersAvailable() {
       listReadersButton.value = "List readers registered";
     } catch (error) {
       // If still no internet connection, the SDK script will be removed
-      if (!communicator.isConnectedToTerminal()) {
-        document.getElementById("stripe-sdk").remove();
-      }
+      // if (!communicator.isConnectedToTerminal()) {
+      //   document.getElementById("stripe-sdk").remove();
+      // }
       listReadersButton.value = "List readers registered";
       listReadersButton.removeAttribute("disabled");
       alert(`${error}`);
@@ -303,6 +303,10 @@ const disconnectReader = async (reader) => {
 async function pay() {
   const payButton = document.getElementById("pay-btn");
   const paymentStatus = document.getElementById("payment-status");
+  const disconnectButton = document.getElementById(
+    stripeReadersModel.getReaderConnected().id
+  );
+  disconnectButton.setAttribute("disabled", true);
   paymentStatus.value = "Payment pending...";
   const amount = document.getElementById("payment-amount").value;
 
@@ -333,9 +337,11 @@ async function pay() {
       } else {
         paymentStatus.value = "Payment success";
         payButton.removeAttribute("disabled");
+        disconnectButton.removeAttribute("disabled");
       }
     }
   } catch (error) {
+    disconnectButton.removeAttribute("disabled");
     // Changed the error message to be more meaningful.
     if (error == "TypeError: Failed to fetch") {
       error = "Payment failed: make sure you're connected to internet.";
