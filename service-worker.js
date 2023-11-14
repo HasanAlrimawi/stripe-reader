@@ -1,18 +1,18 @@
 const CACHE_NAME = "stripe-card-reader-pwa-v1";
 const urlsToCache = [
   "index.html",
-  "/assets/logo192.png",
-  "/assets/logo512.png",
-  "/assets/favicon.png",
-  "/constants/stripe-connection-details.js",
-  "/constans/observer.topics.js",
-  "/styles/shared-style.css",
-  "/communicator.js",
-  "/main-controller.js",
-  "/stripe-view.js",
-  "/stripe-readers-model.js",
-  "/manifest.json",
-  "/service-worker.js",
+  "assets/logo192.png",
+  "assets/logo512.png",
+  "assets/favicon.png",
+  "constants/stripe-connection-details.js",
+  "constans/observer.topics.js",
+  "styles/shared-style.css",
+  "communicator.js",
+  "main-controller.js",
+  "stripe-view.js",
+  "stripe-readers-model.js",
+  "manifest.json",
+  "service-worker.js",
 ];
 
 self.addEventListener("install", (event) => {
