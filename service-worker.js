@@ -5,7 +5,7 @@ const urlsToCache = [
   "assets/logo512.png",
   "assets/favicon.png",
   "constants/stripe-connection-details.js",
-  "constans/observer.topics.js",
+  "constants/observer-topics.js",
   "styles/shared-style.css",
   "communicator.js",
   "main-controller.js",
