@@ -1,4 +1,5 @@
-import { stripeController } from "../controllers/stripe-controller.js";
+import { StripeController } from "../stripe/stripe-controller.js";
+import { TCController } from "../trust-commerce/TC-controller.js";
 
 /**
  * @fileoverview This file contains the list of devices supported by the
@@ -17,11 +18,11 @@ export const peripheralsAccessible = [
     DETAILS: [
       Object.freeze({
         LABEL: "stripe",
-        CONTROLLER: stripeController,
+        CONTROLLER: StripeController.getInstance(),
       }),
       Object.freeze({
         LABEL: "trust commerce",
-        //CONTROLLER: ,
+        CONTROLLER: TCController.getInstance(),
       }),
     ],
   },

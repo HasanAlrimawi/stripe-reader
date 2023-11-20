@@ -124,6 +124,15 @@ input[type="text"] {
   text-wrap: wrap;
 }
 
+input[type="password"] {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: var(--white-to-black);
+  text-wrap: wrap;
+}
+
 textarea {
   padding: 8px;
   border: 1px solid #ccc;

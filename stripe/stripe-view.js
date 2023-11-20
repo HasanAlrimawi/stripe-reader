@@ -1,4 +1,4 @@
-import { stripeReadersModel } from "../models/stripe-readers-model.js";
+import { stripeReadersModel } from "./stripe-readers-model.js";
 
 export const stripeReaderView = (function () {
   /**
@@ -140,13 +140,11 @@ export const stripeReaderView = (function () {
 
   /**
    * Represents the HTML code of the stripe view
-   * 
+   *
    * @returns string
    */
   function deviceHtml() {
     return `
-    <div class="wrapper-horizontal">
-      <div class="card-vertical">
         <section class="card-form">
           <span class="subtitle">Reader Connection</span>
           <input
@@ -158,33 +156,25 @@ export const stripeReaderView = (function () {
           <section id="available-readers-holder" class="card"></section>
         </section>
 
-        <section class="card-form">
-          <span class="subtitle">Payment Details</span>
-          <div class="label-input-wrapper">
-            <label for="payment-amount">Amount:</label>
-            <input type="text" placeholder="Enter transaction amount" name="payment-amount" id="payment-amount" />
-          </div>
-            <input
-              class="button"
-              type="button"
-              value="Pay"
-              id="pay-btn"
-              disabled
-            />
-            <div class="label-input-wrapper">
-              <label for="payment-status">Payment Status</label>
-              <textarea
-                type="text"
-                disabled="true"
-                id="payment-status"
-                value="No payment submitted"
-                rows="3"
-                cols="20"
-              >
-              </textarea>
-        </section>
-      </div>
-    </div>`;
+        `;
+  }
+
+  /**
+   * Creates the buttons responsible for showing form to set configuration
+   *     parameters for the payment gateway used
+   */
+  function addPresetsButtons() {
+    document
+      .getElementById("payment-gateway-presets-buttons")
+      .insertAdjacentHTML(
+        "beforeend",
+        `<input
+    class="button"
+    type="button"
+    id="secretKeyCardAdditionButton"
+    value="Set API secret key"
+  />`
+      );
   }
 
   return {
@@ -192,5 +182,6 @@ export const stripeReaderView = (function () {
     createSecretKeySetterCard,
     controlConnectButtons,
     deviceHtml,
+    addPresetsButtons,
   };
 })();

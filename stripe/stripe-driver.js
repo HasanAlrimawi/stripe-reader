@@ -1,33 +1,45 @@
+import { BaseDriver } from "../communicators/base-driver.js";
 import { OBSERVER_TOPICS } from "../constants/observer-topics.js";
 import { stripeConnectionDetails } from "../constants/stripe-connection-details.js";
 import { observer } from "../observer.js";
+export class StripeDriver extends BaseDriver {
+  static stripeDriverInstance_;
 
-export const communicator = (function () {
   // Declare stripe terminal object to access its funtionalities
-  var terminal = undefined;
+  #terminal = undefined;
 
   // Represents the connection to the stripe's terminal has been initiated
   //     successfully or not.
-  let isConnected_ = false;
+  #isConnected = false;
+
+  static getInstance() {
+    if (!this.stripeDriverInstance_) {
+      this.stripeDriverInstance_ = new this();
+    }
+    return this.stripeDriverInstance_;
+  }
 
   /**
    * Creates a terminal instance the permits consuming terminal APIs
    *     to communicate with stripe terminal.
    */
-  async function createStripeTerminal() {
+  async createStripeTerminal() {
     try {
-      terminal = await StripeTerminal.create({
-        onFetchConnectionToken: fetchConnectionToken,
-        onUnexpectedReaderDisconnect: unexpectedDisconnect,
+      this.#terminal = await StripeTerminal.create({
+        onFetchConnectionToken: this.fetchConnectionToken,
+        onUnexpectedReaderDisconnect: this.unexpectedDisconnect,
       });
-      isConnected_ = true;
-    } catch (error) {}
+      this.#isConnected = true;
+    } catch (error) {
+      console.log("STRIPE TERMINAL CREATION ERROR");
+      console.log(error);
+    }
   }
 
   /**
    * Declares the event of loss of connection with the reader.
    */
-  function unexpectedDisconnect() {
+  unexpectedDisconnect() {
     // In this function, your app should notify the user that the reader disConnected_.
     // You can also include a way to attempt to reconnect to a reader.
     observer.publish(OBSERVER_TOPICS.CONNECTION_LOST, "");
@@ -38,7 +50,7 @@ export const communicator = (function () {
    *     to the readers registered to the server.
    * @returns {!object}
    */
-  async function fetchConnectionToken() {
+  async fetchConnectionToken() {
     // Do not cache or hardcode the ConnectionToken. The SDK manages the ConnectionToken's lifecycle.
     return await fetch(
       `${stripeConnectionDetails.STRIPE_API_URL}terminal/connection_tokens`,
@@ -74,22 +86,28 @@ export const communicator = (function () {
    *     secures communication with the stripe terminal has
    *     been created successfully
    */
-  function isConnectedToTerminal() {
-    return isConnected_;
+  isConnectedToTerminal() {
+    return this.#isConnected;
   }
+
+  /**
+   * Used to mark the flag indicating connection as false.
+   *
+   * Should be called when the SDK script is removed, as the
+   *     driver is singleton.
+   */
+  disconnectFromTerminal = () => {
+    this.#isConnected = false;
+  };
 
   /**
    * Gets the readers that are registered to the stripe terminal
    *     and saves them in the reader model.
    * @returns {object<string, string} The availabe readers registered to terminal
    */
-  async function getReadersAvailable() {
-    // mostly no need becasue it is addressed in the controller -- following commented out lines to be deleted
-    // if (!isConnected_) {
-    //   createStripeTerminal();
-    // }
+  async getReadersAvailable() {
     const config = { simulated: false };
-    const discoverResult = await terminal.discoverReaders(config);
+    const discoverResult = await this.#terminal.discoverReaders(config);
 
     if (discoverResult.error) {
       console.log("Failed to discover: ", discoverResult.error);
@@ -107,8 +125,8 @@ export const communicator = (function () {
    * @param {object} selectedReader represents the reader to
    *     connect to
    */
-  async function connectReader(selectedReader) {
-    const connectResult = await terminal.connectReader(selectedReader);
+  async connectReader(selectedReader) {
+    const connectResult = await this.#terminal.connectReader(selectedReader);
 
     if (connectResult.error) {
       throw connectResult.error;
@@ -124,9 +142,9 @@ export const communicator = (function () {
    * @param {object} selectedReader represents the reader to
    *     disconnect from
    */
-  async function disonnectReader(selectedReader) {
+  async disonnectReader(selectedReader) {
     try {
-      const disconnectionResult = await terminal.disconnectReader(
+      const disconnectionResult = await this.#terminal.disconnectReader(
         selectedReader
       );
 
@@ -146,7 +164,7 @@ export const communicator = (function () {
    * @param {string} amount represents the amount of the transaction to take place
    * @returns {object}
    */
-  async function startIntent(amount) {
+  async startIntent(amount) {
     return await fetch(
       `${stripeConnectionDetails.STRIPE_API_URL}payment_intents`,
       {
@@ -170,9 +188,11 @@ export const communicator = (function () {
    * @returns {object} paymentIntent Represents the payment intent returned from
    *     the collect payment API in success case.
    */
-  async function collectPayment(clientSecret) {
+  async collectPayment(clientSecret) {
     try {
-      const updatedIntent = await terminal.collectPaymentMethod(clientSecret);
+      const updatedIntent = await this.#terminal.collectPaymentMethod(
+        clientSecret
+      );
       if (updatedIntent.error) {
         return {
           stage: "Collect payment method",
@@ -199,9 +219,9 @@ export const communicator = (function () {
    * @returns {object} intent Represents the returned intent from the process
    *     payment if successful, and the error object if it failed
    */
-  async function processPayment(paymentIntent) {
+  async processPayment(paymentIntent) {
     try {
-      let result = await terminal.processPayment(paymentIntent);
+      let result = await this.#terminal.processPayment(paymentIntent);
 
       if (result.error) {
         return {
@@ -232,7 +252,7 @@ export const communicator = (function () {
    * @param {string} intentId
    * @returns {object} The intent that has been canceled
    */
-  async function cancelIntent(intentId) {
+  async cancelIntent(intentId) {
     return await fetch(
       `${stripeConnectionDetails.STRIPE_API_URL}payment_intents/${intentId}/cancel`,
       {
@@ -252,15 +272,83 @@ export const communicator = (function () {
       });
   }
 
-  return {
-    createStripeTerminal,
-    startIntent,
-    connectReader,
-    getReadersAvailable,
-    cancelIntent,
-    disonnectReader,
-    collectPayment,
-    processPayment,
-    isConnectedToTerminal,
+  /**
+   * Takes the responsibility of the payment flow from intent making to
+   *     payment collection and processing.
+   *
+   * @param {number} amount Represents the transaction amount
+   */
+  pay = async (amount) => {
+    const intent = await this.startIntent(amount);
+
+    if (intent?.error) {
+      // payButton.removeAttribute("disabled");
+
+      // In this case the intent has been created but should be canceled
+      if (intent.error.code == !"amount_too_small") {
+        await this.cancelIntent(intent.id);
+      }
+      throw `Payment failed: ${intent.error.message}`;
+    } else {
+      const result = await this.collectAndProcess(intent.client_secret);
+
+      if (result?.error && intent?.status !== "succeeded") {
+        await this.cancelIntent(intent.id);
+        throw `Payment failed: ${result.error}`;
+      } else {
+        return {
+          intent: result,
+          success: "success",
+        };
+        // paymentStatus.value = "Payment success";
+        // payButton.removeAttribute("disabled");
+      }
+    }
   };
-})();
+
+  /**
+   * Consumes the collect API of the stripe's to make the reader ready for entry.
+   *
+   * @param {string} clientSecret Represents the intent created secret
+   * @returns {object} collectionIntent Represents the payment intent that
+   *     was returned by the stripe's terminal collect API
+   */
+  collectionPayment_ = async (clientSecret) => {
+    const collectionIntent = await this.collectPayment(clientSecret);
+
+    if (collectionIntent.error) {
+      throw `Payment failed: ${collectionIntent.error.message}`;
+    }
+    return collectionIntent;
+  };
+
+  /**
+   * Handles the payment collection and process stages, to make sure that
+   *     to give the transaction a second chance if a sudden network issue
+   *     happened or the payment method didn't succeed.
+   *
+   * @param {string} clientSecret Represents the intent created secret
+   * @returns {object} processResult Represents the final result of the
+   *     transaction
+   */
+  collectAndProcess = async (clientSecret) => {
+    let collectionIntent = await this.collectionPayment_(clientSecret);
+    let processResult = await this.processPayment(collectionIntent);
+
+    if (processResult.error) {
+      if (processResult.intent?.status === "requires_payment_method") {
+        const paymentStatus = document.getElementById("payment-status");
+        paymentStatus.value = "Try using another payment method";
+        collectionIntent = await this.collectionPayment_(clientSecret);
+        paymentStatus.value = "Payment pending...";
+        processResult = await this.processPayment(collectionIntent);
+      }
+
+      if (processResult.intent?.status === "requires_confirmation") {
+        processResult = await this.processPayment(collectionIntent);
+        return processResult;
+      }
+    }
+    return processResult;
+  };
+}

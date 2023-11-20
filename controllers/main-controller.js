@@ -6,10 +6,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /**
  * Calls the wanted device's starting function that renders its view.
- * 
- * @param {Controller} deviceController 
+ *
+ * @param {Controller} deviceController
  */
 const showDevice = (deviceController) => {
-  document.getElementById("device-shown").innerHTML = "";
+  document.getElementById("device-space").innerHTML = "";
+  document
+    .getElementById("device-space")
+    .insertAdjacentHTML("beforeend", mainView.payForm());
   deviceController.renderView();
 };

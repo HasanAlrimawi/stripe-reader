@@ -25,7 +25,7 @@ export const mainView = (function () {
         element.textContent = subPeripheral.LABEL;
         element.addEventListener("click", () => {
           if (subPeripheral.CONTROLLER != currentActiveController.CONTROLLER) {
-            currentActiveController.CONTROLLER?.destroyView();
+            currentActiveController.CONTROLLER?.destroy();
             currentActiveController.CONTROLLER = subPeripheral.CONTROLLER;
             showDevice(subPeripheral.CONTROLLER);
           }
@@ -36,7 +36,39 @@ export const mainView = (function () {
     }
   }
 
+  function payForm() {
+    return `<div class="card-vertical" id="device-view">
+    <section class="card-form">
+          <span class="subtitle">Payment Details</span>
+          <div class="label-input-wrapper">
+            <label for="payment-amount">Amount:</label>
+            <input type="text" placeholder="Enter transaction amount" name="payment-amount" id="payment-amount" />
+          </div>
+          <div class="label-input-wrapper" id="payment-form-buttons">
+            <input
+              class="button"
+              type="button"
+              value="Pay"
+              id="pay-btn"
+            />
+          </div>
+            <div class="label-input-wrapper">
+              <label for="payment-status">Payment Status</label>
+              <textarea
+                type="text"
+                disabled="true"
+                id="payment-status"
+                value="No payment submitted"
+                rows="3"
+                cols="20"
+              >
+              </textarea>
+        </section>
+        </div>`;
+  }
+
   return {
     listAccessibleDevices,
+    payForm,
   };
 })();
