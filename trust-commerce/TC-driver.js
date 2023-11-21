@@ -69,7 +69,6 @@ export class TCDriver extends BaseDriver {
   ) => {
     return await fetch(`${TCConnectionDetails.TC_API_URL}`, {
       method: "POST",
-      // mode: "no-cors",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
@@ -98,8 +97,8 @@ export class TCDriver extends BaseDriver {
       deviceName,
       amount
     );
+    console.log(transactionResponse);
     const currentTransactionId = transactionResponse.cloudpayid;
-    console.log(transactionResponse.cloudpaystatus === "submitted");
 
     if (transactionResponse.cloudpaystatus === "submitted") {
       const transactionResult = await this.checkTransaction(
@@ -108,8 +107,6 @@ export class TCDriver extends BaseDriver {
         deviceName,
         currentTransactionId
       );
-
-      console.log(transactionResult);
 
       if (
         transactionResult.cloudpaystatus === "complete" ||
@@ -128,7 +125,6 @@ export class TCDriver extends BaseDriver {
           deviceName,
           currentTransactionId
         );
-        console.log(cancelResult);
         throw cancelResult;
       }
     } else {

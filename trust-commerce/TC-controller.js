@@ -200,11 +200,15 @@ export class TCController extends BaseController {
       message = `Transaction is ${transactionResponse.cloudpaystatus}`;
       console.log(transactionResponse);
     } catch (transactionResult) {
-      message = `${
-        transactionResult.devicestatus
-          ? `Device status: ${transactionResult.devicestatus}.\nMake sure device is connected and available.`
-          : `Transaction result: ${transactionResult.cloudpaystatus}.`
-      }`;
+      if (transactionResult.message) {
+        message = transactionResult.message;
+      } else {
+        message = `${
+          transactionResult.devicestatus
+            ? `Device status: ${transactionResult.devicestatus}.\nMake sure device is connected and available.`
+            : `Transaction result: ${transactionResult.cloudpaystatus}.`
+        }`;
+      }
       console.log(transactionResult);
     }
     payButton.removeAttribute("disabled");
