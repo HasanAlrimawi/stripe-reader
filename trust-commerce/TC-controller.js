@@ -1,5 +1,6 @@
 import { TCConnectionDetails } from "../constants/TC-connection-details.js";
 import { BaseController } from "../controllers/base-controller.js";
+import { TCDriver } from "./TC-driver.js";
 import { TCReadersModel } from "./TC-model.js";
 import { TCReaderView } from "./TC-view.js";
 
@@ -13,6 +14,15 @@ export class TCController extends BaseController {
     return this.stripeControllerInstance_;
   }
 
+  /** Trust Commerce driver instance that provides the functionality for
+   *     making transactions.
+   */
+  communicatorTc = TCDriver.getInstance();
+
+  /**
+   * Responsible for registering event listener and rendering the device's view
+   *     whether by adding or editing the main view
+   */
   renderView = () => {
     this.onStart();
 
@@ -41,48 +51,20 @@ export class TCController extends BaseController {
       });
 
     document.getElementById("pay-btn").addEventListener("click", this.pay);
-    document
-      .getElementById("payment-form-buttons")
-      .insertAdjacentElement("beforeend", TCReaderView.createCheckButton());
-    document
-      .getElementById("check-pay")
-      .addEventListener("click", this.mockCheckTransaction);
+    // document
+    //   .getElementById("payment-form-buttons")
+    //   .insertAdjacentElement("beforeend", TCReaderView.createCheckButton());
+    // document
+    //   .getElementById("check-pay")
+    //   .addEventListener("click", this.mockCheckTransaction);
   };
 
-  saveAccountCredentials = (event) => {
-    event.preventDefault();
-    const customerId = document.getElementById("customer-id").value;
-    const password = document.getElementById("password").value;
-    localStorage.setItem(
-      TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE,
-      JSON.stringify({
-        customerId: customerId,
-        password: password,
-      })
-    );
-    TCReadersModel.setAccountCredentials({
-      customerId: customerId,
-      password: password,
-    });
-  };
-
-  saveDeviceDetails = (event) => {
-    event.preventDefault();
-    const deviceName = document.getElementById("device-name").value;
-    const deviceSerialNumber = document.getElementById("serial-number").value;
-    localStorage.setItem(
-      TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE,
-      JSON.stringify({
-        deviceName: deviceName,
-        deviceSerialNumber: deviceSerialNumber,
-      })
-    );
-    TCReadersModel.setReaderUsed({
-      deviceName: deviceName,
-      deviceSerialNumber: deviceSerialNumber,
-    });
-  };
-
+  /**
+   * Handles the needed setup for the application to act as expected.
+   *
+   * Responsible for any needed subscriptions, scripts loading and preset
+   *     configuration at the very start of device viewing.
+   */
   onStart = () => {
     // To use the device that is already added and saved in the local storage.
     if (
@@ -112,8 +94,72 @@ export class TCController extends BaseController {
     }
   };
 
+  /**
+   * Responsible for unsubscribing and reverting changes made to the main view
+   *      or any needed action in order to get ready for being removed.
+   */
+  destroy = () => {
+    document.getElementById("add-reader-button").remove();
+    document.getElementById("set-account-credentials-button").remove();
+    document.getElementById("title").textContent = "Peripherals";
+  };
+
+  /**
+   * Responsible for saving account credentials that were filled in the
+   *     corresponding form in local storage to use for making transactions.
+   *
+   * @param {Event} event represents the event of submitting form
+   */
+  saveAccountCredentials = (event) => {
+    event.preventDefault();
+    const customerId = document.getElementById("customer-id").value;
+    const password = document.getElementById("password").value;
+    localStorage.setItem(
+      TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE,
+      JSON.stringify({
+        customerId: customerId,
+        password: password,
+      })
+    );
+    TCReadersModel.setAccountCredentials({
+      customerId: customerId,
+      password: password,
+    });
+  };
+
+  /**
+   * Responsible for saving device details that were filled in the
+   *     corresponding form in local storage to use for making transactions.
+   *
+   * @param {Event} event represents the event of submitting form
+   */
+  saveDeviceDetails = (event) => {
+    event.preventDefault();
+    const deviceName = document.getElementById("device-name").value;
+    const deviceSerialNumber = document.getElementById("serial-number").value;
+    localStorage.setItem(
+      TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE,
+      JSON.stringify({
+        deviceName: deviceName,
+        deviceSerialNumber: deviceSerialNumber,
+      })
+    );
+    TCReadersModel.setReaderUsed({
+      deviceName: deviceName,
+      deviceSerialNumber: deviceSerialNumber,
+    });
+  };
+
+  /**
+   * Responsible for making the transaction from taking the amount to viewing
+   *     meaningfyl messages for the application user.
+   */
   pay = async () => {
     const paymentStatus = document.getElementById("payment-status");
+    const payButton = document.getElementById("pay-btn");
+    const amount = document.getElementById("payment-amount").value;
+    payButton.setAttribute("disabled", true);
+
     // if there isn't a defined reader for transaction or account credentials
     //     not specified then payment can't be done
     if (
@@ -125,7 +171,6 @@ export class TCController extends BaseController {
       console.log("LEFT");
       return;
     }
-    const amount = document.getElementById("payment-amount").value;
 
     if (isNaN(amount) || !amount) {
       paymentStatus.value = "Make sure to enter a numeric amount";
@@ -134,78 +179,37 @@ export class TCController extends BaseController {
 
     paymentStatus.value = "pending...";
 
-    if (TCConnectionDetails.DEMO_APP) {
-      const transactionMakeResponse = await communicatorTc.mockMakeTransaction(
+    // if (TCConnectionDetails.DEMO_APP) {
+    //   const mockCheckTransactionReponse = await this.communicatorTc.mockPay(
+    //     amount
+    //   );
+    //   paymentStatus.value = `Transaction: ${mockCheckTransactionReponse.cloudpaystatus}`;
+    //   payButton.removeAttribute("disabled");
+    // }
+    // else {
+    let message = "Transaction Unsuccessful";
+    try {
+      const transactionResponse = await this.communicatorTc.pay(
         TCReadersModel.getAccountCredentials().customerId,
         TCReadersModel.getAccountCredentials().password,
         amount,
-        TCConnectionDetails.DEVICE_NAME
+        `${TCReadersModel.getReaderUsed().deviceName}${
+          TCReadersModel.getReaderUsed().deviceSerialNumber
+        }`
       );
-      TCConnectionDetails.currentTransactionId =
-        transactionMakeResponse.cloudpayid;
-      paymentStatus.value = `Transaction: ${transactionMakeResponse.cloudpaystatus}`;
-    } else {
-      const deviceCheckResponse = await communicatorTc.checkDevice(
-        customerId,
-        password
-      );
-      if (deviceCheckResponse.devicestatus === "connected") {
-        // make the transaction.https://docs.trustcommerce.com/1777da137/p/61c588-creating-a-cp-transaction-request
-        const transactionResponse = await communicatorTc.makeTransaction(
-          TCReadersModel.getAccountCredentials().customerId,
-          TCReadersModel.getAccountCredentials().password,
-          amount,
-          TCConnectionDetails.DEVICE_NAME
-        );
-        TCConnectionDetails.currentTransactionId =
-          transactionResponse.cloudpayid;
-        if (transactionResponse.cloudpaystatus === "submitted") {
-          TCConnectionDetails.currentTransactionId =
-            transactionResponse.cloudpayid;
-        } else if (transactionResponse.cloudpaystatus?.error) {
-          paymentStatus.value = "error occurred";
-          //handle failure of the transaction request
-        } else {
-          paymentStatus.value =
-            "Device isn't connected to cloud payment services.";
-        }
-      }
+      message = `Transaction is ${transactionResponse.cloudpaystatus}`;
+      console.log(transactionResponse);
+    } catch (transactionResult) {
+      message = `${
+        transactionResult.devicestatus
+          ? `Device status: ${transactionResult.devicestatus}.\nMake sure device is connected and available.`
+          : `Transaction result: ${transactionResult.cloudpaystatus}.`
+      }`;
+      console.log(transactionResult);
     }
-  };
-
-  mockCheckTransaction = async () => {
-    const paymentStatus = document.getElementById("payment-status");
-    if (TCConnectionDetails.currentTransactionId.length === 0) {
-      paymentStatus.value = "No transaction made to check its status.";
-    }
-    paymentStatus.value = "pending...";
-    const mockCheckTransactionReponse =
-      await communicatorTc.mockCheckTransaction(
-        TCReadersModel.getAccountCredentials().customerId,
-        TCReadersModel.getAccountCredentials().password,
-        TCConnectionDetails.DEVICE_NAME,
-        TCConnectionDetails.currentTransactionId
-      );
-    paymentStatus.value = mockCheckTransactionReponse.cloudpaystatus;
-  };
-
-  checkTransactionResult = async () => {
-    const transactionResult = await communicatorTc.checkTransaction(
-      customerId,
-      password,
-      TCConnectionDetails.DEVICE_NAME,
-      TCConnectionDetails.currentTransactionId
-    );
-    if (transactionResult.status === "approved") {
-      //done
-    } else {
-      //address faulty/failed transaction.
-    }
-  };
-
-  destroy = () => {
-    document.getElementById("add-reader-button").remove();
-    document.getElementById("set-account-credentials-button").remove();
-    document.getElementById("title").textContent = "Peripherals";
+    payButton.removeAttribute("disabled");
+    console.log(message);
+    paymentStatus.value = message;
+    // }
   };
 }

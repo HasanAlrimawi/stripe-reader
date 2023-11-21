@@ -1,5 +1,6 @@
 import { BaseDriver } from "../communicators/base-driver.js";
 import { TCConnectionDetails } from "../constants/TC-connection-details.js";
+import { TCReadersModel } from "./TC-model.js";
 
 export class TCDriver extends BaseDriver {
   static #tcDriver;
@@ -11,28 +12,53 @@ export class TCDriver extends BaseDriver {
     return this.#tcDriver;
   }
 
-  checkDevice = async (customerId, password) => {
+  /**
+   * Provides ability to check whether the device is ready for transaction
+   *     and in what state it is.
+   *
+   * @param {string} customerId Trust commerce customer id
+   * @param {string} password Trust commerce password
+   * @returns {object}
+   */
+  checkDevice = async (customerId, password, deviceName) => {
     return await fetch(`${TCConnectionDetails.TC_API_URL}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: `custid=${customerId}&password=${password}&action=devicestatus&device_name=${TCConnectionDetails.DEVICE_NAME}`,
-    }).then((res) => {
-      return res.json();
-    });
+      body: `custid=${customerId}&password=${password}&action=devicestatus&device_name=${deviceName}&demo=y`,
+    })
+      .then((res) => {
+        return res.text();
+      })
+      .then((text) => {
+        return this.#textToJSON(text);
+      });
   };
 
+  /**
+   *
+   * @param {string} customerId Trust commerce customer id
+   * @param {string} password Trust commerce password
+   * @param {string} deviceName The used reader device model name and
+   *     serial number
+   * @param {number} amount The amount of the
+   * @returns
+   */
   makeTransaction = async (customerId, password, deviceName, amount) => {
     return await fetch(`${TCConnectionDetails.TC_API_URL}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: `custid=${customerId}&password=${password}&action=sale&device_name=${deviceName}&amount=${amount}`,
-    }).then((res) => {
-      return res.json();
-    });
+      body: `custid=${customerId}&password=${password}&action=sale&device_name=${deviceName}&amount=${amount}&demo=y`,
+    })
+      .then((res) => {
+        return res.text();
+      })
+      .then((text) => {
+        return this.#textToJSON(text);
+      });
   };
 
   checkTransaction = async (
@@ -43,44 +69,70 @@ export class TCDriver extends BaseDriver {
   ) => {
     return await fetch(`${TCConnectionDetails.TC_API_URL}`, {
       method: "POST",
+      // mode: "no-cors",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: `custid=${customerId}&password=${password}&action=transstatus&
-      device_name=${deviceName}&
-      cloudpayid=${transactionId}&
-      long_polling=y`,
-    }).then((res) => {
-      return res.json();
-    });
+      body: `custid=${customerId}&password=${password}&action=transstatus&device_name=${deviceName}&cloudpayid=${transactionId}&long_polling=y&demo=y`,
+    })
+      .then((res) => {
+        return res.text();
+      })
+      .then((text) => {
+        return this.#textToJSON(text);
+      });
   };
-  // TODO constants related to driver should be here, only include the amount to the pay method
-  pay = async (amount) => {
-    const transactionResponse = await this.makeTransaction(
-      TCReadersModel.getAccountCredentials().customerId,
-      TCReadersModel.getAccountCredentials().password,
-      amount,
-      TCConnectionDetails.DEVICE_NAME
+
+  pay = async (customerId, password, amount, deviceName) => {
+    const deviceCheckResult = await this.checkDevice(
+      customerId,
+      password,
+      deviceName
     );
-    TCConnectionDetails.currentTransactionId = transactionResponse.cloudpayid;
+    if (deviceCheckResult.devicestatus !== "connected") {
+      throw deviceCheckResult;
+    }
+    const transactionResponse = await this.makeTransaction(
+      customerId,
+      password,
+      deviceName,
+      amount
+    );
+    const currentTransactionId = transactionResponse.cloudpayid;
+    console.log(transactionResponse.cloudpaystatus === "submitted");
+
     if (transactionResponse.cloudpaystatus === "submitted") {
-      TCConnectionDetails.currentTransactionId = transactionResponse.cloudpayid;
-      const transactionResult = await communicatorTc.checkTransaction(
+      const transactionResult = await this.checkTransaction(
         customerId,
         password,
-        TCConnectionDetails.DEVICE_NAME,
-        TCConnectionDetails.currentTransactionId
+        deviceName,
+        currentTransactionId
       );
-      if (transactionResult.status === "approved") {
-        //done
-      } else {
-        //address faulty/failed transaction.
+
+      console.log(transactionResult);
+
+      if (
+        transactionResult.cloudpaystatus === "complete" ||
+        transactionResult.cloudpaystatus === "cancel"
+      ) {
+        return transactionResult;
       }
-    } else if (transactionResponse.cloudpaystatus?.error) {
-    //   paymentStatus.value = "error occurred";
-      //handle failure of the transaction request
+      // transaction will be canceled in case the response status wasn't
+      //    complete, since probably the reader disconnected recently or
+      //    transaction was canceled by the system due to cardholder
+      //    interaction timeout
+      else {
+        const cancelResult = await this.cancelTransaction(
+          customerId,
+          password,
+          deviceName,
+          currentTransactionId
+        );
+        console.log(cancelResult);
+        throw cancelResult;
+      }
     } else {
-    //   paymentStatus.value = "Device isn't connected to cloud payment services.";
+      throw transactionResponse;
     }
   };
 
@@ -95,12 +147,26 @@ export class TCDriver extends BaseDriver {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: `custid=${customerId}&password=${password}&action=transstatus&
-        device_name=${deviceName}&
-        cloudpayid=${transactionId}`,
-    }).then((res) => {
-      return res.json();
+      body: `custid=${customerId}&password=${password}&action=cancel&device_name=${deviceName}&cloudpayid=${transactionId}&demo=y`,
+    })
+      .then((res) => {
+        return res.text();
+      })
+      .then((text) => {
+        return this.#textToJSON(text);
+      });
+  };
+
+  #textToJSON = (text) => {
+    const lines = text.split("\n");
+    const result = {};
+
+    lines.forEach((line) => {
+      const [key, value] = line.split("=");
+      result[key] = value;
     });
+
+    return result;
   };
 
   mockMakeTransaction = async (customerId, password, deviceName, amount) => {
@@ -129,5 +195,23 @@ export class TCDriver extends BaseDriver {
         });
       }, 2000);
     });
+  };
+
+  mockPay = async (amount) => {
+    const transactionMakeResponse = await this.mockMakeTransaction(
+      TCReadersModel.getAccountCredentials().customerId,
+      TCReadersModel.getAccountCredentials().password,
+      amount,
+      TCConnectionDetails.DEVICE_NAME
+    );
+    TCConnectionDetails.currentTransactionId =
+      transactionMakeResponse.cloudpayid;
+    const mockCheckTransactionReponse = await this.mockCheckTransaction(
+      TCReadersModel.getAccountCredentials().customerId,
+      TCReadersModel.getAccountCredentials().password,
+      TCConnectionDetails.DEVICE_NAME,
+      TCConnectionDetails.currentTransactionId
+    );
+    return mockCheckTransactionReponse;
   };
 }
