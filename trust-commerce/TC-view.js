@@ -146,7 +146,7 @@ export const TCReaderView = (function () {
         class="button"
         type="button"
         id="add-reader-button"
-        value="Add reader"
+        value="Set reader used"
       />`
       );
   }

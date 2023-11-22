@@ -27,7 +27,7 @@ export class TCController extends BaseController {
     this.#onStart();
 
     TCReaderView.addPresetsButtons();
-
+    document.getElementById("title").textContent = "Trust Commerce";
     document
       .getElementById("add-reader-button")
       .addEventListener("click", () => {
@@ -169,11 +169,13 @@ export class TCController extends BaseController {
       paymentStatus.value =
         "Make sure to set account credentials and device details.";
       console.log("LEFT");
+      payButton.removeAttribute("disabled");
       return;
     }
 
     if (isNaN(amount) || !amount) {
       paymentStatus.value = "Make sure to enter a numeric amount";
+      payButton.removeAttribute("disabled");
       return;
     }
 

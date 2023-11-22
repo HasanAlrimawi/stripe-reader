@@ -1,4 +1,4 @@
-import { BaseDriver } from "../communicators/base-driver.js";
+import { BaseDriver } from "../drivers/base-driver.js";
 import { OBSERVER_TOPICS } from "../constants/observer-topics.js";
 import { stripeConnectionDetails } from "../constants/stripe-connection-details.js";
 import { observer } from "../observer.js";

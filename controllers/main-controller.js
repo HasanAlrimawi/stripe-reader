@@ -2,6 +2,9 @@ import { mainView } from "../views/main-view.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   mainView.listAccessibleDevices(showDevice);
+  document
+    .getElementById("theme-icon")
+    .addEventListener("click", mainView.changeTheme);
 });
 
 /**

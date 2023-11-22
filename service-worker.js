@@ -3,7 +3,6 @@ const urlsToCache = [
   "/assets/logo192.png",
   "/assets/logo512.png",
   "/assets/favicon.png",
-  "/communicators/stripe-communicator.js",
   "/constants/stripe-connection-details.js",
   "/constants/observer-topics.js",
   "/constants/devices.js",

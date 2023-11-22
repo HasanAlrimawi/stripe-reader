@@ -1,4 +1,4 @@
-import { BaseDriver } from "../communicators/base-driver.js";
+import { BaseDriver } from "../drivers/base-driver.js";
 
 export class TCDriver extends BaseDriver {
   static #tcDriver;
@@ -103,7 +103,7 @@ export class TCDriver extends BaseDriver {
    * @param {string} password
    * @param {number} amount Transaction amount on cents
    * @param {string} deviceName
-   * @returns
+   * @returns {Object}
    */
   pay = async (customerId, password, amount, deviceName) => {
     const deviceCheckResult = await this.#checkDevice(
