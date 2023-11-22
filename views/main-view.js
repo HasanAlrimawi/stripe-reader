@@ -41,7 +41,7 @@ export const mainView = (function () {
     <section class="card-form">
           <span class="subtitle">Payment Details</span>
           <div class="label-input-wrapper">
-            <label for="payment-amount">Amount:</label>
+            <label for="payment-amount">Amount</label>
             <input type="text" placeholder="Enter transaction amount" name="payment-amount" id="payment-amount" />
           </div>
           <div class="label-input-wrapper" id="payment-form-buttons">

@@ -50,7 +50,7 @@ export class StripeController extends BaseController {
 
     document
       .getElementById("secretKeyCardAdditionButton")
-      .addEventListener("click", this.showSecretKeyCard);
+      .addEventListener("click", this.#showSecretKeyCard);
   };
 
   /**
@@ -83,7 +83,7 @@ export class StripeController extends BaseController {
     ]);
     // The following try catch statements handle loading the stripe JS SDK
     try {
-      await this.loadConnectStripeSDK(
+      await this.#loadConnectStripeSDK(
         stripeConnectionDetails.STRIPE_API_JS_SDK_URL
       );
     } catch (error) {
@@ -145,7 +145,7 @@ export class StripeController extends BaseController {
    *
    * @param {string} url The URL of the script to be loaded
    */
-  loadConnectStripeSDK = async (url) => {
+  #loadConnectStripeSDK = async (url) => {
     const stripeSDKLoad = await this.#loadScriptFile(url);
     if (stripeSDKLoad.status === "success") {
       await this.communicator.createStripeTerminal();
@@ -155,7 +155,7 @@ export class StripeController extends BaseController {
   /**
    * Handles Showing part of the view responsible for setting API secret key.
    */
-  showSecretKeyCard = () => {
+  #showSecretKeyCard = () => {
     document
       .getElementById("secretKeyCardAdditionButton")
       .setAttribute("disabled", true);
@@ -194,7 +194,7 @@ export class StripeController extends BaseController {
       //     and connecting to the stripe terminal using the new key added
       try {
         document.getElementById("stripe-sdk")?.remove();
-        await this.loadConnectStripeSDK(
+        await this.#loadConnectStripeSDK(
           stripeConnectionDetails.STRIPE_API_JS_SDK_URL
         );
         this.#restoreDefault();
@@ -223,8 +223,8 @@ export class StripeController extends BaseController {
     stripeReaderView.controlConnectButtons(
       stripeReadersModel.getReaderConnected(),
       "enable",
-      this.connectToReader,
-      this.disconnectReader
+      this.#connectToReader,
+      this.#disconnectReader
     );
     document.getElementById("pay-btn").setAttribute("disabled", true);
   };
@@ -264,7 +264,7 @@ export class StripeController extends BaseController {
       // To load the SDK script and connect to the terminal if the user connected
       //     to internet after opening the app.
       if (!this.communicator.isConnectedToTerminal()) {
-        await this.loadConnectStripeSDK(
+        await this.#loadConnectStripeSDK(
           stripeConnectionDetails.STRIPE_API_JS_SDK_URL
         );
       }
@@ -279,14 +279,14 @@ export class StripeController extends BaseController {
       try {
         // Make sure to disonnect the connected reader before finding other readers
         if (stripeReadersModel.getReaderConnected()) {
-          await this.disconnectReader(stripeReadersModel.getReaderConnected());
+          await this.#disconnectReader(stripeReadersModel.getReaderConnected());
         }
         stripeReadersModel.setReadersList(undefined);
         console.log("BEFORE GETTING READERS");
         const availableReaders = await this.communicator.getReadersAvailable();
         console.log(availableReaders);
         stripeReadersModel.setReadersList(availableReaders);
-        stripeReaderView.createAvailableReadersList(this.connectToReader);
+        stripeReaderView.createAvailableReadersList(this.#connectToReader);
         listReadersButton.removeAttribute("disabled");
         listReadersButton.value = "List readers registered";
       } catch (error) {
@@ -318,7 +318,7 @@ export class StripeController extends BaseController {
    *
    * @param {string} readerId
    */
-  connectToReader = async (reader) => {
+  #connectToReader = async (reader) => {
     const connectButton = document.getElementById(reader.id);
     connectButton.setAttribute("value", "Connecting");
     connectButton.setAttribute("disabled", true);
@@ -341,8 +341,8 @@ export class StripeController extends BaseController {
         stripeReaderView.controlConnectButtons(
           reader,
           "disable",
-          this.connectToReader,
-          this.disconnectReader
+          this.#connectToReader,
+          this.#disconnectReader
         );
       }
     } catch (error) {
@@ -361,14 +361,14 @@ export class StripeController extends BaseController {
    *
    * @param {string} readerId
    */
-  disconnectReader = async (reader) => {
+  #disconnectReader = async (reader) => {
     try {
       await this.communicator.disonnectReader(reader);
       stripeReaderView.controlConnectButtons(
         reader,
         "enable",
-        this.connectToReader,
-        this.disconnectReader
+        this.#connectToReader,
+        this.#disconnectReader
       );
       stripeReadersModel.setReaderConnected(undefined);
       document.getElementById("pay-btn").setAttribute("disabled", true);

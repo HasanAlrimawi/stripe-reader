@@ -24,7 +24,7 @@ export class TCController extends BaseController {
    *     whether by adding or editing the main view
    */
   renderView = () => {
-    this.onStart();
+    this.#onStart();
 
     TCReaderView.addPresetsButtons();
 
@@ -35,7 +35,7 @@ export class TCController extends BaseController {
           .getElementById("device-space")
           .insertAdjacentElement(
             "beforeend",
-            TCReaderView.defineReaderDeviceCard(this.saveDeviceDetails)
+            TCReaderView.defineReaderDeviceCard(this.#saveDeviceDetails)
           );
       });
 
@@ -46,11 +46,11 @@ export class TCController extends BaseController {
           .getElementById("device-space")
           .insertAdjacentElement(
             "beforeend",
-            TCReaderView.accountCredentialsCard(this.saveAccountCredentials)
+            TCReaderView.accountCredentialsCard(this.#saveAccountCredentials)
           );
       });
 
-    document.getElementById("pay-btn").addEventListener("click", this.pay);
+    document.getElementById("pay-btn").addEventListener("click", this.#pay);
     // document
     //   .getElementById("payment-form-buttons")
     //   .insertAdjacentElement("beforeend", TCReaderView.createCheckButton());
@@ -65,17 +65,17 @@ export class TCController extends BaseController {
    * Responsible for any needed subscriptions, scripts loading and preset
    *     configuration at the very start of device viewing.
    */
-  onStart = () => {
+  #onStart = () => {
     // To use the device that is already added and saved in the local storage.
     if (
       localStorage.getItem(
-        TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE
+        TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE_KEY
       ) !== null
     ) {
       TCReadersModel.setReaderUsed(
         JSON.parse(
           localStorage.getItem(
-            TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE
+            TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE_KEY
           )
         )
       );
@@ -83,12 +83,12 @@ export class TCController extends BaseController {
 
     // To use the account credentials that are already added and saved in the local storage.
     if (
-      localStorage.getItem(TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE) !==
+      localStorage.getItem(TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE_KEY) !==
       null
     ) {
       TCReadersModel.setAccountCredentials(
         JSON.parse(
-          localStorage.getItem(TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE)
+          localStorage.getItem(TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE_KEY)
         )
       );
     }
@@ -110,12 +110,12 @@ export class TCController extends BaseController {
    *
    * @param {Event} event represents the event of submitting form
    */
-  saveAccountCredentials = (event) => {
+  #saveAccountCredentials = (event) => {
     event.preventDefault();
     const customerId = document.getElementById("customer-id").value;
     const password = document.getElementById("password").value;
     localStorage.setItem(
-      TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE,
+      TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE_KEY,
       JSON.stringify({
         customerId: customerId,
         password: password,
@@ -133,12 +133,12 @@ export class TCController extends BaseController {
    *
    * @param {Event} event represents the event of submitting form
    */
-  saveDeviceDetails = (event) => {
+  #saveDeviceDetails = (event) => {
     event.preventDefault();
     const deviceName = document.getElementById("device-name").value;
     const deviceSerialNumber = document.getElementById("serial-number").value;
     localStorage.setItem(
-      TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE,
+      TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE_KEY,
       JSON.stringify({
         deviceName: deviceName,
         deviceSerialNumber: deviceSerialNumber,
@@ -154,7 +154,7 @@ export class TCController extends BaseController {
    * Responsible for making the transaction from taking the amount to viewing
    *     meaningfyl messages for the application user.
    */
-  pay = async () => {
+  #pay = async () => {
     const paymentStatus = document.getElementById("payment-status");
     const payButton = document.getElementById("pay-btn");
     const amount = document.getElementById("payment-amount").value;
@@ -179,14 +179,6 @@ export class TCController extends BaseController {
 
     paymentStatus.value = "pending...";
 
-    // if (TCConnectionDetails.DEMO_APP) {
-    //   const mockCheckTransactionReponse = await this.communicatorTc.mockPay(
-    //     amount
-    //   );
-    //   paymentStatus.value = `Transaction: ${mockCheckTransactionReponse.cloudpaystatus}`;
-    //   payButton.removeAttribute("disabled");
-    // }
-    // else {
     let message = "Transaction Unsuccessful";
     try {
       const transactionResponse = await this.communicatorTc.pay(
@@ -214,6 +206,5 @@ export class TCController extends BaseController {
     payButton.removeAttribute("disabled");
     console.log(message);
     paymentStatus.value = message;
-    // }
   };
 }
