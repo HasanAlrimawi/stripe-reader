@@ -10,6 +10,18 @@
   --hover-background-color: #0056b3;
 }
 
+[page-theme="dark"] {
+  --bar-background-color: #333;
+  --main-color: #474443;
+  --peripheral-selection: #f8e217;
+  --subtitle-color: #fff;
+  --label-color: #c1c1c1;
+  --white-to-black: #000;
+  --black-to-white: #fff;
+  --background-color: #fb0000;
+  --hover-background-color: #cd0000;
+}
+
 * {
   color: var(--black-to-white);
 }
