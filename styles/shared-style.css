@@ -7,7 +7,8 @@
   --white-to-black: #fff;
   --black-to-white: #333333;
   --button-background-color: #007bff;
-  --hover-background-color: #0056b3;
+  --button-hover-background-color: #0056b3;
+  --button-disabled-color: #91c0f7;
   --dropdown-hover: #aaaae1;
   --dropdown-content: #ededf9;
   --dropdown-elements-hover: #c6c6e3;
@@ -22,7 +23,8 @@
   --white-to-black: #000;
   --black-to-white: #fff;
   --button-background-color: #fb0000;
-  --hover-background-color: #cd0000;
+  --button-hover-background-color: #cd0000;
+  --button-disabled-color: #f79191;
   --dropdown-hover: #000000;
   --dropdown-content: #636262;
   --dropdown-elements-hover: #333;
@@ -74,10 +76,10 @@ body {
 }
 
 .wrapper-horizontal {
-  padding: 50px 20px;
+  padding: 35px 20px;
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 30px;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
@@ -119,7 +121,7 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 15px;
   width: 80%;
-  max-width: 800px;
+  max-width: 600px;
 }
 
 .label {
@@ -319,17 +321,18 @@ textarea {
 }
 
 .button:hover {
-  background-color: var(--hover-background-color);
+  background-color: var(--button-hover-background-color);
 }
 
 .button:disabled {
-  background-color: #91c0f7;
+  background-color: var(--button-disabled-color);
   cursor: default;
 }
 
 textarea {
   background-color: #ccc;
   border-style: none;
+  color: #000;
 }
 
 #theme-icon {
@@ -339,4 +342,10 @@ textarea {
 
 #theme-icon:hover {
   cursor: pointer;
+}
+
+.flex-space-between{
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
 }

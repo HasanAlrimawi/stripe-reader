@@ -60,7 +60,7 @@ export class StripeController extends BaseController {
    *     configuration
    */
   #onStart = async () => {
-    this.#handleAPIKey();
+    this.#loadAPIKey();
     const subId1 = observer.subscribe(
       OBSERVER_TOPICS.CONNECTION_LOST,
       this.#handleDisonncetion
@@ -234,7 +234,7 @@ export class StripeController extends BaseController {
    *     assigned from previous app use to use it, and if not then it uses
    *     the default secret key specified
    */
-  #handleAPIKey = () => {
+  #loadAPIKey = () => {
     if (
       localStorage.getItem(stripeConnectionDetails.LOCAL_STORAGE_API_KEY) ===
       null

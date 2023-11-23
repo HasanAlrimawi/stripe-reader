@@ -131,6 +131,7 @@ export class TCDriver extends BaseDriver {
         deviceName,
         currentcloudPayId
       );
+      console.log(transactionResult);
 
       if (
         transactionResult.cloudpaystatus === "complete" ||

@@ -14,6 +14,8 @@ export const TCReaderView = (function () {
     const passwordLabel = document.createElement("label");
     const passwordInput = document.createElement("input");
     const submitButton = document.createElement("input");
+    const cancelButton = document.createElement("input");
+    const buttonsWrapper = document.createElement("div");
 
     form.setAttribute("id", "account-credentials-form");
     form.setAttribute("class", "card-form");
@@ -41,13 +43,22 @@ export const TCReaderView = (function () {
     submitButton.setAttribute("class", "button");
     submitButton.setAttribute("id", "account-credentials-button");
     submitButton.setAttribute("value", "Save");
+    cancelButton.setAttribute("type", "submit");
+    cancelButton.setAttribute("class", "button");
+    cancelButton.setAttribute("value", "Cancel");
+    buttonsWrapper.setAttribute("class", "flex-space-between");
 
+    cancelButton.addEventListener("click", () => {
+      form.remove();
+    });
+
+    buttonsWrapper.appendChild(submitButton);
+    buttonsWrapper.appendChild(cancelButton);
     form.appendChild(customerIdLabel);
     form.appendChild(customerIdInput);
     form.appendChild(passwordLabel);
     form.appendChild(passwordInput);
-    form.appendChild(submitButton);
-
+    form.appendChild(buttonsWrapper);
     return form;
   }
 
@@ -63,9 +74,9 @@ export const TCReaderView = (function () {
     const form = document.createElement("form");
     const deviceNameLabel = document.createElement("label");
     const deviceNameInput = document.createElement("input");
-    const serialNumberLabel = document.createElement("label");
-    const serialNumberInput = document.createElement("input");
     const submitButton = document.createElement("input");
+    const cancelButton = document.createElement("input");
+    const buttonsWrapper = document.createElement("div");
 
     form.setAttribute("id", "payment-device-form");
     form.setAttribute("class", "card-form");
@@ -74,34 +85,34 @@ export const TCReaderView = (function () {
       document.getElementById("payment-device-form").remove();
     });
     deviceNameLabel.setAttribute("class", "subtitle");
-    deviceNameLabel.setAttribute("for", "deviceName");
-    deviceNameLabel.textContent = "Device Name";
+    deviceNameLabel.setAttribute("for", "deviceModel");
+    deviceNameLabel.textContent = "Device Model & Serial Number";
     deviceNameInput.setAttribute("required", true);
     deviceNameInput.setAttribute("type", "text");
-    deviceNameInput.setAttribute("name", "deviceName");
-    deviceNameInput.setAttribute("id", "device-name");
-    deviceNameInput.setAttribute("placeholder", "Enter device name");
-    serialNumberLabel.setAttribute("class", "subtitle");
-    serialNumberLabel.setAttribute("for", "serialNumber");
-    serialNumberLabel.textContent = "Serial Number";
-    serialNumberInput.setAttribute("required", true);
-    serialNumberInput.setAttribute("type", "text");
-    serialNumberInput.setAttribute("name", "serialNumber");
-    serialNumberInput.setAttribute("id", "serial-number");
-    serialNumberInput.setAttribute(
+    deviceNameInput.setAttribute("name", "deviceModel");
+    deviceNameInput.setAttribute("id", "device-model");
+    deviceNameInput.setAttribute(
       "placeholder",
-      "Enter device's serial number"
+      "Enter device model with the serial number [model_serialnumber] (e.g. A920PRO_578111)"
     );
     submitButton.setAttribute("type", "submit");
     submitButton.setAttribute("class", "button");
     submitButton.setAttribute("id", "device-details-button");
     submitButton.setAttribute("value", "Save");
+    cancelButton.setAttribute("type", "submit");
+    cancelButton.setAttribute("class", "button");
+    cancelButton.setAttribute("value", "Cancel");
+    buttonsWrapper.setAttribute("class", "flex-space-between");
 
+    cancelButton.addEventListener("click", () => {
+      form.remove();
+    });
+
+    buttonsWrapper.appendChild(submitButton);
+    buttonsWrapper.appendChild(cancelButton);
     form.appendChild(deviceNameLabel);
     form.appendChild(deviceNameInput);
-    form.appendChild(serialNumberLabel);
-    form.appendChild(serialNumberInput);
-    form.appendChild(submitButton);
+    form.appendChild(buttonsWrapper);
 
     return form;
   }

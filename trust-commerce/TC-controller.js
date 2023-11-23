@@ -1,4 +1,3 @@
-import { TCConnectionDetails } from "../constants/TC-connection-details.js";
 import { BaseController } from "../controllers/base-controller.js";
 import { TCDriver } from "./TC-driver.js";
 import { TCReadersModel } from "./TC-model.js";
@@ -66,32 +65,7 @@ export class TCController extends BaseController {
    *     configuration at the very start of device viewing.
    */
   #onStart = () => {
-    // To use the device that is already added and saved in the local storage.
-    if (
-      localStorage.getItem(
-        TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE_KEY
-      ) !== null
-    ) {
-      TCReadersModel.setReaderUsed(
-        JSON.parse(
-          localStorage.getItem(
-            TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE_KEY
-          )
-        )
-      );
-    }
-
-    // To use the account credentials that are already added and saved in the local storage.
-    if (
-      localStorage.getItem(TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE_KEY) !==
-      null
-    ) {
-      TCReadersModel.setAccountCredentials(
-        JSON.parse(
-          localStorage.getItem(TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE_KEY)
-        )
-      );
-    }
+    TCReadersModel.loadConfigFromLocalStorage();
   };
 
   /**
@@ -114,13 +88,6 @@ export class TCController extends BaseController {
     event.preventDefault();
     const customerId = document.getElementById("customer-id").value;
     const password = document.getElementById("password").value;
-    localStorage.setItem(
-      TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE_KEY,
-      JSON.stringify({
-        customerId: customerId,
-        password: password,
-      })
-    );
     TCReadersModel.setAccountCredentials({
       customerId: customerId,
       password: password,
@@ -135,19 +102,8 @@ export class TCController extends BaseController {
    */
   #saveDeviceDetails = (event) => {
     event.preventDefault();
-    const deviceName = document.getElementById("device-name").value;
-    const deviceSerialNumber = document.getElementById("serial-number").value;
-    localStorage.setItem(
-      TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE_KEY,
-      JSON.stringify({
-        deviceName: deviceName,
-        deviceSerialNumber: deviceSerialNumber,
-      })
-    );
-    TCReadersModel.setReaderUsed({
-      deviceName: deviceName,
-      deviceSerialNumber: deviceSerialNumber,
-    });
+    const deviceName = document.getElementById("device-model").value;
+    TCReadersModel.setReaderUsed(deviceName);
   };
 
   /**
@@ -168,7 +124,6 @@ export class TCController extends BaseController {
     ) {
       paymentStatus.value =
         "Make sure to set account credentials and device details.";
-      console.log("LEFT");
       payButton.removeAttribute("disabled");
       return;
     }
@@ -178,18 +133,15 @@ export class TCController extends BaseController {
       payButton.removeAttribute("disabled");
       return;
     }
-
     paymentStatus.value = "pending...";
-
     let message = "Transaction Unsuccessful";
+
     try {
       const transactionResponse = await this.communicatorTc.pay(
         TCReadersModel.getAccountCredentials().customerId,
         TCReadersModel.getAccountCredentials().password,
         amount,
-        `${TCReadersModel.getReaderUsed().deviceName}${
-          TCReadersModel.getReaderUsed().deviceSerialNumber
-        }`
+        TCReadersModel.getReaderUsed()
       );
       message = `Transaction is ${transactionResponse.cloudpaystatus}`;
       console.log(transactionResponse);
