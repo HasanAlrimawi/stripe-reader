@@ -87,6 +87,50 @@ export const stripeReaderView = (function () {
     return wrapper;
   }
 
+  function createSecretKeySetterCard2(saveKey) {
+    const form = document.createElement("form");
+    const keyLabel = document.createElement("label");
+    const keyInput = document.createElement("input");
+    const submitButton = document.createElement("input");
+    const cancelButton = document.createElement("input");
+    const buttonsWrapper = document.createElement("div");
+
+    form.setAttribute("id", "secret-key-card");
+    form.setAttribute("class", "card-form");
+    form.addEventListener("submit", (event) => {
+      saveKey(event);
+      // form.remove();
+    });
+    keyLabel.setAttribute("class", "subtitle");
+    keyLabel.setAttribute("for", "apiKey");
+    keyLabel.textContent = "Set API secret key";
+    keyInput.setAttribute("required", true);
+    keyInput.setAttribute("type", "text");
+    keyInput.setAttribute("name", "apiKey");
+    keyInput.setAttribute("id", "secret-key-input");
+    keyInput.setAttribute(
+      "placeholder",
+      "Setting a new key will overwrite the already used one."
+    );
+    submitButton.setAttribute("type", "submit");
+    submitButton.setAttribute("class", "button");
+    submitButton.setAttribute("id", "secret-key-button");
+    submitButton.setAttribute("value", "Save");
+    cancelButton.setAttribute("type", "button");
+    cancelButton.setAttribute("class", "button");
+    cancelButton.setAttribute("value", "Cancel");
+    cancelButton.setAttribute("id", "secret-key-form-cancel-button");
+    buttonsWrapper.setAttribute("class", "flex-space-between");
+
+    buttonsWrapper.appendChild(submitButton);
+    buttonsWrapper.appendChild(cancelButton);
+    form.appendChild(keyLabel);
+    form.appendChild(keyInput);
+    form.appendChild(buttonsWrapper);
+
+    return form;
+  }
+
   /**
    * Replaces the connect button of the just connected reader with a disconnect
    *     button, and disables the other readers' connect buttons.
@@ -171,7 +215,7 @@ export const stripeReaderView = (function () {
         `<input
     class="button"
     type="button"
-    id="secretKeyCardAdditionButton"
+    id="secret-key-card-addition-button"
     value="Set API secret key"
   />`
       );
@@ -183,5 +227,6 @@ export const stripeReaderView = (function () {
     controlConnectButtons,
     deviceHtml,
     addPresetsButtons,
+    createSecretKeySetterCard2,
   };
 })();

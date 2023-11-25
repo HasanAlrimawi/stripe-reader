@@ -49,7 +49,7 @@ export class StripeController extends BaseController {
     payBtn.addEventListener("click", this.#pay);
 
     document
-      .getElementById("secretKeyCardAdditionButton")
+      .getElementById("secret-key-card-addition-button")
       .addEventListener("click", this.#showSecretKeyCard);
   };
 
@@ -100,7 +100,7 @@ export class StripeController extends BaseController {
     for (const subscription of this.subscriptions) {
       observer.unsubscribe(subscription.topic, subscription.subId);
     }
-    document.getElementById("secretKeyCardAdditionButton").remove();
+    document.getElementById("secret-key-card-addition-button").remove();
     document.getElementById("title").textContent = "Peripherals";
     document.getElementById("stripe-sdk")?.remove();
     this.communicator.disconnectFromTerminal();
@@ -157,24 +157,43 @@ export class StripeController extends BaseController {
    */
   #showSecretKeyCard = () => {
     document
-      .getElementById("secretKeyCardAdditionButton")
+      .getElementById("secret-key-card-addition-button")
       .setAttribute("disabled", true);
     document
       .getElementById("device-space")
-      .appendChild(stripeReaderView.createSecretKeySetterCard());
-    document
-      .getElementById("secretKeyButton")
-      .addEventListener("click", this.#setAPISecretKey);
+      .appendChild(
+        stripeReaderView.createSecretKeySetterCard2(this.#setAPISecretKey)
+      );
+    const secretKeyCardAdditionButton = document.getElementById(
+      "secret-key-card-addition-button"
+    );
+    const cancelButton = document.getElementById(
+      "secret-key-form-cancel-button"
+    );
+    const form = document.getElementById("secret-key-card");
+    cancelButton.addEventListener("click", () => {
+      console.log("HI");
+      secretKeyCardAdditionButton.removeAttribute("disabled");
+      form.remove();
+    });
+    // document
+    //   .getElementById("secret-key-button")
+    //   .addEventListener("click", this.#setAPISecretKey);
   };
 
   /**
    * Handles setting the new API secret key and initating new connection
    *     with the stripe terminal using the new key.
    */
-  #setAPISecretKey = async () => {
-    const secretKeyButton = document.getElementById("secretKeyButton");
-    const secretKeyInput = document.getElementById("secretKeyInput");
+  #setAPISecretKey = async (event) => {
+    event.preventDefault();
+    const form = document.getElementById("secret-key-card");
+    const secretKeySaveButton = document.getElementById("secret-key-button");
+    const secretKeyInput = document.getElementById("secret-key-input");
     const secretKey = secretKeyInput.value;
+    const secretKeyCardAdditionButton = document.getElementById(
+      "secret-key-card-addition-button"
+    );
 
     if (secretKey) {
       stripeConnectionDetails.SECRET_KEY = secretKey;
@@ -182,13 +201,11 @@ export class StripeController extends BaseController {
         stripeConnectionDetails.LOCAL_STORAGE_API_KEY,
         secretKey
       );
-      secretKeyButton.value = "The new key has been successfully set.";
-      secretKeyButton.setAttribute("disabled", true);
+      secretKeySaveButton.value = "The new key has been successfully set.";
+      secretKeySaveButton.setAttribute("disabled", true);
       setTimeout(() => {
-        document
-          .getElementById("secretKeyCardAdditionButton")
-          .removeAttribute("disabled");
-        document.getElementById("secretKeyCard").remove();
+        secretKeyCardAdditionButton.removeAttribute("disabled");
+        form.remove();
       }, 1500);
       // The following try catch statements handle loading the stripe JS SDK
       //     and connecting to the stripe terminal using the new key added
@@ -203,12 +220,12 @@ export class StripeController extends BaseController {
         alert(`${error}`);
       }
     } else {
-      secretKeyButton.value =
+      secretKeySaveButton.value =
         "Make sure to fill the field before setting the key.";
-      secretKeyButton.setAttribute("disabled", true);
+      secretKeySaveButton.setAttribute("disabled", true);
       setTimeout(() => {
-        secretKeyButton.value = "Set key";
-        secretKeyButton.removeAttribute("disabled");
+        secretKeySaveButton.value = "Set key";
+        secretKeySaveButton.removeAttribute("disabled");
       }, 2000);
     }
   };
