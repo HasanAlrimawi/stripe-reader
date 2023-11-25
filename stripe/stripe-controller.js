@@ -172,7 +172,6 @@ export class StripeController extends BaseController {
     );
     const form = document.getElementById("secret-key-card");
     cancelButton.addEventListener("click", () => {
-      console.log("HI");
       secretKeyCardAdditionButton.removeAttribute("disabled");
       form.remove();
     });
