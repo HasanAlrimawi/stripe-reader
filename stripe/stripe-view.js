@@ -67,26 +67,11 @@ export const stripeReaderView = (function () {
   }
 
   /**
-   * Creates the HTMLElement that represents the view that will take a new API
+   * Creates the HTMLElement form that represents the view that will take a new API
    *     secret key to use with connecting to stripe's terminal.
    *
    * @returns {HTMLElement}
    */
-  function createSecretKeySetterCard() {
-    const wrapper = document.createElement("section");
-    wrapper.setAttribute("class", "card-form");
-    wrapper.setAttribute("id", "secretKeyCard");
-    wrapper.insertAdjacentHTML(
-      "beforeend",
-      `<label class="subtitle" for="secretKey">Set API secret key</label>
-    <input type="text" name="secretKey" id="secretKeyInput"
-    placeholder="Setting a new key will overwrite the already used one.">
-    <input type="button" class="button" id="secretKeyButton"
-     value="Set key">`
-    );
-    return wrapper;
-  }
-
   function createSecretKeySetterCard2(saveKey) {
     const form = document.createElement("form");
     const keyLabel = document.createElement("label");
@@ -102,7 +87,7 @@ export const stripeReaderView = (function () {
       // form.remove();
     });
     keyLabel.setAttribute("class", "subtitle");
-    keyLabel.setAttribute("for", "apiKey");
+    keyLabel.setAttribute("for", "secret-key-input");
     keyLabel.textContent = "Set API secret key";
     keyInput.setAttribute("required", true);
     keyInput.setAttribute("type", "text");

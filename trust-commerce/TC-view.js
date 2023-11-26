@@ -24,7 +24,7 @@ export const TCReaderView = (function () {
       document.getElementById("account-credentials-form").remove();
     });
     customerIdLabel.setAttribute("class", "subtitle");
-    customerIdLabel.setAttribute("for", "customerId");
+    customerIdLabel.setAttribute("for", "customer-id");
     customerIdLabel.textContent = "Customer id";
     customerIdInput.setAttribute("required", true);
     customerIdInput.setAttribute("type", "text");
@@ -85,7 +85,7 @@ export const TCReaderView = (function () {
       document.getElementById("payment-device-form").remove();
     });
     deviceNameLabel.setAttribute("class", "subtitle");
-    deviceNameLabel.setAttribute("for", "deviceModel");
+    deviceNameLabel.setAttribute("for", "device-model");
     deviceNameLabel.textContent = "Device Model & Serial Number";
     deviceNameInput.setAttribute("required", true);
     deviceNameInput.setAttribute("type", "text");

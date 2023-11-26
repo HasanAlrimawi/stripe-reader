@@ -121,17 +121,21 @@ export class TCDriver extends BaseDriver {
       deviceName,
       amount
     );
-    console.log(transactionResponse);
     const currentcloudPayId = transactionResponse.cloudpayid;
 
     if (transactionResponse.cloudpaystatus === "submitted") {
-      const transactionResult = await this.#checkTransaction(
+      let transactionResult = await this.#checkTransaction(
         customerId,
         password,
         deviceName,
         currentcloudPayId
       );
-      console.log(transactionResult);
+      transactionResult = await this.#checkTransaction(
+        customerId,
+        password,
+        deviceName,
+        currentcloudPayId
+      );
 
       if (
         transactionResult.cloudpaystatus === "complete" ||

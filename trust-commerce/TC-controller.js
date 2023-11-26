@@ -143,22 +143,26 @@ export class TCController extends BaseController {
         amount,
         TCReadersModel.getReaderUsed()
       );
-      message = `Transaction is ${transactionResponse.cloudpaystatus}`;
+      message = `Transaction is ${
+        transactionResponse.status
+          ? transactionResponse.status
+          : transactionResponse.cloudpaystatus
+      }`;
       console.log(transactionResponse);
     } catch (transactionResult) {
-      if (transactionResult.message) {
-        message = transactionResult.message;
-      } else {
-        message = `${
-          transactionResult.devicestatus
-            ? `Device status: ${transactionResult.devicestatus}.\nMake sure device is connected and available.`
-            : `Transaction result: ${transactionResult.cloudpaystatus}.`
-        }`;
-      }
+      message = `${
+        transactionResult.devicestatus
+          ? `Device status: ${transactionResult.devicestatus}.\nMake sure device is connected and available.`
+          : `Transaction result: ${
+              transactionResult.status
+                ? transactionResult.status
+                : transactionResult.cloudpaystatus
+            }.`
+      }`;
+
       console.log(transactionResult);
     }
     payButton.removeAttribute("disabled");
-    console.log(message);
     paymentStatus.value = message;
   };
 }
