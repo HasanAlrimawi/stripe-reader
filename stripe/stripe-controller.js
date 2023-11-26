@@ -162,7 +162,7 @@ export class StripeController extends BaseController {
     document
       .getElementById("device-space")
       .appendChild(
-        stripeReaderView.createSecretKeySetterCard2(this.#setAPISecretKey)
+        stripeReaderView.createSecretKeySetterCard(this.#setAPISecretKey)
       );
     const secretKeyCardAdditionButton = document.getElementById(
       "secret-key-card-addition-button"
@@ -175,9 +175,6 @@ export class StripeController extends BaseController {
       secretKeyCardAdditionButton.removeAttribute("disabled");
       form.remove();
     });
-    // document
-    //   .getElementById("secret-key-button")
-    //   .addEventListener("click", this.#setAPISecretKey);
   };
 
   /**

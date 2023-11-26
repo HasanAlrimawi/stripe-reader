@@ -72,7 +72,7 @@ export const stripeReaderView = (function () {
    *
    * @returns {HTMLElement}
    */
-  function createSecretKeySetterCard2(saveKey) {
+  function createSecretKeySetterCard(saveKey) {
     const form = document.createElement("form");
     const keyLabel = document.createElement("label");
     const keyInput = document.createElement("input");
@@ -212,6 +212,5 @@ export const stripeReaderView = (function () {
     controlConnectButtons,
     deviceHtml,
     addPresetsButtons,
-    createSecretKeySetterCard2,
   };
 })();
