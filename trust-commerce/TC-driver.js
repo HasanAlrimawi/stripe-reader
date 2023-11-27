@@ -148,13 +148,15 @@ export class TCDriver extends BaseDriver {
       //    transaction was canceled by the system due to cardholder
       //    interaction timeout
       else {
-        const cancelResult = await this.#cancelTransaction(
+        await this.#cancelTransaction(
           customerId,
           password,
           deviceName,
           currentcloudPayId
         );
-        throw cancelResult;
+        throw {
+          status: "canceled",
+        };
       }
     } else {
       throw transactionResponse;
