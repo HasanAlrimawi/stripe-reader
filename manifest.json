@@ -1,6 +1,6 @@
 {
-    "short_name": "Stripe Card Reader",
-    "name": "Stripe Card Reader",
+    "short_name": "Payment Gateways",
+    "name": "Payment Gateways",
     "icons": [
       {
         "src": "assets/logo192.png",

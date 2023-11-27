@@ -52,8 +52,8 @@ export const TCReaderView = (function () {
       form.remove();
     });
 
-    buttonsWrapper.appendChild(submitButton);
     buttonsWrapper.appendChild(cancelButton);
+    buttonsWrapper.appendChild(submitButton);
     form.appendChild(customerIdLabel);
     form.appendChild(customerIdInput);
     form.appendChild(passwordLabel);
@@ -108,8 +108,8 @@ export const TCReaderView = (function () {
       form.remove();
     });
 
-    buttonsWrapper.appendChild(submitButton);
     buttonsWrapper.appendChild(cancelButton);
+    buttonsWrapper.appendChild(submitButton);
     form.appendChild(deviceNameLabel);
     form.appendChild(deviceNameInput);
     form.appendChild(buttonsWrapper);

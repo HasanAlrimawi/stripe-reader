@@ -1,4 +1,4 @@
-const CACHE_NAME = "stripe-card-reader-pwa-v1";
+const CACHE_NAME = "payment-gateways-pwa-v1";
 const urlsToCache = [
   "/assets/logo192.png",
   "/assets/logo512.png",
@@ -10,7 +10,7 @@ const urlsToCache = [
   "/constants/TC-connection-details.js",
   "/controllers/base-controller.js",
   "/controllers/main-controller.js",
-  "/driver/base-driver.js",
+  "/drivers/base-driver.js",
   "/stripe/stripe-controller.js",
   "/stripe/stripe-driver.js",
   "/stripe/stripe-readers-model.js",

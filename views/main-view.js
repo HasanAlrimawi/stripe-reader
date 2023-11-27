@@ -12,7 +12,6 @@ export const mainView = (function () {
    * @param {Function} showDevice The callback function to be executed
    */
   function listAccessibleDevices(showDevice) {
-    // for (const gateway of paymentGateways) {
     const dropDownContainer = document.getElementById("dropdown-holder-div");
     const dropDownHead = document.createElement("div");
     const dropDownBody = document.createElement("div");
@@ -26,6 +25,7 @@ export const mainView = (function () {
     dropDownHead.appendChild(caret);
     dropDownContainer.appendChild(dropDownHead);
     dropDownBody.setAttribute("class", "dropdown-content");
+
     for (const gateway of paymentGateways) {
       const element = document.createElement("p");
       element.setAttribute("class", "dropdown-elements");
@@ -40,7 +40,6 @@ export const mainView = (function () {
       dropDownBody.appendChild(element);
     }
     dropDownContainer.appendChild(dropDownBody);
-    // }
   }
 
   /**

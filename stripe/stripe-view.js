@@ -107,8 +107,8 @@ export const stripeReaderView = (function () {
     cancelButton.setAttribute("id", "secret-key-form-cancel-button");
     buttonsWrapper.setAttribute("class", "flex-space-between");
 
-    buttonsWrapper.appendChild(submitButton);
     buttonsWrapper.appendChild(cancelButton);
+    buttonsWrapper.appendChild(submitButton);
     form.appendChild(keyLabel);
     form.appendChild(keyInput);
     form.appendChild(buttonsWrapper);
@@ -117,29 +117,29 @@ export const stripeReaderView = (function () {
   }
 
   /**
-   * Replaces the connect button of the just connected reader with a disconnect
-   *     button, and disables the other readers' connect buttons.
+   * Replaces the use reader button of the just chosen reader with a leave
+   *     button, and disables the other readers' use buttons.
    *
-   * @param {string} mode To specify what to do with connect/disconnect buttons
+   * @param {string} mode To specify what to do with use/leave buttons
    *     of all the readers except the one its button has been clicked,
    *     whether to enable or disable the buttons
-   * @param {string} reader Represents the reader its button has just been clicked
-   *     to exchange its button whether to connect/disconnect button
+   * @param {string} reader Represents the reader its button has just been
+   *     clicked to exchange its button whether to use/leave button
    */
-  function controlConnectButtons(reader, mode, useReader, leaveReader) {
+  function useLeaveReadersButtons(reader, mode, useReader, leaveReader) {
     let leaveReaderButton;
     let useReaderButton;
-    /** Represents the connect buttons of the readers apart from the one its
+    /** Represents the use reader buttons of the readers apart from the one its
      *      button recently clicked */
-    let connectButtons;
+    let useReaderButtons;
 
     switch (mode) {
       case "disable":
         useReaderButton = document.getElementById(reader.id);
         leaveReaderButton = createLeaveReaderButton(reader.id);
         useReaderButton.replaceWith(leaveReaderButton);
-        connectButtons = document.getElementsByClassName("connect-button");
-        for (const button of connectButtons) {
+        useReaderButtons = document.getElementsByClassName("connect-button");
+        for (const button of useReaderButtons) {
           button.setAttribute("disabled", true);
         }
         leaveReaderButton.addEventListener("click", () => {
@@ -151,8 +151,8 @@ export const stripeReaderView = (function () {
         leaveReaderButton = document.getElementById(reader.id);
         useReaderButton = createUseReaderButton(reader.id);
         leaveReaderButton.replaceWith(useReaderButton);
-        connectButtons = document.getElementsByClassName("connect-button");
-        for (const button of connectButtons) {
+        useReaderButtons = document.getElementsByClassName("connect-button");
+        for (const button of useReaderButtons) {
           button.removeAttribute("disabled");
         }
         useReaderButton.addEventListener("click", () => {
@@ -217,7 +217,7 @@ export const stripeReaderView = (function () {
   return {
     createAvailableReadersList,
     createSecretKeySetterCard,
-    controlConnectButtons,
+    useLeaveReadersButtons,
     deviceHtml,
     addPresetsButtons,
     createCheckButton,

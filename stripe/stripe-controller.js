@@ -1,8 +1,5 @@
-// import { communicator } from "../communicators/stripe-communicator.js";
-import { OBSERVER_TOPICS } from "../constants/observer-topics.js";
 import { stripeConnectionDetails } from "../constants/stripe-connection-details.js";
 import { stripeReaderView } from "./stripe-view.js";
-import { observer } from "../observer.js";
 import { stripeReadersModel } from "./stripe-readers-model.js";
 import { StripeDriver } from "./stripe-driver.js";
 import { BaseController } from "../controllers/base-controller.js";
@@ -37,23 +34,24 @@ export class StripeController extends BaseController {
       .appendChild(stripeReaderView.createCheckButton());
     document
       .getElementById("check-transaction-button")
-      .addEventListener("click", () => {
-        this.#checkTransaction(stripeConnectionDetails.SECRET_KEY);
-      });
+      .addEventListener("click", this.#checkTransaction);
     document.getElementById("title").textContent = "Stripe Reader";
     stripeReaderView.addPresetsButtons();
     const payBtn = document.getElementById("pay-btn");
     payBtn.setAttribute("disabled", true);
-
     document
       .getElementById("list-readers-btn")
       .addEventListener("click", this.#getListReadersAvailable);
-
     payBtn.addEventListener("click", this.#pay);
-
     document
       .getElementById("secret-key-card-addition-button")
       .addEventListener("click", this.#showSecretKeyCard);
+
+    if (localStorage.getItem(stripeConnectionDetails.LOCAL_STORAGE_API_KEY)) {
+      stripeConnectionDetails.SECRET_KEY = localStorage.getItem(
+        stripeConnectionDetails.LOCAL_STORAGE_API_KEY
+      );
+    }
   };
 
   /**
@@ -62,11 +60,12 @@ export class StripeController extends BaseController {
    */
   destroy = () => {
     document.getElementById("secret-key-card-addition-button").remove();
-    document.getElementById("title").textContent = "Peripherals";
+    document.getElementById("title").textContent = "Payment Gateways";
   };
 
   /**
-   * Handles Showing part of the view responsible for setting API secret key.
+   * Handles Showing part of the view which is a form responsible for setting
+   *     API secret key.
    */
   #showSecretKeyCard = () => {
     document
@@ -129,9 +128,8 @@ export class StripeController extends BaseController {
   };
 
   /**
-   * Checks if connection to stripe was successful and tries to do so if there
-   *     isn't, adds the readers' Ids to the dropdown list, after clearing the readers model
-   *     and the dropdown list if they had any reader included before.
+   * Gets the list of readers registered for the used stripe account and
+   *     updates the list of readers model and view.
    */
   #getListReadersAvailable = async () => {
     const listReadersButton = document.getElementById("list-readers-btn");
@@ -139,15 +137,21 @@ export class StripeController extends BaseController {
     listReadersButton.value = "Getting readers...";
 
     try {
-      // Make sure to disonnect the connected reader before finding other readers
-      if (stripeReadersModel.getReaderConnected()) {
-        await this.#leaveReader(stripeReadersModel.getReaderConnected());
+      if (stripeReadersModel.getReaderUsed()) {
+        this.#leaveReader(stripeReadersModel.getReaderUsed());
       }
       stripeReadersModel.setReadersList(undefined);
       console.log("BEFORE GETTING READERS");
       const availableReaders = await this.communicator.getReadersAvailable(
         stripeConnectionDetails.SECRET_KEY
       );
+
+      if (availableReaders.error) {
+        alert(availableReaders.error.message);
+        listReadersButton.removeAttribute("disabled");
+        listReadersButton.value = "List readers registered";
+        return;
+      }
       stripeReadersModel.setReadersList(availableReaders?.data);
       stripeReaderView.createAvailableReadersList(this.#useReader);
       listReadersButton.removeAttribute("disabled");
@@ -164,7 +168,7 @@ export class StripeController extends BaseController {
    *     button when the reader gets disconnected.
    */
   #restoreDefault = () => {
-    stripeReadersModel.setReaderConnected(undefined);
+    stripeReadersModel.setReaderUsed(undefined);
     stripeReadersModel.setReadersList(undefined);
     document.getElementById("pay-btn").setAttribute("disabled", true);
     document
@@ -177,17 +181,17 @@ export class StripeController extends BaseController {
   };
 
   /**
-   * Connects the reader with the specified id and saves the reader connected
-   *     to the reader connected model object.
+   * selects the reader to use for transaction saves it
+   *     to the reader used model object.
    *
    * @param {string} readerId
    */
-  #useReader = async (reader) => {
+  #useReader = (reader) => {
     const connectButton = document.getElementById(reader.id);
     connectButton.setAttribute("value", "leave");
-    stripeReadersModel.setReaderConnected(reader);
+    stripeReadersModel.setReaderUsed(reader);
     document.getElementById("pay-btn").removeAttribute("disabled");
-    stripeReaderView.controlConnectButtons(
+    stripeReaderView.useLeaveReadersButtons(
       reader,
       "disable",
       this.#useReader,
@@ -196,24 +200,24 @@ export class StripeController extends BaseController {
   };
 
   /**
-   * Disconnects the connected reader off the stripe terminal
+   * deselects the previously used reader for transactions.
    *
    * @param {string} readerId
    */
-  #leaveReader = async (reader) => {
-    stripeReaderView.controlConnectButtons(
+  #leaveReader = (reader) => {
+    stripeReaderView.useLeaveReadersButtons(
       reader,
       "enable",
       this.#useReader,
       this.#leaveReader
     );
-    stripeReadersModel.setReaderConnected(undefined);
+    stripeReadersModel.setReaderUsed(undefined);
     document.getElementById("pay-btn").setAttribute("disabled", true);
   };
 
   /**
    * Takes the responsibility of the payment flow from intent making to
-   *     payment collection and processing.
+   *     payment processing and cancelling if needed.
    */
   #pay = async () => {
     const payButton = document.getElementById("pay-btn");
@@ -234,7 +238,7 @@ export class StripeController extends BaseController {
       const result = await this.communicator.pay(
         stripeConnectionDetails.SECRET_KEY,
         amount,
-        stripeReadersModel.getReaderConnected().id
+        stripeReadersModel.getReaderUsed().id
       );
       let message = "";
       this.#currentIntentId =
@@ -262,14 +266,23 @@ export class StripeController extends BaseController {
    *
    * @param {string} apiSecretKey
    */
-  #checkTransaction = async (apiSecretKey) => {
+  #checkTransaction = async () => {
     if (this.#currentIntentId) {
       const transactionStatus = await this.communicator.retrieveTransaction(
-        apiSecretKey,
+        stripeConnectionDetails.SECRET_KEY,
         this.#currentIntentId
       );
       const paymentStatus = document.getElementById("payment-status");
-      if (transactionStatus.status) {
+
+      if (transactionStatus.last_payment_error) {
+        await this.communicator.cancelIntent(
+          stripeConnectionDetails.SECRET_KEY,
+          transactionStatus.id
+        );
+        paymentStatus.value = `${
+          transactionStatus.last_payment_error.message.split(".")[0]
+        }.\nTransaction has been canceled.`;
+      } else if (transactionStatus.status) {
         paymentStatus.value = `Transaction amount: ${
           transactionStatus.amount / 100
         }$\nStatus: ${transactionStatus.status}`;

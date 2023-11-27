@@ -5,14 +5,6 @@ import { TCConnectionDetails } from "../constants/TC-connection-details.js";
  */
 export const TCReadersModel = (function () {
   let readerUsed_ = undefined;
-
-  /**
-   * Represents AccountCredentials object.
-   * @typedef {Object} AccountCredentials
-   * @property {number} customerId
-   * @property {string} password
-   */
-
   let accountCredentials_ = undefined;
 
   function getReaderUsed() {

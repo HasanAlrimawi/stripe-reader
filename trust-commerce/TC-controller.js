@@ -50,12 +50,6 @@ export class TCController extends BaseController {
       });
 
     document.getElementById("pay-btn").addEventListener("click", this.#pay);
-    // document
-    //   .getElementById("payment-form-buttons")
-    //   .insertAdjacentElement("beforeend", TCReaderView.createCheckButton());
-    // document
-    //   .getElementById("check-pay")
-    //   .addEventListener("click", this.mockCheckTransaction);
   };
 
   /**
@@ -75,7 +69,7 @@ export class TCController extends BaseController {
   destroy = () => {
     document.getElementById("add-reader-button").remove();
     document.getElementById("set-account-credentials-button").remove();
-    document.getElementById("title").textContent = "Peripherals";
+    document.getElementById("title").textContent = "Payment Gateways";
   };
 
   /**
@@ -123,7 +117,7 @@ export class TCController extends BaseController {
       TCReadersModel.getReaderUsed() === undefined
     ) {
       paymentStatus.value =
-        "Make sure to set account credentials and device details.";
+        "Make sure to set account credentials and device details first.";
       payButton.removeAttribute("disabled");
       return;
     }

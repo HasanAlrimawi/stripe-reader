@@ -14,7 +14,7 @@
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker
-          .register("./service-worker.js")
+          .register("service-worker.js")
           .then((registration) => {
             console.log(
               "Service Worker registered with scope:",
@@ -29,17 +29,14 @@
     <div id="header-bar" class="header-bar">
       <div class="dropdown" id="dropdown-holder-div"></div>
       <div id="header-middle">
-        <h1 id="title">Peripherals</h1>
+        <h1 id="title">Payment Gateways</h1>
         <div id="payment-gateway-presets-buttons"></div>
       </div>
       <div id="theme">
-        <img id="theme-icon" src="/assets/toggle-theme.png" alt="Theme Icon">
+        <img id="theme-icon" src="assets/toggle-theme.png" alt="Theme Icon" />
       </div>
     </div>
-
-    <!-- <div class="dropdown" id="dropdown-holder-div"></div> -->
-
     <div class="wrapper-horizontal" id="device-space"></div>
   </body>
-  <script type="module" src="/controllers/main-controller.js"></script>
+  <script type="module" src="controllers/main-controller.js"></script>
 </html>

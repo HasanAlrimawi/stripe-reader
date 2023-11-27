@@ -1,5 +1,4 @@
 import { BaseDriver } from "../drivers/base-driver.js";
-import { stripeConnectionDetails } from "../constants/stripe-connection-details.js";
 export class StripeDriver extends BaseDriver {
   static stripeDriverInstance_;
 
@@ -10,11 +9,14 @@ export class StripeDriver extends BaseDriver {
     return this.stripeDriverInstance_;
   }
 
+  /** Represents the APIs endpoint URL used */
   #STRIPE_API_URL = "https://api.stripe.com/v1";
 
   /**
    * Gets the readers that are registered to the stripe terminal
    *     and saves them in the reader model.
+   *
+   * @param {string} apiSecretKey
    * @returns {object<string, string} The availabe readers registered to terminal
    */
   async getReadersAvailable(apiSecretKey) {
@@ -32,10 +34,11 @@ export class StripeDriver extends BaseDriver {
   /**
    * Creates payment intent with the specifed amount in cents.
    *
+   * @param {string} apiSecretKey
    * @param {string} amount represents the amount of the transaction to take place
    * @returns {object}
    */
-  async startIntent(apiSecretKey, amount) {
+  async #startIntent(apiSecretKey, amount) {
     return await fetch(`${this.#STRIPE_API_URL}/payment_intents`, {
       method: "POST",
       headers: {
@@ -52,12 +55,14 @@ export class StripeDriver extends BaseDriver {
   /**
    * Handles the process of the payment
    *
-   * @param {object} paymentIntent Represents the payment intent returned from
+   * @param {string} apiSecretKey
+   * @param {string} paymentIntentId Represents the payment intent returned from
    *     the collect payment API
+   * @param {string} readerId
    * @returns {object} intent Represents the returned intent from the process
    *     payment if successful, and the error object if it failed
    */
-  async processPayment(apiSecretKey, paymentIntentId, readerId) {
+  async #processPayment(apiSecretKey, paymentIntentId, readerId) {
     return await fetch(
       `${
         this.#STRIPE_API_URL
@@ -79,10 +84,11 @@ export class StripeDriver extends BaseDriver {
   /**
    * Cancels the specified intent in some failure cases.
    *
+   * @param {string} apiSecretKey
    * @param {string} intentId
    * @returns {object} The intent that has been canceled
    */
-  async cancelIntent(intentId, apiSecretKey) {
+  async cancelIntent(apiSecretKey, intentId) {
     return await fetch(
       `${this.#STRIPE_API_URL}/payment_intents/${intentId}/cancel`,
       {
@@ -100,28 +106,31 @@ export class StripeDriver extends BaseDriver {
 
   /**
    * Takes the responsibility of the payment flow from intent making to
-   *     payment collection and processing.
+   *     payment processing and cancelling if needed.
    *
+   * @param {string} apiSecretKey
    * @param {number} amount Represents the transaction amount
+   * @param {string} readerId
+   * @returns {object}
    */
   pay = async (apiSecretKey, amount, readerId) => {
-    const intent = await this.startIntent(apiSecretKey, amount);
+    const intent = await this.#startIntent(apiSecretKey, amount);
 
     if (intent?.error) {
       // In this case the intent has been created but should be canceled
       if (intent.error.code == !"amount_too_small") {
-        await this.cancelIntent(intent.id, apiSecretKey);
+        await this.cancelIntent(apiSecretKey, intent.id);
       }
       throw `Payment failed: ${intent.error.message}`;
     } else {
-      const result = await this.processPayment(
+      const result = await this.#processPayment(
         apiSecretKey,
         intent.id,
         readerId
       );
 
       if (result?.error) {
-        await this.cancelIntent(intent.id, apiSecretKey);
+        await this.cancelIntent(apiSecretKey, intent.id);
         throw `Payment failed: ${result.error.message}`;
       } else {
         return {

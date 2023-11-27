@@ -9,6 +9,4 @@ export const stripeConnectionDetails = {
   STRIPE_API_URL: "https://api.stripe.com/v1/",
   /** Represents local storage key of the API key */
   LOCAL_STORAGE_API_KEY: "API_KEY",
-  /** Represents the URL of stripe JS SDK */
-  STRIPE_API_JS_SDK_URL: "https://js.stripe.com/terminal/v1/",
 };

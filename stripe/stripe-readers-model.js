@@ -12,18 +12,18 @@ export const stripeReadersModel = (function () {
     readersList_ = newListReaders;
   }
 
-  function getReaderConnected() {
+  function getReaderUsed() {
     return readerConnected_;
   }
 
-  function setReaderConnected(newConnectedReader) {
+  function setReaderUsed(newConnectedReader) {
     readerConnected_ = newConnectedReader;
   }
 
   return {
     getReadersList,
     setReadersList,
-    getReaderConnected,
-    setReaderConnected,
+    getReaderUsed,
+    setReaderUsed,
   };
 })();
