@@ -72,8 +72,8 @@ export const mainView = (function () {
                 disabled="true"
                 id="payment-status"
                 value="No payment submitted"
-                rows="3"
-                cols="20"
+                rows="4"
+                cols="28"
               >
               </textarea>
         </section>

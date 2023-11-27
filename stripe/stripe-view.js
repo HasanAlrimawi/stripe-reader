@@ -8,7 +8,7 @@ export const stripeReaderView = (function () {
    * @param {string} readerName
    * @returns HTMLElement
    */
-  function createAvailableReadersList(connectToReader) {
+  function createAvailableReadersList(useReader) {
     const availableReaders = stripeReadersModel.getReadersList();
     const readersHolderElement = document.getElementById(
       "available-readers-holder"
@@ -19,16 +19,16 @@ export const stripeReaderView = (function () {
       for (const reader of availableReaders) {
         const readerWrapper = document.createElement("div");
         const readerLabel = document.createElement("label");
-        const connectButton = createConnectButton(reader.id);
-        connectButton.addEventListener("click", () => {
-          connectToReader(reader);
+        const useReaderButton = createUseReaderButton(reader.id);
+        useReaderButton.addEventListener("click", () => {
+          useReader(reader);
         });
 
         readerWrapper.setAttribute("class", "vertical-wrapper");
         readerLabel.textContent = reader.label;
 
         readerWrapper.appendChild(readerLabel);
-        readerWrapper.appendChild(connectButton);
+        readerWrapper.appendChild(useReaderButton);
         readersHolderElement.appendChild(readerWrapper);
       }
     }
@@ -41,13 +41,13 @@ export const stripeReaderView = (function () {
    * @param {string} readerName Represents the name to be given for the reader
    * @returns {HTMLElement}
    */
-  function createDisconnectButton(readerId) {
-    const disconnectButton = document.createElement("input");
-    disconnectButton.setAttribute("id", readerId);
-    disconnectButton.setAttribute("value", "Disconnect");
-    disconnectButton.setAttribute("class", "button");
-    disconnectButton.setAttribute("type", "button");
-    return disconnectButton;
+  function createLeaveReaderButton(readerId) {
+    const leaveReaderButton = document.createElement("input");
+    leaveReaderButton.setAttribute("id", readerId);
+    leaveReaderButton.setAttribute("value", "Leave");
+    leaveReaderButton.setAttribute("class", "button");
+    leaveReaderButton.setAttribute("type", "button");
+    return leaveReaderButton;
   }
 
   /**
@@ -57,13 +57,13 @@ export const stripeReaderView = (function () {
    * @param {string} readerName Represents the name to be given for the reader
    * @returns {HTMLElement}
    */
-  function createConnectButton(readerId) {
-    const connectButton = document.createElement("input");
-    connectButton.setAttribute("id", readerId);
-    connectButton.setAttribute("value", "Connect");
-    connectButton.setAttribute("class", "connect-button button");
-    connectButton.setAttribute("type", "button");
-    return connectButton;
+  function createUseReaderButton(readerId) {
+    const useReaderButton = document.createElement("input");
+    useReaderButton.setAttribute("id", readerId);
+    useReaderButton.setAttribute("value", "Use");
+    useReaderButton.setAttribute("class", "connect-button button");
+    useReaderButton.setAttribute("type", "button");
+    return useReaderButton;
   }
 
   /**
@@ -126,42 +126,37 @@ export const stripeReaderView = (function () {
    * @param {string} reader Represents the reader its button has just been clicked
    *     to exchange its button whether to connect/disconnect button
    */
-  function controlConnectButtons(
-    reader,
-    mode,
-    connectToReader,
-    disconnectReader
-  ) {
-    let disconnectButton;
-    let connectButton;
+  function controlConnectButtons(reader, mode, useReader, leaveReader) {
+    let leaveReaderButton;
+    let useReaderButton;
     /** Represents the connect buttons of the readers apart from the one its
      *      button recently clicked */
     let connectButtons;
 
     switch (mode) {
       case "disable":
-        connectButton = document.getElementById(reader.id);
-        disconnectButton = createDisconnectButton(reader.id);
-        connectButton.replaceWith(disconnectButton);
+        useReaderButton = document.getElementById(reader.id);
+        leaveReaderButton = createLeaveReaderButton(reader.id);
+        useReaderButton.replaceWith(leaveReaderButton);
         connectButtons = document.getElementsByClassName("connect-button");
-        connectButtons.forEach((button) => {
+        for (const button of connectButtons) {
           button.setAttribute("disabled", true);
-        });
-        disconnectButton.addEventListener("click", () => {
-          disconnectReader(reader);
+        }
+        leaveReaderButton.addEventListener("click", () => {
+          leaveReader(reader);
         });
         break;
 
       case "enable":
-        disconnectButton = document.getElementById(reader.id);
-        connectButton = createConnectButton(reader.id);
-        disconnectButton.replaceWith(connectButton);
+        leaveReaderButton = document.getElementById(reader.id);
+        useReaderButton = createUseReaderButton(reader.id);
+        leaveReaderButton.replaceWith(useReaderButton);
         connectButtons = document.getElementsByClassName("connect-button");
-        connectButtons.forEach((button) => {
+        for (const button of connectButtons) {
           button.removeAttribute("disabled");
-        });
-        connectButton.addEventListener("click", () => {
-          connectToReader(reader);
+        }
+        useReaderButton.addEventListener("click", () => {
+          useReader(reader);
         });
         break;
     }
@@ -206,11 +201,25 @@ export const stripeReaderView = (function () {
       );
   }
 
+  /**
+   * Creates check button to check the state of the last made transaction
+   */
+  function createCheckButton() {
+    const checkButton = document.createElement("input");
+    checkButton.setAttribute("type", "button");
+    checkButton.setAttribute("class", "button");
+    checkButton.setAttribute("value", "Check Transaction");
+    checkButton.setAttribute("id", "check-transaction-button");
+    checkButton.setAttribute("disabled", true);
+    return checkButton;
+  }
+
   return {
     createAvailableReadersList,
     createSecretKeySetterCard,
     controlConnectButtons,
     deviceHtml,
     addPresetsButtons,
+    createCheckButton,
   };
 })();
