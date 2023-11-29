@@ -19,7 +19,7 @@ export const mainView = (function () {
     const caret = document.createElement("div");
 
     dropDownHead.setAttribute("class", "dropdown-head");
-    dropDownTitle.textContent = "Select payment gateway";
+    dropDownTitle.textContent = "Select gateway";
     caret.setAttribute("class", "caret");
     dropDownHead.appendChild(dropDownTitle);
     dropDownHead.appendChild(caret);
@@ -32,6 +32,7 @@ export const mainView = (function () {
       element.textContent = gateway.LABEL;
       element.addEventListener("click", () => {
         if (gateway.CONTROLLER != currentActiveController.CONTROLLER) {
+          dropDownTitle.textContent = gateway.LABEL;
           currentActiveController.CONTROLLER?.destroy();
           currentActiveController.CONTROLLER = gateway.CONTROLLER;
           showDevice(gateway.CONTROLLER);

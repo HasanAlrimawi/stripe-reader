@@ -201,25 +201,11 @@ export const stripeReaderView = (function () {
       );
   }
 
-  /**
-   * Creates check button to check the state of the last made transaction
-   */
-  function createCheckButton() {
-    const checkButton = document.createElement("input");
-    checkButton.setAttribute("type", "button");
-    checkButton.setAttribute("class", "button");
-    checkButton.setAttribute("value", "Check Transaction");
-    checkButton.setAttribute("id", "check-transaction-button");
-    checkButton.setAttribute("disabled", true);
-    return checkButton;
-  }
-
   return {
     createAvailableReadersList,
     createSecretKeySetterCard,
     useLeaveReadersButtons,
     deviceHtml,
     addPresetsButtons,
-    createCheckButton,
   };
 })();

@@ -1,17 +1,18 @@
 :root {
-  --bar-background-color: #c9c8ff;
+  --bar-background-color: #e6e6e6;
   --main-color: #f4f4f4;
   --peripheral-selection: #ff9800;
   --subtitle-color: #3e3e3e;
   --label-color: #777;
   --white-to-black: #fff;
   --black-to-white: #333333;
-  --button-background-color: #007bff;
-  --button-hover-background-color: #0056b3;
-  --button-disabled-color: #91c0f7;
-  --dropdown-hover: #aaaae1;
-  --dropdown-content: #ededf9;
-  --dropdown-elements-hover: #c6c6e3;
+  --button-background-color: #91c15a;
+  --button-hover-background-color: #709d48;
+  --button-disabled-color: #b1d7b2;
+  --dropdown-head: #d8d8d8;
+  --dropdown-hover: #a09f9f;
+  --dropdown-content: #f4f4f4;
+  --dropdown-elements-hover: #b1b0b0;
 }
 
 [page-theme="dark"] {
@@ -25,6 +26,7 @@
   --button-background-color: #fb0000;
   --button-hover-background-color: #cd0000;
   --button-disabled-color: #f79191;
+  --dropdown-head: #292929;
   --dropdown-hover: #000000;
   --dropdown-content: #636262;
   --dropdown-elements-hover: #333;
@@ -194,7 +196,8 @@ textarea {
 }
 
 .dropdown-head {
-  background: var(--bar-background-color);
+  /* background: var(--bar-background-color); */
+  background: var(--dropdown-head);
   color: #191970;
   display: flex;
   justify-content: space-between;
@@ -344,7 +347,7 @@ textarea {
   cursor: pointer;
 }
 
-.flex-space-between{
+.flex-space-between {
   display: flex;
   justify-content: space-between;
   align-items: baseline;

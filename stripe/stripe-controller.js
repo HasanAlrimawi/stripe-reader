@@ -17,8 +17,6 @@ export class StripeController extends BaseController {
   /** Instance of stripe's driver to reach its capabilties */
   communicator = StripeDriver.getInstance();
 
-  #currentIntentId = undefined;
-
   /**
    * Handles the rendering of the stripe reader view.
    *
@@ -29,13 +27,7 @@ export class StripeController extends BaseController {
     document
       .getElementById("device-view")
       .insertAdjacentHTML("afterbegin", stripeReaderView.deviceHtml());
-    document
-      .getElementById("payment-form-buttons")
-      .appendChild(stripeReaderView.createCheckButton());
-    document
-      .getElementById("check-transaction-button")
-      .addEventListener("click", this.#checkTransaction);
-    document.getElementById("title").textContent = "Stripe Reader";
+    document.getElementById("title").textContent = "Stripe";
     stripeReaderView.addPresetsButtons();
     const payBtn = document.getElementById("pay-btn");
     payBtn.setAttribute("disabled", true);
@@ -174,7 +166,6 @@ export class StripeController extends BaseController {
     document
       .getElementById("check-transaction-button")
       .setAttribute("disabled", true);
-    this.#currentIntentId = undefined;
     document.getElementById("available-readers-holder").innerHTML = "";
     document.getElementById("payment-status").value = "";
     document.getElementById("payment-amount").value = "";
@@ -221,9 +212,6 @@ export class StripeController extends BaseController {
    */
   #pay = async () => {
     const payButton = document.getElementById("pay-btn");
-    const checkTransactionButton = document.getElementById(
-      "check-transaction-button"
-    );
     const paymentStatus = document.getElementById("payment-status");
     const amount = document.getElementById("payment-amount").value;
     paymentStatus.value = "Payment pending...";
@@ -241,54 +229,24 @@ export class StripeController extends BaseController {
         stripeReadersModel.getReaderUsed().id
       );
       let message = "";
-      this.#currentIntentId =
-        result?.intent?.action?.process_payment_intent?.payment_intent;
-      if (result?.intent?.action) {
-        message = `Payment ${result.intent.action.status}. \nCheck status after card-holder interaction.`;
-      } else {
-        message = "Check transaction status";
+      console.log(result);
+
+      if (result.last_payment_error) {
+        message = `${
+          result.last_payment_error.message.split(".")[0]
+        }.\nTransaction has been canceled.`;
+      } else if (result.status) {
+        message = `Transaction amount: ${result.amount / 100}$\nStatus: ${
+          result.status
+        }`;
       }
       paymentStatus.value = message;
-      checkTransactionButton.removeAttribute("disabled");
     } catch (error) {
       if (error == "TypeError: Failed to fetch") {
         error = "Payment failed: make sure you're connected to internet.";
       }
       paymentStatus.value = error;
-      checkTransactionButton.setAttribute("disabled", true);
-      this.#currentIntentId = undefined;
     }
     payButton.removeAttribute("disabled");
-  };
-
-  /**
-   * Checks the status of the last transaction made.
-   *
-   * @param {string} apiSecretKey
-   */
-  #checkTransaction = async () => {
-    if (this.#currentIntentId) {
-      const transactionStatus = await this.communicator.retrieveTransaction(
-        stripeConnectionDetails.SECRET_KEY,
-        this.#currentIntentId
-      );
-      const paymentStatus = document.getElementById("payment-status");
-
-      if (transactionStatus.last_payment_error) {
-        await this.communicator.cancelIntent(
-          stripeConnectionDetails.SECRET_KEY,
-          transactionStatus.id
-        );
-        paymentStatus.value = `${
-          transactionStatus.last_payment_error.message.split(".")[0]
-        }.\nTransaction has been canceled.`;
-      } else if (transactionStatus.status) {
-        paymentStatus.value = `Transaction amount: ${
-          transactionStatus.amount / 100
-        }$\nStatus: ${transactionStatus.status}`;
-      } else {
-        paymentStatus.value = transactionStatus?.error?.message;
-      }
-    }
   };
 }

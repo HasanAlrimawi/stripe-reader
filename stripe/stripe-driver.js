@@ -133,10 +133,11 @@ export class StripeDriver extends BaseDriver {
         await this.cancelIntent(apiSecretKey, intent.id);
         throw `Payment failed: ${result.error.message}`;
       } else {
-        return {
-          intent: result,
-          success: "success",
-        };
+        const transactionResult = await this.#transactionChecker(
+          apiSecretKey,
+          intent
+        );
+        return transactionResult;
       }
     }
   };
@@ -148,7 +149,7 @@ export class StripeDriver extends BaseDriver {
    * @param {string} intentId
    * @returns {object} The intent required
    */
-  retrieveTransaction = async (apiSecretKey, intentId) => {
+  #retrieveTransaction = async (apiSecretKey, intentId) => {
     return await fetch(`${this.#STRIPE_API_URL}/payment_intents/${intentId}`, {
       method: "GET",
       headers: {
@@ -158,6 +159,54 @@ export class StripeDriver extends BaseDriver {
       },
     }).then((res) => {
       return res.json();
+    });
+  };
+
+  /**
+   * Checks the transaction state every 3 second if the cardholder interacted,
+   *     and if the transaction is successful, and it gets canceled if the
+   *     cardholder didn't interacted for more than 10 seconds.
+   *
+   * @param {string} apiSecretKey
+   * @param {Object} intent
+   * @returns {Promise}
+   */
+  #transactionChecker = async (apiSecretKey, intent) => {
+    return new Promise(async (resolve) => {
+      let paymentFinished = false;
+      let retrievedTransaction = undefined;
+      const transactionCheckInterval = setInterval(async () => {
+        retrievedTransaction = await this.#retrieveTransaction(
+          apiSecretKey,
+          intent.id
+        );
+
+        if (retrievedTransaction.last_payment_error) {
+          await this.cancelIntent(apiSecretKey, intent.id);
+          paymentFinished = true;
+        } else if (
+          retrievedTransaction?.status === "succeeded" ||
+          retrievedTransaction?.status === "canceled"
+        ) {
+          paymentFinished = true;
+        }
+
+        if (paymentFinished) {
+          resolve(retrievedTransaction);
+          clearInterval(transactionCheckInterval);
+        }
+      }, 3000);
+      // To force promise resolve after 10 seconds, as the cardholder
+      // took so much time to interact and insert the card to the reader
+      setTimeout(async () => {
+        await this.cancelIntent(apiSecretKey, intent.id);
+        retrievedTransaction = await this.#retrieveTransaction(
+          apiSecretKey,
+          intent.id
+        );
+        clearInterval(retrievedTransaction);
+        resolve(retrievedTransaction);
+      }, 10000);
     });
   };
 }
