@@ -12,6 +12,7 @@ export class TCDriver extends BaseDriver {
 
   /** Trust commerce API URL to make transactions */
   #TC_API_URL = "https://vault.trustcommerce.com/trans/?";
+  // #TC_API_URL = "http://localhost:8085/tc-proxy";
 
   /**
    * Provides ability to check whether the device is ready for transaction
@@ -163,6 +164,55 @@ export class TCDriver extends BaseDriver {
     }
   };
 
+  refund = async(customerId, password, amount, deviceName) => {
+    const refundResponse = await this.#makeTransaction(
+      customerId,
+      password,
+      deviceName,
+      amount
+    );
+    const currentcloudPayId = refundResponse.cloudpayid;
+
+    if (refundResponse.cloudpaystatus === "submitted") {
+      let transactionResult = await this.#checkTransaction(
+        customerId,
+        password,
+        deviceName,
+        currentcloudPayId
+      );
+      transactionResult = await this.#checkTransaction(
+        customerId,
+        password,
+        deviceName,
+        currentcloudPayId
+      );
+
+      if (
+        transactionResult.cloudpaystatus === "complete" ||
+        transactionResult.cloudpaystatus === "cancel"
+      ) {
+        return transactionResult;
+      }
+      // transaction will be canceled in case the response status wasn't
+      //    complete, since probably the reader disconnected recently or
+      //    transaction was canceled by the system due to cardholder
+      //    interaction timeout
+      else {
+        await this.#cancelTransaction(
+          customerId,
+          password,
+          deviceName,
+          currentcloudPayId
+        );
+        throw {
+          status: "canceled",
+        };
+      }
+    } else {
+      throw refundResponse;
+    }
+  }
+
   /**
    * Cancels Trust Commerce transaction that was requested before.
    *
@@ -179,6 +229,22 @@ export class TCDriver extends BaseDriver {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: `custid=${customerId}&password=${password}&action=cancel&device_name=${deviceName}&cloudpayid=${cloudPayId}&demo=y`,
+    })
+      .then((res) => {
+        return res.text();
+      })
+      .then((text) => {
+        return this.#textToJSON(text);
+      });
+  };
+
+  #refundTransaction = async (customerId, password, amount, deviceName) => {
+    return await fetch(`${this.#TC_API_URL}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `custid=${customerId}&password=${password}&action=credit2&device_name=${deviceName}&amount=${amount}&demo=y`,
     })
       .then((res) => {
         return res.text();

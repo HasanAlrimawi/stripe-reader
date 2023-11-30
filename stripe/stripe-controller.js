@@ -60,6 +60,9 @@ export class StripeController extends BaseController {
    *     API secret key.
    */
   #showSecretKeyCard = () => {
+    if (document.getElementById("secret-key-card")) {
+      return;
+    }
     document
       .getElementById("secret-key-card-addition-button")
       .setAttribute("disabled", true);
@@ -163,9 +166,9 @@ export class StripeController extends BaseController {
     stripeReadersModel.setReaderUsed(undefined);
     stripeReadersModel.setReadersList(undefined);
     document.getElementById("pay-btn").setAttribute("disabled", true);
-    document
-      .getElementById("check-transaction-button")
-      .setAttribute("disabled", true);
+    // document
+    //   .getElementById("check-transaction-button")
+    //   .setAttribute("disabled", true);
     document.getElementById("available-readers-holder").innerHTML = "";
     document.getElementById("payment-status").value = "";
     document.getElementById("payment-amount").value = "";
@@ -229,7 +232,7 @@ export class StripeController extends BaseController {
         stripeReadersModel.getReaderUsed().id
       );
       let message = "";
-      console.log(result);
+      // console.log(result);
 
       if (result.last_payment_error) {
         message = `${
