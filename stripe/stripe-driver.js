@@ -88,7 +88,7 @@ export class StripeDriver extends BaseDriver {
    * @param {string} intentId
    * @returns {object} The intent that has been canceled
    */
-  async cancelIntent(apiSecretKey, intentId) {
+  async #cancelIntent(apiSecretKey, intentId) {
     return await fetch(
       `${this.#STRIPE_API_URL}/payment_intents/${intentId}/cancel`,
       {
@@ -119,7 +119,7 @@ export class StripeDriver extends BaseDriver {
     if (intent?.error) {
       // In this case the intent has been created but should be canceled
       if (intent.error.code == !"amount_too_small") {
-        await this.cancelIntent(apiSecretKey, intent.id);
+        await this.#cancelIntent(apiSecretKey, intent.id);
       }
       throw `Payment failed: ${intent.error.message}`;
     } else {
@@ -130,12 +130,13 @@ export class StripeDriver extends BaseDriver {
       );
 
       if (result?.error) {
-        await this.cancelIntent(apiSecretKey, intent.id);
+        await this.#cancelIntent(apiSecretKey, intent.id);
         throw `Payment failed: ${result.error.message}`;
       } else {
         const transactionResult = await this.#transactionChecker(
           apiSecretKey,
-          intent
+          intent,
+          readerId
         );
         return transactionResult;
       }
@@ -163,15 +164,40 @@ export class StripeDriver extends BaseDriver {
   };
 
   /**
+   * Cancels the action the reader is doing at the moment of calling the API
+   *     in order to clear the screen and make the reader
+   *     ready for transaction.
+   *
+   * @param {string} apiSecretKey
+   * @param {string} readerId
+   * @returns {Object}
+   */
+  #cancelReaderAction = async (apiSecretKey, readerId) => {
+    return await fetch(
+      `${this.#STRIPE_API_URL}/terminal/readers/${readerId}/cancel_action`,
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Bearer ${apiSecretKey}`,
+        },
+      }
+    ).then((res) => {
+      return res.json();
+    });
+  };
+
+  /**
    * Checks the transaction state every 3 second if the cardholder interacted,
    *     and if the transaction is successful, and it gets canceled if the
-   *     cardholder didn't interacted for more than 10 seconds.
+   *     cardholder didn't interacted for more than 20 seconds.
    *
    * @param {string} apiSecretKey
    * @param {Object} intent
    * @returns {Promise}
    */
-  #transactionChecker = async (apiSecretKey, intent) => {
+  #transactionChecker = async (apiSecretKey, intent, readerId) => {
     return new Promise(async (resolve) => {
       let paymentFinished = false;
       let retrievedTransaction = undefined;
@@ -182,7 +208,7 @@ export class StripeDriver extends BaseDriver {
         );
 
         if (retrievedTransaction.last_payment_error) {
-          await this.cancelIntent(apiSecretKey, intent.id);
+          await this.#cancelIntent(apiSecretKey, intent.id);
           paymentFinished = true;
         } else if (
           retrievedTransaction?.status === "succeeded" ||
@@ -196,17 +222,20 @@ export class StripeDriver extends BaseDriver {
           clearInterval(transactionCheckInterval);
         }
       }, 3000);
-      // To force promise resolve after 10 seconds, as the cardholder
+      // To force promise resolve after 20 seconds, as the cardholder
       // took so much time to interact and insert the card to the reader
       setTimeout(async () => {
-        await this.cancelIntent(apiSecretKey, intent.id);
-        retrievedTransaction = await this.#retrieveTransaction(
-          apiSecretKey,
-          intent.id
-        );
-        clearInterval(retrievedTransaction);
-        resolve(retrievedTransaction);
-      }, 10000);
+        if (!paymentFinished) {
+          this.#cancelReaderAction(apiSecretKey, readerId);
+          await this.#cancelIntent(apiSecretKey, intent.id);
+          retrievedTransaction = await this.#retrieveTransaction(
+            apiSecretKey,
+            intent.id
+          );
+          clearInterval(retrievedTransaction);
+          resolve(retrievedTransaction);
+        }
+      }, 20000);
     });
   };
 }

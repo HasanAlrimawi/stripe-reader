@@ -162,20 +162,10 @@ export const TCReaderView = (function () {
       );
   }
 
-  function createRefundButton() {
-    const refundButton = document.createElement("input");
-    refundButton.setAttribute("id", "check-pay");
-    refundButton.setAttribute("value", "Refund");
-    refundButton.setAttribute("class", "button");
-    refundButton.setAttribute("type", "button");
-    return refundButton;
-  }
-
   return {
     accountCredentialsCard,
     defineReaderDeviceCard,
     createCheckButton,
     addPresetsButtons,
-    createRefundButton,
   };
 })();

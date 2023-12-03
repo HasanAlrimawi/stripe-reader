@@ -17,10 +17,10 @@ export const paymentGateways = [
     CONTROLLER: StripeController.getInstance(),
   }),
 
-  // Object.freeze({
-  //   LABEL: "Trust Commerce",
-  //   CONTROLLER: TCController.getInstance(),
-  // }),
+  Object.freeze({
+    LABEL: "Trust Commerce",
+    CONTROLLER: TCController.getInstance(),
+  }),
 ];
 
 /**

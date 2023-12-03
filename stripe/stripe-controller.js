@@ -136,7 +136,6 @@ export class StripeController extends BaseController {
         this.#leaveReader(stripeReadersModel.getReaderUsed());
       }
       stripeReadersModel.setReadersList(undefined);
-      console.log("BEFORE GETTING READERS");
       const availableReaders = await this.communicator.getReadersAvailable(
         stripeConnectionDetails.SECRET_KEY
       );
@@ -248,6 +247,9 @@ export class StripeController extends BaseController {
       if (error == "TypeError: Failed to fetch") {
         error = "Payment failed: make sure you're connected to internet.";
       }
+      const errorPartitioned = error.split(/(?<![0-9])\./);
+      error =
+        errorPartitioned.length > 1 ? errorPartitioned[0] : errorPartitioned;
       paymentStatus.value = error;
     }
     payButton.removeAttribute("disabled");

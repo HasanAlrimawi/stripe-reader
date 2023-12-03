@@ -11,7 +11,8 @@ export class TCDriver extends BaseDriver {
   }
 
   /** Trust commerce API URL to make transactions */
-  #TC_API_URL = "https://vault.trustcommerce.com/trans/?";
+  #TC_API_URL = "https://drab-puce-ladybug-coat.cyclic.app/tc-proxy";
+  // #TC_API_URL = "https://vault.trustcommerce.com/trans/?";
   // #TC_API_URL = "http://localhost:8085/tc-proxy";
 
   /**
@@ -81,7 +82,8 @@ export class TCDriver extends BaseDriver {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: `custid=${customerId}&password=${password}&action=transstatus&device_name=${deviceName}&cloudpayid=${cloudPayId}&long_polling=y&demo=y`,
+      body: `custid=${customerId}&password=${password}&action=transstatus&device_name=${deviceName}&cloudpayid=${cloudPayId}&demo=y`,
+      // body: `custid=${customerId}&password=${password}&action=transstatus&device_name=${deviceName}&cloudpayid=${cloudPayId}&long_polling=y&demo=y`,
     })
       .then((res) => {
         return res.text();
@@ -102,7 +104,7 @@ export class TCDriver extends BaseDriver {
    *
    * @param {number} customerId
    * @param {string} password
-   * @param {number} amount Transaction amount on cents
+   * @param {number} amount Transaction amount in cents
    * @param {string} deviceName
    * @returns {Object}
    */
@@ -125,13 +127,7 @@ export class TCDriver extends BaseDriver {
     const currentcloudPayId = transactionResponse.cloudpayid;
 
     if (transactionResponse.cloudpaystatus === "submitted") {
-      let transactionResult = await this.#checkTransaction(
-        customerId,
-        password,
-        deviceName,
-        currentcloudPayId
-      );
-      transactionResult = await this.#checkTransaction(
+      let transactionResult = await this.#getTransactionFinalState(
         customerId,
         password,
         deviceName,
@@ -164,55 +160,6 @@ export class TCDriver extends BaseDriver {
     }
   };
 
-  refund = async(customerId, password, amount, deviceName) => {
-    const refundResponse = await this.#makeTransaction(
-      customerId,
-      password,
-      deviceName,
-      amount
-    );
-    const currentcloudPayId = refundResponse.cloudpayid;
-
-    if (refundResponse.cloudpaystatus === "submitted") {
-      let transactionResult = await this.#checkTransaction(
-        customerId,
-        password,
-        deviceName,
-        currentcloudPayId
-      );
-      transactionResult = await this.#checkTransaction(
-        customerId,
-        password,
-        deviceName,
-        currentcloudPayId
-      );
-
-      if (
-        transactionResult.cloudpaystatus === "complete" ||
-        transactionResult.cloudpaystatus === "cancel"
-      ) {
-        return transactionResult;
-      }
-      // transaction will be canceled in case the response status wasn't
-      //    complete, since probably the reader disconnected recently or
-      //    transaction was canceled by the system due to cardholder
-      //    interaction timeout
-      else {
-        await this.#cancelTransaction(
-          customerId,
-          password,
-          deviceName,
-          currentcloudPayId
-        );
-        throw {
-          status: "canceled",
-        };
-      }
-    } else {
-      throw refundResponse;
-    }
-  }
-
   /**
    * Cancels Trust Commerce transaction that was requested before.
    *
@@ -238,20 +185,67 @@ export class TCDriver extends BaseDriver {
       });
   };
 
-  #refundTransaction = async (customerId, password, amount, deviceName) => {
-    return await fetch(`${this.#TC_API_URL}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: `custid=${customerId}&password=${password}&action=credit2&device_name=${deviceName}&amount=${amount}&demo=y`,
-    })
-      .then((res) => {
-        return res.text();
-      })
-      .then((text) => {
-        return this.#textToJSON(text);
-      });
+  /**
+   * Checks the transaction state every 3 second if the cardholder interacted,
+   *     and if the transaction is successful, and it gets canceled if the
+   *     cardholder didn't interacted for more than 20 seconds.
+   *
+   * @param {number} customerId
+   * @param {string} password
+   * @param {number} amount Transaction amount in cents
+   * @param {string} deviceName
+   * @returns {Object}
+   */
+  #getTransactionFinalState = async (
+    customerId,
+    password,
+    deviceName,
+    cloudPayId
+  ) => {
+    return new Promise(async (resolve) => {
+      let paymentFinished = false;
+      let transactionCheckResult = undefined;
+      const transactionCheckInterval = setInterval(async () => {
+        transactionCheckResult = await this.#checkTransaction(
+          customerId,
+          password,
+          deviceName,
+          cloudPayId
+        );
+
+        if (
+          transactionCheckResult.cloudpaystatus === "complete" ||
+          transactionCheckResult.cloudpaystatus === "cancel"
+        ) {
+          paymentFinished = true;
+        }
+
+        if (paymentFinished) {
+          resolve(transactionCheckResult);
+          clearInterval(transactionCheckInterval);
+        }
+      }, 3000);
+      // To force promise resolve after 20 seconds, as the cardholder
+      // took so much time to interact and insert the card to the reader
+      setTimeout(async () => {
+        if (!paymentFinished) {
+          await this.#cancelTransaction(
+            customerId,
+            password,
+            deviceName,
+            cloudPayId
+          );
+          transactionCheckResult = await this.#checkTransaction(
+            customerId,
+            password,
+            deviceName,
+            cloudPayId
+          );
+          clearInterval(transactionCheckResult);
+          resolve(transactionCheckResult);
+        }
+      }, 20000);
+    });
   };
 
   /**

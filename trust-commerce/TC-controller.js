@@ -52,12 +52,7 @@ export class TCController extends BaseController {
             );
         }
       });
-
-    // const refundButton = TCReaderView.createRefundButton();
-    // document
-    //   .getElementById("payment-form-buttons")
-    //   .insertAdjacentElement("beforeend", refundButton);
-    // refundButton.addEventListener("click", this.#refund);
+      
     document.getElementById("pay-btn").addEventListener("click", this.#pay);
   };
 
@@ -142,16 +137,25 @@ export class TCController extends BaseController {
       }`;
       console.log(transactionResponse);
     } catch (transactionResult) {
+      // message = `${
+      //   transactionResult.devicestatus
+      //     ? `Device status: ${transactionResult.devicestatus}.\nMake sure device is connected and available.`
+      //     : `Transaction result: ${
+      //         transactionResult.status
+      //           ? transactionResult.status
+      //           : transactionResult.cloudpaystatus
+      //       }.`
+      // }`;
+
       message = `${
         transactionResult.devicestatus
-          ? `Device status: ${transactionResult.devicestatus}.\nMake sure device is connected and available.`
+          ? `Device status: ${transactionResult.description}.\nMake sure device is connected and available.`
           : `Transaction result: ${
-              transactionResult.status
-                ? transactionResult.status
+              transactionResult.message
+                ? transactionResult.message
                 : transactionResult.cloudpaystatus
             }.`
       }`;
-
       console.log(transactionResult);
     }
     payButton.removeAttribute("disabled");
@@ -184,50 +188,5 @@ export class TCController extends BaseController {
       };
     }
     return;
-  };
-
-  #refund = async () => {
-    const paymentStatus = document.getElementById("payment-status");
-    const payButton = document.getElementById("pay-btn");
-    const amount = document.getElementById("payment-amount").value;
-    payButton.setAttribute("disabled", true);
-    const amountAndPresetsCheck = this.#checkPresetsAndAmount(amount);
-
-    if (amountAndPresetsCheck?.error) {
-      paymentStatus.value = amountAndPresetsCheck.error;
-      payButton.removeAttribute("disabled");
-      return;
-    }
-    paymentStatus.value = "pending...";
-    let message = "Transaction Unsuccessful";
-
-    try {
-      const transactionResponse = await this.communicatorTc.refund(
-        TCReadersModel.getAccountCredentials().customerId,
-        TCReadersModel.getAccountCredentials().password,
-        amount,
-        TCReadersModel.getReaderUsed()
-      );
-      message = `Transaction is ${
-        transactionResponse.status
-          ? transactionResponse.status
-          : transactionResponse.cloudpaystatus
-      }`;
-      console.log(transactionResponse);
-    } catch (transactionResult) {
-      message = `${
-        transactionResult.devicestatus
-          ? `Device status: ${transactionResult.devicestatus}.\nMake sure device is connected and available.`
-          : `Transaction result: ${
-              transactionResult.status
-                ? transactionResult.status
-                : transactionResult.cloudpaystatus
-            }.`
-      }`;
-
-      console.log(transactionResult);
-    }
-    payButton.removeAttribute("disabled");
-    paymentStatus.value = message;
   };
 }
