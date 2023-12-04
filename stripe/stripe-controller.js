@@ -151,6 +151,9 @@ export class StripeController extends BaseController {
       listReadersButton.removeAttribute("disabled");
       listReadersButton.value = "List readers registered";
     } catch (error) {
+      if (error == "TypeError: Failed to fetch") {
+        error = "Make sure you're connected to internet then try again.";
+      }
       listReadersButton.value = "List readers registered";
       listReadersButton.removeAttribute("disabled");
       alert(`${error}`);
@@ -165,9 +168,6 @@ export class StripeController extends BaseController {
     stripeReadersModel.setReaderUsed(undefined);
     stripeReadersModel.setReadersList(undefined);
     document.getElementById("pay-btn").setAttribute("disabled", true);
-    // document
-    //   .getElementById("check-transaction-button")
-    //   .setAttribute("disabled", true);
     document.getElementById("available-readers-holder").innerHTML = "";
     document.getElementById("payment-status").value = "";
     document.getElementById("payment-amount").value = "";
@@ -231,7 +231,6 @@ export class StripeController extends BaseController {
         stripeReadersModel.getReaderUsed().id
       );
       let message = "";
-      // console.log(result);
 
       if (result.last_payment_error) {
         message = `${
@@ -245,7 +244,7 @@ export class StripeController extends BaseController {
       paymentStatus.value = message;
     } catch (error) {
       if (error == "TypeError: Failed to fetch") {
-        error = "Payment failed: make sure you're connected to internet.";
+        error = "Transaction canceled: make sure you're connected to internet.";
       }
       const errorPartitioned = error.split(/(?<![0-9])\./);
       error =

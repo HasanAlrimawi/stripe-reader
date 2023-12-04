@@ -133,12 +133,16 @@ export class StripeDriver extends BaseDriver {
         await this.#cancelIntent(apiSecretKey, intent.id);
         throw `Payment failed: ${result.error.message}`;
       } else {
-        const transactionResult = await this.#transactionChecker(
-          apiSecretKey,
-          intent,
-          readerId
-        );
-        return transactionResult;
+        try {
+          const transactionResult = await this.#transactionChecker(
+            apiSecretKey,
+            intent.id,
+            readerId
+          );
+          return transactionResult;
+        } catch (error) {
+          throw error;
+        }
       }
     }
   };
@@ -194,21 +198,28 @@ export class StripeDriver extends BaseDriver {
    *     cardholder didn't interacted for more than 20 seconds.
    *
    * @param {string} apiSecretKey
-   * @param {Object} intent
+   * @param {Object} intentId
    * @returns {Promise}
    */
-  #transactionChecker = async (apiSecretKey, intent, readerId) => {
-    return new Promise(async (resolve) => {
+  #transactionChecker = async (apiSecretKey, intentId, readerId) => {
+    return new Promise(async (resolve, reject) => {
       let paymentFinished = false;
       let retrievedTransaction = undefined;
       const transactionCheckInterval = setInterval(async () => {
-        retrievedTransaction = await this.#retrieveTransaction(
-          apiSecretKey,
-          intent.id
-        );
+        try {
+          retrievedTransaction = await this.#retrieveTransaction(
+            apiSecretKey,
+            intentId
+          );
+        } catch (error) {
+          clearInterval(transactionCheckInterval);
+          paymentFinished = true;
+          reject(error);
+          return;
+        }
 
         if (retrievedTransaction.last_payment_error) {
-          await this.#cancelIntent(apiSecretKey, intent.id);
+          await this.#cancelIntent(apiSecretKey, intentId);
           paymentFinished = true;
         } else if (
           retrievedTransaction?.status === "succeeded" ||
@@ -227,10 +238,10 @@ export class StripeDriver extends BaseDriver {
       setTimeout(async () => {
         if (!paymentFinished) {
           this.#cancelReaderAction(apiSecretKey, readerId);
-          await this.#cancelIntent(apiSecretKey, intent.id);
+          await this.#cancelIntent(apiSecretKey, intentId);
           retrievedTransaction = await this.#retrieveTransaction(
             apiSecretKey,
-            intent.id
+            intentId
           );
           clearInterval(retrievedTransaction);
           resolve(retrievedTransaction);

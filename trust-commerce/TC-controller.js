@@ -52,7 +52,7 @@ export class TCController extends BaseController {
             );
         }
       });
-      
+
     document.getElementById("pay-btn").addEventListener("click", this.#pay);
   };
 
@@ -130,35 +130,32 @@ export class TCController extends BaseController {
         amount,
         TCReadersModel.getReaderUsed()
       );
+      payButton.removeAttribute("disabled");
       message = `Transaction is ${
         transactionResponse.status
           ? transactionResponse.status
           : transactionResponse.cloudpaystatus
       }`;
       console.log(transactionResponse);
-    } catch (transactionResult) {
-      // message = `${
-      //   transactionResult.devicestatus
-      //     ? `Device status: ${transactionResult.devicestatus}.\nMake sure device is connected and available.`
-      //     : `Transaction result: ${
-      //         transactionResult.status
-      //           ? transactionResult.status
-      //           : transactionResult.cloudpaystatus
-      //       }.`
-      // }`;
-
+    } catch (faultyTransaction) {
+      payButton.removeAttribute("disabled");
+      
+      if (faultyTransaction == "TypeError: Failed to fetch") {
+        paymentStatus.value =
+          "Make sure you're connected to internet then try again.";
+        return;
+      }
       message = `${
-        transactionResult.devicestatus
-          ? `Device status: ${transactionResult.description}.\nMake sure device is connected and available.`
+        faultyTransaction.devicestatus
+          ? `Device status: ${faultyTransaction.description}.\nMake sure device is connected and available.`
           : `Transaction result: ${
-              transactionResult.message
-                ? transactionResult.message
-                : transactionResult.cloudpaystatus
+              faultyTransaction.message
+                ? faultyTransaction.message
+                : faultyTransaction.cloudpaystatus
             }.`
       }`;
-      console.log(transactionResult);
+      console.log(faultyTransaction);
     }
-    payButton.removeAttribute("disabled");
     paymentStatus.value = message;
   };
 

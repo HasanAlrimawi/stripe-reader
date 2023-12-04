@@ -127,33 +127,17 @@ export class TCDriver extends BaseDriver {
     const currentcloudPayId = transactionResponse.cloudpayid;
 
     if (transactionResponse.cloudpaystatus === "submitted") {
-      let transactionResult = await this.#getTransactionFinalState(
-        customerId,
-        password,
-        deviceName,
-        currentcloudPayId
-      );
-
-      if (
-        transactionResult.cloudpaystatus === "complete" ||
-        transactionResult.cloudpaystatus === "cancel"
-      ) {
-        return transactionResult;
-      }
-      // transaction will be canceled in case the response status wasn't
-      //    complete, since probably the reader disconnected recently or
-      //    transaction was canceled by the system due to cardholder
-      //    interaction timeout
-      else {
-        await this.#cancelTransaction(
+      try {
+        let transactionResult = await this.#getTransactionFinalState(
           customerId,
           password,
           deviceName,
           currentcloudPayId
         );
-        throw {
-          status: "canceled",
-        };
+        console.log(transactionResult);
+        return transactionResult;
+      } catch (error) {
+        throw error;
       }
     } else {
       throw transactionResponse;
@@ -202,16 +186,23 @@ export class TCDriver extends BaseDriver {
     deviceName,
     cloudPayId
   ) => {
-    return new Promise(async (resolve) => {
+    return new Promise(async (resolve, reject) => {
       let paymentFinished = false;
       let transactionCheckResult = undefined;
       const transactionCheckInterval = setInterval(async () => {
-        transactionCheckResult = await this.#checkTransaction(
-          customerId,
-          password,
-          deviceName,
-          cloudPayId
-        );
+        try {
+          transactionCheckResult = await this.#checkTransaction(
+            customerId,
+            password,
+            deviceName,
+            cloudPayId
+          );
+        } catch (error) {
+          clearInterval(transactionCheckInterval);
+          paymentFinished = true;
+          reject(error);
+          return;
+        }
 
         if (
           transactionCheckResult.cloudpaystatus === "complete" ||
