@@ -134,7 +134,6 @@ export class TCDriver extends BaseDriver {
           deviceName,
           currentcloudPayId
         );
-        console.log(transactionResult);
         return transactionResult;
       } catch (error) {
         throw error;

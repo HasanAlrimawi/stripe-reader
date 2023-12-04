@@ -136,10 +136,9 @@ export class TCController extends BaseController {
           ? transactionResponse.status
           : transactionResponse.cloudpaystatus
       }`;
-      console.log(transactionResponse);
     } catch (faultyTransaction) {
       payButton.removeAttribute("disabled");
-      
+
       if (faultyTransaction == "TypeError: Failed to fetch") {
         paymentStatus.value =
           "Make sure you're connected to internet then try again.";
@@ -154,7 +153,6 @@ export class TCController extends BaseController {
                 : faultyTransaction.cloudpaystatus
             }.`
       }`;
-      console.log(faultyTransaction);
     }
     paymentStatus.value = message;
   };
