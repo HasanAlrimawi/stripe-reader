@@ -21,7 +21,11 @@ export const TCReaderView = (function () {
     form.setAttribute("class", "card-form");
     form.addEventListener("submit", (event) => {
       saveAccountCredentials(event);
-      document.getElementById("account-credentials-form").remove();
+      submitButton.setAttribute("disabled", true);
+      submitButton.value = "Credentials saved successfully";
+      setTimeout(() => {
+        form.remove();
+      }, 1500);
     });
     customerIdLabel.setAttribute("class", "subtitle");
     customerIdLabel.setAttribute("for", "customer-id");
@@ -82,7 +86,11 @@ export const TCReaderView = (function () {
     form.setAttribute("class", "card-form");
     form.addEventListener("submit", (event) => {
       saveDeviceDetails(event);
-      document.getElementById("payment-device-form").remove();
+      submitButton.setAttribute("disabled", true);
+      submitButton.value = "Device saved successfully";
+      setTimeout(() => {
+        form.remove();
+      }, 1500);
     });
     deviceNameLabel.setAttribute("class", "subtitle");
     deviceNameLabel.setAttribute("for", "device-model");
