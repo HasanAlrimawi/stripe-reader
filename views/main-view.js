@@ -32,6 +32,7 @@ export const mainView = (function () {
       element.textContent = gateway.LABEL;
       element.addEventListener("click", () => {
         if (gateway.CONTROLLER != currentActiveController.CONTROLLER) {
+          clearSettingsMenu();
           dropDownTitle.textContent = gateway.LABEL;
           currentActiveController.CONTROLLER?.destroy();
           currentActiveController.CONTROLLER = gateway.CONTROLLER;
@@ -50,7 +51,7 @@ export const mainView = (function () {
    * @returns {string} The form HTML
    */
   function payForm() {
-    return `<div class="card-vertical" id="device-view">
+    return `
     <section class="card-form">
           <span class="subtitle">Payment Details</span>
           <div class="label-input-wrapper">
@@ -76,14 +77,13 @@ export const mainView = (function () {
                 cols="28"
               >
               </textarea>
-        </section>
-        </div>`;
+        </section>`;
   }
 
   /**
    * toggles the theme selected.
    */
-  const changeTheme = function () {
+  const changeTheme = () => {
     darkThemeSelected_ = !darkThemeSelected_;
     if (darkThemeSelected_) {
       document.documentElement.setAttribute("page-theme", "dark");
@@ -92,9 +92,53 @@ export const mainView = (function () {
     }
   };
 
+  const addSettings = (newSettings) => {
+    const settingsContentWrapper = document.getElementsByClassName(
+      "settings-dropdown-content"
+    )[0];
+    newSettings.forEach((setting) => {
+      const newSettingHolder = document.createElement("p");
+      newSettingHolder.classList.add("settings-dropdown-elements");
+      newSettingHolder.textContent = setting.name;
+      newSettingHolder.addEventListener("click", setting.callbackFunction);
+      settingsContentWrapper.appendChild(newSettingHolder);
+    });
+  };
+
+  const clearSettingsMenu = () => {
+    document.getElementsByClassName("settings-dropdown-content")[0].innerHTML =
+      "";
+  };
+
+  const makeModal = (makeElement) => {
+    const modal = document.createElement("div");
+    const modalContent = document.createElement("div");
+    const closeButton = document.createElement("div");
+    modal.setAttribute("class", "modal");
+    modalContent.setAttribute("id", "modal-content");
+    closeButton.setAttribute("class", "close");
+    closeButton.innerHTML = `&times;`;
+    modalContent.appendChild(closeButton);
+    modalContent.appendChild(makeElement);
+    modal.appendChild(modalContent);
+    document.getElementById("device-space").appendChild(modal);
+
+    closeButton.addEventListener("click", () => {
+      modal.remove();
+    });
+
+    window.onclick = function (event) {
+      if (event.target == modal) {
+        modal.remove();
+      }
+    };
+  };
+
   return {
     listAccessibleDevices,
     payForm,
     changeTheme,
+    addSettings,
+    makeModal,
   };
 })();

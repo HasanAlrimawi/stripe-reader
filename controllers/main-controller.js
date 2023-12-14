@@ -14,8 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
  */
 const showDevice = (deviceController) => {
   document.getElementById("device-space").innerHTML = "";
-  document
-    .getElementById("device-space")
-    .insertAdjacentHTML("beforeend", mainView.payForm());
+  // document
+  //   .getElementById("device-space")
+  //   .insertAdjacentHTML("beforeend", mainView.payForm());
   deviceController.renderView();
 };

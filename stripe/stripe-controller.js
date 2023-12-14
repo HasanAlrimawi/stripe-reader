@@ -3,6 +3,7 @@ import { stripeReaderView } from "./stripe-view.js";
 import { stripeReadersModel } from "./stripe-readers-model.js";
 import { StripeDriver } from "./stripe-driver.js";
 import { BaseController } from "../controllers/base-controller.js";
+import { mainView } from "../views/main-view.js";
 
 export class StripeController extends BaseController {
   static stripeControllerInstance_;
@@ -24,25 +25,40 @@ export class StripeController extends BaseController {
    *     from subscriptions to event listeners to scripts loading.
    */
   renderView = async () => {
-    document
-      .getElementById("device-view")
-      .insertAdjacentHTML("afterbegin", stripeReaderView.deviceHtml());
     document.getElementById("title").textContent = "Stripe";
-    stripeReaderView.addPresetsButtons();
-    const payBtn = document.getElementById("pay-btn");
-    payBtn.setAttribute("disabled", true);
-    document
-      .getElementById("list-readers-btn")
-      .addEventListener("click", this.#getListReadersAvailable);
-    payBtn.addEventListener("click", this.#pay);
-    document
-      .getElementById("secret-key-card-addition-button")
-      .addEventListener("click", this.#showSecretKeyCard);
-
+    const showView = () => {
+      const stripeSettings = [
+        {
+          name: "Change secret key",
+          callbackFunction: this.#showSecretKeyCard,
+        },
+      ];
+      mainView.addSettings(stripeSettings);
+      document
+        .getElementById("device-space")
+        .insertAdjacentHTML("afterbegin", stripeReaderView.deviceHtml());
+      document
+        .getElementById("device-view")
+        .insertAdjacentHTML("beforeend", mainView.payForm());
+      const payBtn = document.getElementById("pay-btn");
+      payBtn.setAttribute("disabled", true);
+      document
+        .getElementById("list-readers-btn")
+        .addEventListener("click", this.#getListReadersAvailable);
+      payBtn.addEventListener("click", this.#pay);
+    };
     if (localStorage.getItem(stripeConnectionDetails.LOCAL_STORAGE_API_KEY)) {
-      stripeConnectionDetails.SECRET_KEY = localStorage.getItem(
-        stripeConnectionDetails.LOCAL_STORAGE_API_KEY
-      );
+      showView();
+    } else {
+      document
+        .getElementById("device-space")
+        .insertAdjacentElement(
+          "beforeend",
+          stripeReaderView.multipleStepsSetUpForm(
+            this.#setAPISecretKey,
+            showView
+          )
+        );
     }
   };
 
@@ -51,7 +67,6 @@ export class StripeController extends BaseController {
    *     in order to get ready for being removed.
    */
   destroy = () => {
-    document.getElementById("secret-key-card-addition-button").remove();
     document.getElementById("title").textContent = "Payment Gateways";
   };
 
@@ -60,66 +75,21 @@ export class StripeController extends BaseController {
    *     API secret key.
    */
   #showSecretKeyCard = () => {
-    if (document.getElementById("secret-key-card")) {
-      return;
-    }
-    document
-      .getElementById("secret-key-card-addition-button")
-      .setAttribute("disabled", true);
-    document
-      .getElementById("device-space")
-      .appendChild(
-        stripeReaderView.createSecretKeySetterCard(this.#setAPISecretKey)
-      );
-    const secretKeyCardAdditionButton = document.getElementById(
-      "secret-key-card-addition-button"
-    );
-    const cancelButton = document.getElementById(
-      "secret-key-form-cancel-button"
-    );
-    const form = document.getElementById("secret-key-card");
-    cancelButton.addEventListener("click", () => {
-      secretKeyCardAdditionButton.removeAttribute("disabled");
-      form.remove();
-    });
+    const secretKeyForm = stripeReaderView.createSecretKeySetterCard(this.#setAPISecretKey);
+    mainView.makeModal(secretKeyForm);
   };
 
   /**
    * Handles setting the new API secret key and initating new connection
    *     with the stripe terminal using the new key.
    */
-  #setAPISecretKey = async (event) => {
-    event.preventDefault();
-    const form = document.getElementById("secret-key-card");
-    const secretKeySaveButton = document.getElementById("secret-key-button");
-    const secretKeyInput = document.getElementById("secret-key-input");
-    const secretKey = secretKeyInput.value;
-    const secretKeyCardAdditionButton = document.getElementById(
-      "secret-key-card-addition-button"
+  #setAPISecretKey = async (secretKey) => {
+    this.#restoreDefault();
+    stripeConnectionDetails.SECRET_KEY = secretKey;
+    localStorage.setItem(
+      stripeConnectionDetails.LOCAL_STORAGE_API_KEY,
+      secretKey
     );
-
-    if (secretKey) {
-      stripeConnectionDetails.SECRET_KEY = secretKey;
-      localStorage.setItem(
-        stripeConnectionDetails.LOCAL_STORAGE_API_KEY,
-        secretKey
-      );
-      secretKeySaveButton.value = "The new key has been successfully set.";
-      secretKeySaveButton.setAttribute("disabled", true);
-      setTimeout(() => {
-        secretKeyCardAdditionButton.removeAttribute("disabled");
-        form.remove();
-      }, 1500);
-      this.#restoreDefault();
-    } else {
-      secretKeySaveButton.value =
-        "Make sure to fill the field before setting the key.";
-      secretKeySaveButton.setAttribute("disabled", true);
-      setTimeout(() => {
-        secretKeySaveButton.value = "Set key";
-        secretKeySaveButton.removeAttribute("disabled");
-      }, 2000);
-    }
   };
 
   /**
@@ -167,10 +137,15 @@ export class StripeController extends BaseController {
   #restoreDefault = () => {
     stripeReadersModel.setReaderUsed(undefined);
     stripeReadersModel.setReadersList(undefined);
-    document.getElementById("pay-btn").setAttribute("disabled", true);
-    document.getElementById("available-readers-holder").innerHTML = "";
-    document.getElementById("payment-status").value = "";
-    document.getElementById("payment-amount").value = "";
+    document.getElementById("pay-btn")?.setAttribute("disabled", true);
+    const availableReadersHolder = document.getElementById(
+      "available-readers-holder"
+    );
+    availableReadersHolder
+      ? (availableReadersHolder.innerHTML = "")
+      : undefined;
+    document.getElementById("payment-status")?.setAttribute("value", "");
+    document.getElementById("payment-amount")?.setAttribute("value", "");
   };
 
   /**

@@ -1,4 +1,6 @@
+import { TCConnectionDetails } from "../constants/TC-connection-details.js";
 import { BaseController } from "../controllers/base-controller.js";
+import { mainView } from "../views/main-view.js";
 import { TCDriver } from "./TC-driver.js";
 import { TCReadersModel } from "./TC-model.js";
 import { TCReaderView } from "./TC-view.js";
@@ -23,37 +25,71 @@ export class TCController extends BaseController {
    *     whether by adding or editing the main view
    */
   renderView = () => {
-    this.#onStart();
+    const renderPayForm = () => {
+      const TCSettings = [
+        {
+          name: "Change credentials",
+          callbackFunction: this.#updateAccountCredentials,
+        },
+        {
+          name: "Change reader device",
+          callbackFunction: this.#changeReaderDevice,
+        },
+      ];
+      mainView.addSettings(TCSettings);
+      document
+        .getElementById("device-space")
+        .insertAdjacentHTML("beforeend", mainView.payForm());
+      document.getElementById("pay-btn").addEventListener("click", this.#pay);
+    };
 
-    TCReaderView.addPresetsButtons();
+    if (
+      localStorage.getItem(TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE_KEY) &&
+      localStorage.getItem(
+        TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE_KEY
+      )
+    ) {
+      this.#onStart();
+      renderPayForm();
+    } else {
+      document
+        .getElementById("device-space")
+        .insertAdjacentElement(
+          "beforeend",
+          TCReaderView.multipleStepsSetUpForm(
+            this.#saveAccountCredentials,
+            this.#saveReaderDetails,
+            renderPayForm
+          )
+        );
+    }
+    // TCReaderView.addPresetsButtons();
     document.getElementById("title").textContent = "Trust Commerce";
-    document
-      .getElementById("add-reader-button")
-      .addEventListener("click", () => {
-        if (!document.getElementById("payment-device-form")) {
-          document
-            .getElementById("device-space")
-            .insertAdjacentElement(
-              "beforeend",
-              TCReaderView.defineReaderDeviceCard(this.#saveDeviceDetails)
-            );
-        }
-      });
+    // document
+    //   .getElementById("add-reader-button")
+    //   .addEventListener("click", () => {
+    //     if (!document.getElementById("payment-device-form")) {
+    //       document
+    //         .getElementById("device-space")
+    //         .insertAdjacentElement(
+    //           "beforeend",
+    //           TCReaderView.defineReaderDeviceCard(this.#saveReaderDetails)
+    //         );
+    //     }
+    //   });
 
-    document
-      .getElementById("set-account-credentials-button")
-      .addEventListener("click", () => {
-        if (!document.getElementById("account-credentials-form")) {
-          document
-            .getElementById("device-space")
-            .insertAdjacentElement(
-              "beforeend",
-              TCReaderView.accountCredentialsCard(this.#saveAccountCredentials)
-            );
-        }
-      });
-
-    document.getElementById("pay-btn").addEventListener("click", this.#pay);
+    // document
+    //   .getElementById("set-account-credentials-button")
+    //   .addEventListener("click", () => {
+    //     if (!document.getElementById("account-credentials-form")) {
+    //       document
+    //         .getElementById("device-space")
+    //         .insertAdjacentElement(
+    //           "beforeend",
+    //           TCReaderView.accountCredentialsCard(this.#saveAccountCredentials)
+    //         );
+    //     }
+    //   });
   };
 
   /**
@@ -71,8 +107,6 @@ export class TCController extends BaseController {
    *      or any needed action in order to get ready for being removed.
    */
   destroy = () => {
-    document.getElementById("add-reader-button").remove();
-    document.getElementById("set-account-credentials-button").remove();
     document.getElementById("title").textContent = "Payment Gateways";
   };
 
@@ -82,10 +116,7 @@ export class TCController extends BaseController {
    *
    * @param {Event} event represents the event of submitting form
    */
-  #saveAccountCredentials = (event) => {
-    event.preventDefault();
-    const customerId = document.getElementById("customer-id").value;
-    const password = document.getElementById("password").value;
+  #saveAccountCredentials = (customerId, password) => {
     TCReadersModel.setAccountCredentials({
       customerId: customerId,
       password: password,
@@ -98,10 +129,8 @@ export class TCController extends BaseController {
    *
    * @param {Event} event represents the event of submitting form
    */
-  #saveDeviceDetails = (event) => {
-    event.preventDefault();
-    const deviceName = document.getElementById("device-model").value;
-    TCReadersModel.setReaderUsed(deviceName);
+  #saveReaderDetails = (readerName) => {
+    TCReadersModel.setReaderUsed(readerName);
   };
 
   /**
@@ -183,5 +212,21 @@ export class TCController extends BaseController {
       };
     }
     return;
+  };
+
+  #updateAccountCredentials = () => {
+    const accountCredentialsForm = TCReaderView.accountCredentialsCard(
+      this.#saveAccountCredentials
+    );
+    mainView.makeModal(accountCredentialsForm);
+    // console.log("update credentials");
+  };
+
+  #changeReaderDevice = () => {
+    const setReaderForm = TCReaderView.defineReaderDeviceCard(
+      this.#saveReaderDetails
+    );
+    mainView.makeModal(setReaderForm);
+    console.log("change reader device");
   };
 }
