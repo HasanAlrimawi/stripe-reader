@@ -77,7 +77,6 @@ export const stripeReaderView = (function () {
     const keyLabel = document.createElement("label");
     const keyInput = document.createElement("input");
     const submitButton = document.createElement("input");
-    const cancelButton = document.createElement("input");
     const buttonsWrapper = document.createElement("div");
 
     form.setAttribute("id", "secret-key-card");
@@ -107,13 +106,8 @@ export const stripeReaderView = (function () {
     submitButton.setAttribute("class", "button ml-auto");
     submitButton.setAttribute("id", "secret-key-button");
     submitButton.setAttribute("value", "Save");
-    // cancelButton.setAttribute("type", "button");
-    // cancelButton.setAttribute("class", "button");
-    // cancelButton.setAttribute("value", "Cancel");
-    // cancelButton.setAttribute("id", "secret-key-form-cancel-button");
     buttonsWrapper.setAttribute("class", "flex-space-between");
 
-    // buttonsWrapper.appendChild(cancelButton);
     buttonsWrapper.appendChild(submitButton);
     form.appendChild(keyLabel);
     form.appendChild(keyInput);

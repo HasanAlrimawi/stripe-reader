@@ -168,6 +168,19 @@ export const TCReaderView = (function () {
 
   let formStepsNum = 0;
 
+  /**
+   * Creates multi-step form for taking user's entry of Trust Commerce account
+   *     credentials and the reader device the user is willing to use, then
+   *     show payment form for user to use.
+   *
+   * @param {function} saveAccountCredentials Handles saving the account
+   *     credentials entered by user
+   * @param {function} saveReaderDetails Handles saving the reader that
+   *     the user entered to use for payments
+   * @param {function} renderPayForm Responsible for showing the payment form
+   *     so that the user can use it for payments.
+   * @returns HTMLElement Represents the multi-step form
+   */
   function multipleStepsSetUpForm(
     saveAccountCredentials,
     saveReaderDetails,
@@ -359,12 +372,15 @@ export const TCReaderView = (function () {
     return form;
   }
 
+  /**
+   * Responsible for updating the progress bar of the multi-step form.
+   */
   const updateProgressbar = () => {
     const progressSteps = document.getElementsByClassName("progress-step");
     const progress = document.getElementById("progress");
 
-    [...progressSteps].forEach((progressStep, idx) => {
-      if (idx < formStepsNum + 1) {
+    [...progressSteps].forEach((progressStep, index) => {
+      if (index < formStepsNum + 1) {
         progressStep.classList.add("progress-step-active");
       } else {
         progressStep.classList.remove("progress-step-active");
@@ -378,6 +394,9 @@ export const TCReaderView = (function () {
       ((progressActive.length - 1) / (progressSteps.length - 1)) * 100 + "%";
   };
 
+  /**
+   * Responsible for viewing the needed step of the multi-step form.
+   */
   const updateFormSteps = () => {
     const formSteps = document.getElementsByClassName("form-step");
     [...formSteps].forEach((formStep) => {

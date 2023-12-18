@@ -26,6 +26,7 @@ export class TCController extends BaseController {
    */
   renderView = () => {
     const renderPayForm = () => {
+      /** Represents the updatable settings related to TC use */
       const TCSettings = [
         {
           name: "Change credentials",
@@ -63,33 +64,7 @@ export class TCController extends BaseController {
           )
         );
     }
-    // TCReaderView.addPresetsButtons();
     document.getElementById("title").textContent = "Trust Commerce";
-    // document
-    //   .getElementById("add-reader-button")
-    //   .addEventListener("click", () => {
-    //     if (!document.getElementById("payment-device-form")) {
-    //       document
-    //         .getElementById("device-space")
-    //         .insertAdjacentElement(
-    //           "beforeend",
-    //           TCReaderView.defineReaderDeviceCard(this.#saveReaderDetails)
-    //         );
-    //     }
-    //   });
-
-    // document
-    //   .getElementById("set-account-credentials-button")
-    //   .addEventListener("click", () => {
-    //     if (!document.getElementById("account-credentials-form")) {
-    //       document
-    //         .getElementById("device-space")
-    //         .insertAdjacentElement(
-    //           "beforeend",
-    //           TCReaderView.accountCredentialsCard(this.#saveAccountCredentials)
-    //         );
-    //     }
-    //   });
   };
 
   /**
@@ -214,19 +189,41 @@ export class TCController extends BaseController {
     return;
   };
 
+  /** Responsible for viewing form for updating account credentials of TC
+   *     and saving the updated credentials.
+   */
   #updateAccountCredentials = () => {
     const accountCredentialsForm = TCReaderView.accountCredentialsCard(
       this.#saveAccountCredentials
     );
+
+    if (TCReadersModel.getAccountCredentials()) {
+      accountCredentialsForm
+        .querySelector("#customer-id")
+        .setAttribute(
+          "value",
+          TCReadersModel.getAccountCredentials().customerId
+        );
+      accountCredentialsForm
+        .querySelector("#password")
+        .setAttribute("value", TCReadersModel.getAccountCredentials().password);
+    }
     mainView.makeModal(accountCredentialsForm);
-    // console.log("update credentials");
   };
 
+  /** Responsible for viewing form for updating reader device used to make
+   *     payments and then saves the new reader device entered.
+   */
   #changeReaderDevice = () => {
     const setReaderForm = TCReaderView.defineReaderDeviceCard(
       this.#saveReaderDetails
     );
+
+    if (TCReadersModel.getReaderUsed()) {
+      setReaderForm
+        .querySelector("#device-model")
+        .setAttribute("value", TCReadersModel.getReaderUsed());
+    }
     mainView.makeModal(setReaderForm);
-    console.log("change reader device");
   };
 }

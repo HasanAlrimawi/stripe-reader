@@ -1,7 +1,8 @@
 import { mainView } from "../views/main-view.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  mainView.listAccessibleDevices(showDevice);
+  mainView.listPaymentGateways(showPaymentGateway);
+  mainView.listAccessibleDevices(showPaymentGateway);
   document
     .getElementById("theme-icon")
     .addEventListener("click", mainView.changeTheme);
@@ -12,10 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
  *
  * @param {Controller} deviceController
  */
-const showDevice = (deviceController) => {
+const showPaymentGateway = (deviceController) => {
   document.getElementById("device-space").innerHTML = "";
-  // document
-  //   .getElementById("device-space")
-  //   .insertAdjacentHTML("beforeend", mainView.payForm());
   deviceController.renderView();
 };

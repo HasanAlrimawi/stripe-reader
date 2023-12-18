@@ -12,8 +12,6 @@ export class TCDriver extends BaseDriver {
 
   /** Trust commerce API URL to make transactions */
   #TC_API_URL = "https://drab-puce-ladybug-coat.cyclic.app/tc-proxy";
-  // #TC_API_URL = "https://vault.trustcommerce.com/trans/?";
-  // #TC_API_URL = "http://localhost:8085/tc-proxy";
 
   /**
    * Provides ability to check whether the device is ready for transaction

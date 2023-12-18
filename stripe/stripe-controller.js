@@ -75,7 +75,14 @@ export class StripeController extends BaseController {
    *     API secret key.
    */
   #showSecretKeyCard = () => {
-    const secretKeyForm = stripeReaderView.createSecretKeySetterCard(this.#setAPISecretKey);
+    const secretKeyForm = stripeReaderView.createSecretKeySetterCard(
+      this.#setAPISecretKey
+    );
+    if (localStorage.getItem(stripeConnectionDetails.LOCAL_STORAGE_API_KEY)) {
+      secretKeyForm
+        .querySelector("#secret-key-input")
+        .setAttribute("value", stripeConnectionDetails.SECRET_KEY);
+    }
     mainView.makeModal(secretKeyForm);
   };
 

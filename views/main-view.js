@@ -9,9 +9,10 @@ export const mainView = (function () {
   /**
    * Responsible for loading the supported devices in a dropdown list.
    *
-   * @param {Function} showDevice The callback function to be executed
+   * @param {Function} showPaymentGateway The callback function to be executed
+   *     in order to show the payment gateway chosen
    */
-  function listAccessibleDevices(showDevice) {
+  function listAccessibleDevices(showPaymentGateway) {
     const dropDownContainer = document.getElementById("dropdown-holder-div");
     const dropDownHead = document.createElement("div");
     const dropDownBody = document.createElement("div");
@@ -36,7 +37,7 @@ export const mainView = (function () {
           dropDownTitle.textContent = gateway.LABEL;
           currentActiveController.CONTROLLER?.destroy();
           currentActiveController.CONTROLLER = gateway.CONTROLLER;
-          showDevice(gateway.CONTROLLER);
+          showPaymentGateway(gateway.CONTROLLER);
         }
       });
       dropDownBody.appendChild(element);
@@ -92,6 +93,17 @@ export const mainView = (function () {
     }
   };
 
+  /**
+   * @typedef {Object} Setting
+   * @property {string} name
+   * @property {function} callbackFunction
+   */
+
+  /**
+   * Adds new settings of to the settings menu.
+   *
+   * @param {Array<Setting>} newSettings
+   */
   const addSettings = (newSettings) => {
     const settingsContentWrapper = document.getElementsByClassName(
       "settings-dropdown-content"
@@ -105,12 +117,21 @@ export const mainView = (function () {
     });
   };
 
+  /**
+   * Clears the settings menu.
+   */
   const clearSettingsMenu = () => {
     document.getElementsByClassName("settings-dropdown-content")[0].innerHTML =
       "";
   };
 
-  const makeModal = (makeElement) => {
+  /**
+   * Creates modal which is a popup window for specific need.
+   *
+   * @param {HTMLElement} modalMainContent Represents the main content of the
+   *     modal
+   */
+  const makeModal = (modalMainContent) => {
     const modal = document.createElement("div");
     const modalContent = document.createElement("div");
     const closeButton = document.createElement("div");
@@ -119,7 +140,7 @@ export const mainView = (function () {
     closeButton.setAttribute("class", "close");
     closeButton.innerHTML = `&times;`;
     modalContent.appendChild(closeButton);
-    modalContent.appendChild(makeElement);
+    modalContent.appendChild(modalMainContent);
     modal.appendChild(modalContent);
     document.getElementById("device-space").appendChild(modal);
 
@@ -134,11 +155,47 @@ export const mainView = (function () {
     };
   };
 
+  /**
+   * Responsible of showing the available payment gateways for user to choose.
+   *
+   * @param {function} showPaymentGateway The callback function to be executed
+   *     in order to show the payment gateway chosen
+   */
+  const listPaymentGateways = (showPaymentGateway) => {
+    const section = document.createElement("section");
+    section.classList.add("card-form");
+
+    const span = document.createElement("span");
+    span.classList.add("subtitle");
+    span.textContent = "Select payment gateway";
+
+    const divWrapper = document.createElement("div");
+    divWrapper.classList.add("wrapper-horizontal");
+
+    for (const gateway of paymentGateways) {
+      const divGateway = document.createElement("div");
+      divGateway.classList.add("main-menu-selection");
+      divGateway.textContent = gateway.LABEL;
+      divGateway.addEventListener("click", () => {
+        clearSettingsMenu();
+        currentActiveController.CONTROLLER = gateway.CONTROLLER;
+        showPaymentGateway(gateway.CONTROLLER);
+      });
+      divWrapper.appendChild(divGateway);
+    }
+
+    section.appendChild(span);
+    section.appendChild(divWrapper);
+
+    document.getElementById("device-space").appendChild(section);
+  };
+
   return {
     listAccessibleDevices,
     payForm,
     changeTheme,
     addSettings,
     makeModal,
+    listPaymentGateways,
   };
 })();
