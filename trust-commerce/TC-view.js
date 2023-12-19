@@ -192,7 +192,7 @@ export const TCReaderView = (function () {
     const progress = document.createElement("div");
     const progressSteps = [];
     // Setting up elements' attributes
-    h1.textContent = "Setting up app...";
+    h1.textContent = "Setting up Trust Commerce";
     h1.classList.add("text-center");
 
     progressBar.classList.add("progress-bar");
@@ -224,7 +224,7 @@ export const TCReaderView = (function () {
     const customerIdLabel = document.createElement("label");
     customerIdLabel.classList.add("subtitle");
     customerIdLabel.setAttribute("for", "customer-id");
-    customerIdLabel.textContent = "Customer id";
+    customerIdLabel.textContent = "Retail account customer id";
     inputGroup1.appendChild(customerIdLabel);
 
     const customerIdInput = document.createElement("input");
@@ -232,7 +232,7 @@ export const TCReaderView = (function () {
     customerIdInput.type = "text";
     customerIdInput.name = "customerId";
     customerIdInput.id = "customer-id";
-    customerIdInput.placeholder = "Enter your customer id";
+    customerIdInput.placeholder = "Enter your account customer id";
     inputGroup1.appendChild(customerIdInput);
 
     const passwordLabel = document.createElement("label");

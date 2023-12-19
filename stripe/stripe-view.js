@@ -211,7 +211,7 @@ export const stripeReaderView = (function () {
     const progress = document.createElement("div");
     const progressSteps = [];
     // Setting up elements' attributes
-    h1.textContent = "Setting up stripe";
+    h1.textContent = "Setting up Stripe";
     h1.classList.add("text-center");
 
     progressBar.classList.add("progress-bar");
