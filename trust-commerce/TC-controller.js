@@ -189,7 +189,8 @@ export class TCController extends BaseController {
     return;
   };
 
-  /** Responsible for viewing form for updating account credentials of TC
+  /**
+   * Responsible for viewing form for updating account credentials of TC
    *     and saving the updated credentials.
    */
   #updateAccountCredentials = () => {
@@ -211,7 +212,8 @@ export class TCController extends BaseController {
     mainView.makeModal(accountCredentialsForm);
   };
 
-  /** Responsible for viewing form for updating reader device used to make
+  /**
+   * Responsible for viewing form for updating reader device used to make
    *     payments and then saves the new reader device entered.
    */
   #changeReaderDevice = () => {

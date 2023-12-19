@@ -110,7 +110,7 @@ export class StripeController extends BaseController {
 
     try {
       if (stripeReadersModel.getReaderUsed()) {
-        this.#leaveReader(stripeReadersModel.getReaderUsed());
+        this.#stopReader(stripeReadersModel.getReaderUsed());
       }
       stripeReadersModel.setReadersList(undefined);
       const availableReaders = await this.communicator.getReadersAvailable(
@@ -163,14 +163,14 @@ export class StripeController extends BaseController {
    */
   #useReader = (reader) => {
     const connectButton = document.getElementById(reader.id);
-    connectButton.setAttribute("value", "leave");
+    connectButton.setAttribute("value", "stop");
     stripeReadersModel.setReaderUsed(reader);
     document.getElementById("pay-btn").removeAttribute("disabled");
-    stripeReaderView.useLeaveReadersButtons(
+    stripeReaderView.useStopReadersButtons(
       reader,
       "disable",
       this.#useReader,
-      this.#leaveReader
+      this.#stopReader
     );
   };
 
@@ -179,12 +179,12 @@ export class StripeController extends BaseController {
    *
    * @param {string} readerId
    */
-  #leaveReader = (reader) => {
-    stripeReaderView.useLeaveReadersButtons(
+  #stopReader = (reader) => {
+    stripeReaderView.useStopReadersButtons(
       reader,
       "enable",
       this.#useReader,
-      this.#leaveReader
+      this.#stopReader
     );
     stripeReadersModel.setReaderUsed(undefined);
     document.getElementById("pay-btn").setAttribute("disabled", true);

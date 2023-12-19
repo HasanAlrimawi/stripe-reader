@@ -41,13 +41,13 @@ export const stripeReaderView = (function () {
    * @param {string} readerName Represents the name to be given for the reader
    * @returns {HTMLElement}
    */
-  function createLeaveReaderButton(readerId) {
-    const leaveReaderButton = document.createElement("input");
-    leaveReaderButton.setAttribute("id", readerId);
-    leaveReaderButton.setAttribute("value", "Leave");
-    leaveReaderButton.setAttribute("class", "button");
-    leaveReaderButton.setAttribute("type", "button");
-    return leaveReaderButton;
+  function createStopReaderButton(readerId) {
+    const stopReaderButton = document.createElement("input");
+    stopReaderButton.setAttribute("id", readerId);
+    stopReaderButton.setAttribute("value", "Stop");
+    stopReaderButton.setAttribute("class", "button");
+    stopReaderButton.setAttribute("type", "button");
+    return stopReaderButton;
   }
 
   /**
@@ -87,8 +87,7 @@ export const stripeReaderView = (function () {
       submitButton.setAttribute("value", "Successfully saved");
       submitButton.setAttribute("disabled", "true");
       setTimeout(() => {
-        submitButton.removeAttribute("disabled");
-        submitButton.setAttribute("value", "Save");
+        document.getElementById("current-modal")?.remove();
       }, 1500);
     });
     keyLabel.setAttribute("class", "subtitle");
@@ -117,17 +116,17 @@ export const stripeReaderView = (function () {
   }
 
   /**
-   * Replaces the use reader button of the just chosen reader with a leave
+   * Replaces the use reader button of the just chosen reader with a stop
    *     button, and disables the other readers' use buttons.
    *
-   * @param {string} mode To specify what to do with use/leave buttons
+   * @param {string} mode To specify what to do with use/stop buttons
    *     of all the readers except the one its button has been clicked,
    *     whether to enable or disable the buttons
    * @param {string} reader Represents the reader its button has just been
-   *     clicked to exchange its button whether to use/leave button
+   *     clicked to exchange its button whether to use/stop button
    */
-  function useLeaveReadersButtons(reader, mode, useReader, leaveReader) {
-    let leaveReaderButton;
+  function useStopReadersButtons(reader, mode, useReader, stopReader) {
+    let stopReaderButton;
     let useReaderButton;
     /** Represents the use reader buttons of the readers apart from the one its
      *      button recently clicked */
@@ -136,21 +135,21 @@ export const stripeReaderView = (function () {
     switch (mode) {
       case "disable":
         useReaderButton = document.getElementById(reader.id);
-        leaveReaderButton = createLeaveReaderButton(reader.id);
-        useReaderButton.replaceWith(leaveReaderButton);
+        stopReaderButton = createStopReaderButton(reader.id);
+        useReaderButton.replaceWith(stopReaderButton);
         useReaderButtons = document.getElementsByClassName("connect-button");
         for (const button of useReaderButtons) {
           button.setAttribute("disabled", true);
         }
-        leaveReaderButton.addEventListener("click", () => {
-          leaveReader(reader);
+        stopReaderButton.addEventListener("click", () => {
+          stopReader(reader);
         });
         break;
 
       case "enable":
-        leaveReaderButton = document.getElementById(reader.id);
+        stopReaderButton = document.getElementById(reader.id);
         useReaderButton = createUseReaderButton(reader.id);
-        leaveReaderButton.replaceWith(useReaderButton);
+        stopReaderButton.replaceWith(useReaderButton);
         useReaderButtons = document.getElementsByClassName("connect-button");
         for (const button of useReaderButtons) {
           button.removeAttribute("disabled");
@@ -205,12 +204,11 @@ export const stripeReaderView = (function () {
   let formStepsNum = 0;
 
   function multipleStepsSetUpForm(setSecretKey, renderPayForm) {
-    // Create elements
     const h1 = document.createElement("h1");
     const progressBar = document.createElement("div");
     const progress = document.createElement("div");
     const progressSteps = [];
-    // Setting up elements' attributes
+
     h1.textContent = "Setting up Stripe";
     h1.classList.add("text-center");
 
@@ -275,35 +273,35 @@ export const stripeReaderView = (function () {
       setSecretKey(keyInput.value);
     });
 
-    // Form Step 3
-    const formStep3 = document.createElement("form");
-    formStep3.classList.add("form-step");
+    // Form Step 2
+    const formStep2 = document.createElement("form");
+    formStep2.classList.add("form-step");
 
-    const inputGroup3 = document.createElement("div");
-    inputGroup3.classList.add("input-group");
-    formStep3.appendChild(inputGroup3);
+    const inputGroup2 = document.createElement("div");
+    inputGroup2.classList.add("input-group");
+    formStep2.appendChild(inputGroup2);
 
     const saveLabel = document.createElement("label");
     saveLabel.classList.add("subtitle");
     saveLabel.textContent = "Entries Saved! You can use the app";
-    inputGroup3.appendChild(saveLabel);
+    inputGroup2.appendChild(saveLabel);
 
-    const buttonsGroup3 = document.createElement("div");
-    buttonsGroup3.classList.add("buttons-group");
-    formStep3.appendChild(buttonsGroup3);
+    const buttonsGroup2 = document.createElement("div");
+    buttonsGroup2.classList.add("buttons-group");
+    formStep2.appendChild(buttonsGroup2);
 
-    const prevButton3 = document.createElement("input");
-    prevButton3.classList.add("button", "button-previous");
-    prevButton3.value = "Previous";
-    buttonsGroup3.appendChild(prevButton3);
+    const prevButton2 = document.createElement("input");
+    prevButton2.classList.add("button", "button-previous");
+    prevButton2.value = "Previous";
+    buttonsGroup2.appendChild(prevButton2);
 
-    const nextButton3 = document.createElement("input");
-    nextButton3.type = "submit";
-    nextButton3.classList.add("button", "button-next");
-    nextButton3.value = "Use app";
-    buttonsGroup3.appendChild(nextButton3);
+    const nextButton2 = document.createElement("input");
+    nextButton2.type = "submit";
+    nextButton2.classList.add("button", "button-next");
+    nextButton2.value = "Use app";
+    buttonsGroup2.appendChild(nextButton2);
 
-    formStep3.addEventListener("submit", (e) => {
+    formStep2.addEventListener("submit", (e) => {
       e.preventDefault();
       formStepsNum++;
       updateProgressbar();
@@ -311,7 +309,7 @@ export const stripeReaderView = (function () {
       renderPayForm();
     });
 
-    const elements = [h1, progressBar, formStep1, formStep3];
+    const elements = [h1, progressBar, formStep1, formStep2];
 
     const form = document.createElement("div");
     form.classList.add("form");
@@ -320,7 +318,7 @@ export const stripeReaderView = (function () {
     });
 
     //------------------------------------
-    prevButton3.addEventListener("click", () => {
+    prevButton2.addEventListener("click", () => {
       formStepsNum--;
       updateFormSteps();
       updateProgressbar();
@@ -361,7 +359,7 @@ export const stripeReaderView = (function () {
   return {
     createAvailableReadersList,
     createSecretKeySetterCard,
-    useLeaveReadersButtons,
+    useStopReadersButtons,
     deviceHtml,
     addPresetsButtons,
     multipleStepsSetUpForm,

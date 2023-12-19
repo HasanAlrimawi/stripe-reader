@@ -136,6 +136,7 @@ export const mainView = (function () {
     const modalContent = document.createElement("div");
     const closeButton = document.createElement("div");
     modal.setAttribute("class", "modal");
+    modal.setAttribute("id", "current-modal");
     modalContent.setAttribute("id", "modal-content");
     closeButton.setAttribute("class", "close");
     closeButton.innerHTML = `&times;`;

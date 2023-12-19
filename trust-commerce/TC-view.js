@@ -14,7 +14,6 @@ export const TCReaderView = (function () {
     const passwordLabel = document.createElement("label");
     const passwordInput = document.createElement("input");
     const submitButton = document.createElement("input");
-    // const cancelButton = document.createElement("input");
     const buttonsWrapper = document.createElement("div");
 
     form.setAttribute("id", "account-credentials-form");
@@ -25,8 +24,7 @@ export const TCReaderView = (function () {
       submitButton.setAttribute("disabled", true);
       submitButton.value = "Saved successfully";
       setTimeout(() => {
-        submitButton.removeAttribute("disabled");
-        submitButton.setAttribute("value", "Save");
+        document.getElementById("current-modal")?.remove();
       }, 1500);
     });
     customerIdLabel.setAttribute("class", "subtitle");
@@ -49,12 +47,8 @@ export const TCReaderView = (function () {
     submitButton.setAttribute("class", "button ml-auto");
     submitButton.setAttribute("id", "account-credentials-button");
     submitButton.setAttribute("value", "Save");
-    // cancelButton.setAttribute("type", "submit");
-    // cancelButton.setAttribute("class", "button");
-    // cancelButton.setAttribute("value", "Cancel");
     buttonsWrapper.setAttribute("class", "flex-space-between");
 
-    // buttonsWrapper.appendChild(cancelButton);
     buttonsWrapper.appendChild(submitButton);
     form.appendChild(customerIdLabel);
     form.appendChild(customerIdInput);
@@ -77,7 +71,6 @@ export const TCReaderView = (function () {
     const deviceNameLabel = document.createElement("label");
     const deviceNameInput = document.createElement("input");
     const submitButton = document.createElement("input");
-    // const cancelButton = document.createElement("input");
     const buttonsWrapper = document.createElement("div");
 
     form.setAttribute("id", "payment-device-form");
@@ -88,8 +81,7 @@ export const TCReaderView = (function () {
       submitButton.setAttribute("disabled", true);
       submitButton.value = "Saved successfully";
       setTimeout(() => {
-        submitButton.removeAttribute("disabled");
-        submitButton.setAttribute("value", "Save");
+        document.getElementById("current-modal")?.remove();
       }, 1500);
     });
     deviceNameLabel.setAttribute("class", "subtitle");
@@ -107,12 +99,8 @@ export const TCReaderView = (function () {
     submitButton.setAttribute("class", "button ml-auto");
     submitButton.setAttribute("id", "device-details-button");
     submitButton.setAttribute("value", "Save");
-    // cancelButton.setAttribute("type", "submit");
-    // cancelButton.setAttribute("class", "button");
-    // cancelButton.setAttribute("value", "Cancel");
     buttonsWrapper.setAttribute("class", "flex-space-between");
 
-    // buttonsWrapper.appendChild(cancelButton);
     buttonsWrapper.appendChild(submitButton);
     form.appendChild(deviceNameLabel);
     form.appendChild(deviceNameInput);
