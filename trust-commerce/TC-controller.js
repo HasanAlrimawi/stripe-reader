@@ -30,7 +30,7 @@ export class TCController extends BaseController {
       const TCSettings = [
         {
           name: "Change credentials",
-          callbackFunction: this.#updateAccountCredentials,
+          callbackFunction: this.#changeAccountCredentials,
         },
         {
           name: "Change reader device",
@@ -193,7 +193,7 @@ export class TCController extends BaseController {
    * Responsible for viewing form for updating account credentials of TC
    *     and saving the updated credentials.
    */
-  #updateAccountCredentials = () => {
+  #changeAccountCredentials = () => {
     const accountCredentialsForm = TCReaderView.accountCredentialsCard(
       this.#saveAccountCredentials
     );
