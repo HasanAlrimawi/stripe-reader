@@ -1,4 +1,4 @@
-import { multipleStepsForms } from "../auth-methods.js";
+import { multipleStepsForms } from "../multiple-steps-forms.js";
 import { AUTHENTICATION_METHODS } from "../constants/auth-methods-constants.js";
 import { currentActiveDriver } from "../constants/payment-gateways.js";
 import { READER_SELECTION_METHODS } from "../constants/reader-selection-constants.js";
@@ -32,7 +32,7 @@ const showPaymentGateway = (driver) => {
         .getElementById("payment-gateway-space")
         .insertAdjacentElement(
           "beforeend",
-          multipleStepsForms.accountAndManualReaderEntryMultipleStepsForm(
+          multipleStepsForms.accountAndManualReaderEntry(
             driver.saveAuthDetails,
             driver.saveReader,
             renderPayForm
@@ -46,6 +46,12 @@ const renderPayForm = () => {
   document
     .getElementById("payment-gateway-space")
     .insertAdjacentElement("beforeend", mainView.payForm(pay));
+
+    // TODO 
+    // mainView.addSettings([
+      // {name: "Change credentials",
+    // callbackFunction: }
+    // ])
 };
 
 const pay = async () => {
@@ -66,14 +72,11 @@ const pay = async () => {
   try {
     const transactionResponse = await currentActiveDriver.DRIVER.pay(amount);
     payButton.removeAttribute("disabled");
-    if (transactionResponse.error) {
+    if (transactionResponse?.error) {
       message = `Transaction failure\nCause: ${transactionResponse.error}.`;
     } else {
-      message = `Transaction is ${
-        transactionResponse.status
-          ? transactionResponse.status
-          : transactionResponse.cloudpaystatus
-      }`;
+      console.log(transactionResponse);
+      message = `Transaction is ${transactionResponse}`;
     }
   } catch (faultyTransaction) {
     payButton.removeAttribute("disabled");

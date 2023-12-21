@@ -224,7 +224,7 @@ export class TCDriver extends BaseDriver {
           this.#readerUnderUse,
           currentcloudPayId
         );
-        return transactionResult;
+        return transactionResult.cloudpaystatus;
       } catch (error) {
         throw error;
       }
