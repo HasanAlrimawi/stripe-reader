@@ -1,3 +1,5 @@
+import { TCLocalStorageKeys } from "../constants/TC-connection-details.js";
+import { AUTHENTICATION_METHODS } from "../constants/auth-methods-constants.js";
 import { BaseDriver } from "../drivers/base-driver.js";
 
 export class TCDriver extends BaseDriver {
@@ -10,8 +12,98 @@ export class TCDriver extends BaseDriver {
     return this.#tcDriver;
   }
 
+  #accountCredentials = undefined;
+  #readerUnderUse = undefined;
+
   /** Trust commerce API URL to make transactions */
   #TC_API_URL = "https://drab-puce-ladybug-coat.cyclic.app/tc-proxy";
+
+  /**
+   * Returns what authentication method this driver needs so that the
+   *     controller knows what form to show so the
+   *     user enters his/her credentials.
+   *
+   * @returns {string} The authentication method type
+   */
+  getAuthMethod = () => {
+    return AUTHENTICATION_METHODS.USER_AND_PASSWORD;
+  };
+
+  /**
+   * Returns what reader choosing method this driver supports so that the
+   *     controller knows what form to show so the user
+   *     can enter or choose his/her reader device.
+   *
+   * @returns {string} The reader selection method
+   */
+  getReaderChoosingMethod = () => {
+    return "MANUAL_ENTRY";
+  };
+
+  /**
+   * Returns what reader is under use.
+   *
+   * @returns {string} reader under use
+   */
+  getReaderUnderUse = () => {
+    return this.#readerUnderUse;
+  };
+
+  /**
+   * Saves the reader device name and modelNumber to be used for transactions
+   *     in the local storage and for this driver's attribute.
+   *
+   * @param {string} readerModel Represents the reader to be used for
+   *     transactions
+   */
+  saveReader = (readerModel) => {
+    this.#readerUnderUse = readerModel;
+    localStorage.setItem(
+      TCLocalStorageKeys.TC_READER_SAVED_LOCAL_STORAGE_KEY,
+      this.#readerUnderUse
+    );
+  };
+
+  /**
+   * Saves the credentials which are the customer id and the password
+   *     that shall be used for making transactions on the account's behalf.
+   *
+   * @param {Object} credentials Represents the customer id and password
+   *     wrapped in an object
+   */
+  saveAuthDetails = (customerId, password) => {
+    this.#accountCredentials = { customerId: customerId, password: password };
+    localStorage.setItem(
+      TCLocalStorageKeys.TC_ACCOUNT_LOCAL_STORAGE_KEY,
+      JSON.stringify(this.#accountCredentials)
+    );
+  };
+
+  /**
+   * Loads any saved values the driver needs from local storage and any
+   *     todos the driver should do first.
+   */
+  load = () => {
+    if (localStorage.getItem("TC_ACCOUNT_CREDENTIALS")) {
+      this.#accountCredentials = JSON.parse(
+        localStorage.getItem("TC_ACCOUNT_CREDENTIALS")
+      );
+      console.log(this.#accountCredentials);
+    }
+
+    if (localStorage.getItem("TC_READER_LOCAL_STORAGE")) {
+      this.#readerUnderUse = localStorage.getItem("TC_READER_LOCAL_STORAGE");
+    }
+  };
+
+  /**
+   * Returns the account credentials that are under use.
+   *
+   * @returns {Object} account credentials attribute
+   */
+  getAuthenticationUnderUse = () => {
+    return this.#accountCredentials;
+  };
 
   /**
    * Provides ability to check whether the device is ready for transaction
@@ -106,20 +198,20 @@ export class TCDriver extends BaseDriver {
    * @param {string} deviceName
    * @returns {Object}
    */
-  pay = async (customerId, password, amount, deviceName) => {
+  pay = async (amount) => {
     const deviceCheckResult = await this.#checkDevice(
-      customerId,
-      password,
-      deviceName
+      this.#accountCredentials.customerId,
+      this.#accountCredentials.password,
+      this.#readerUnderUse
     );
 
     if (deviceCheckResult.devicestatus !== "connected") {
-      throw deviceCheckResult;
+      return { error: deviceCheckResult.description }; // can be returned as object containing error msg not just deviceCheckResult
     }
     const transactionResponse = await this.#makeTransaction(
-      customerId,
-      password,
-      deviceName,
+      this.#accountCredentials.customerId,
+      this.#accountCredentials.password,
+      this.#readerUnderUse,
       amount
     );
     const currentcloudPayId = transactionResponse.cloudpayid;
@@ -127,9 +219,9 @@ export class TCDriver extends BaseDriver {
     if (transactionResponse.cloudpaystatus === "submitted") {
       try {
         let transactionResult = await this.#getTransactionFinalState(
-          customerId,
-          password,
-          deviceName,
+          this.#accountCredentials.customerId,
+          this.#accountCredentials.password,
+          this.#readerUnderUse,
           currentcloudPayId
         );
         return transactionResult;
@@ -137,7 +229,10 @@ export class TCDriver extends BaseDriver {
         throw error;
       }
     } else {
-      throw transactionResponse;
+      if (transactionResponse.message) {
+        return { error: transactionResponse.message };
+      }
+      return transactionResponse;
     }
   };
 

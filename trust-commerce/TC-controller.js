@@ -1,4 +1,4 @@
-import { TCConnectionDetails } from "../constants/TC-connection-details.js";
+import { TCLocalStorageKeys } from "../constants/TC-connection-details.js";
 import { BaseController } from "../controllers/base-controller.js";
 import { mainView } from "../views/main-view.js";
 import { TCDriver } from "./TC-driver.js";
@@ -45,9 +45,9 @@ export class TCController extends BaseController {
     };
 
     if (
-      localStorage.getItem(TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE_KEY) &&
+      localStorage.getItem(TCLocalStorageKeys.TC_ACCOUNT_LOCAL_STORAGE_KEY) &&
       localStorage.getItem(
-        TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE_KEY
+        TCLocalStorageKeys.TC_READER_SAVED_LOCAL_STORAGE_KEY
       )
     ) {
       this.#onStart();

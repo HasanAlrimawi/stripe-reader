@@ -1,5 +1,5 @@
 import {
-  currentActiveController,
+  currentActiveDriver,
   paymentGateways,
 } from "../constants/payment-gateways.js";
 
@@ -32,12 +32,12 @@ export const mainView = (function () {
       element.setAttribute("class", "dropdown-elements");
       element.textContent = gateway.LABEL;
       element.addEventListener("click", () => {
-        if (gateway.CONTROLLER != currentActiveController.CONTROLLER) {
+        if (gateway.DRIVER != currentActiveDriver.DRIVER) {
           clearSettingsMenu();
           dropDownTitle.textContent = gateway.LABEL;
-          currentActiveController.CONTROLLER?.destroy();
-          currentActiveController.CONTROLLER = gateway.CONTROLLER;
-          showPaymentGateway(gateway.CONTROLLER);
+          // currentActiveController.CONTROLLER?.destroy();
+          currentActiveDriver.DRIVER = gateway.DRIVER;
+          showPaymentGateway(gateway.DRIVER);
         }
       });
       dropDownBody.appendChild(element);
@@ -51,34 +51,65 @@ export const mainView = (function () {
    *
    * @returns {string} The form HTML
    */
-  function payForm() {
-    return `
-    <section class="card-form">
-          <span class="subtitle">Payment Details</span>
-          <div class="label-input-wrapper">
-            <label for="payment-amount">Amount</label>
-            <input type="text" placeholder="Enter transaction amount" name="payment-amount" id="payment-amount" />
-          </div>
-          <div class="label-input-wrapper" id="payment-form-buttons">
-            <input
-              class="button"
-              type="button"
-              value="Pay"
-              id="pay-btn"
-            />
-          </div>
-            <div class="label-input-wrapper">
-              <label for="payment-status">Payment Status</label>
-              <textarea
-                type="text"
-                disabled="true"
-                id="payment-status"
-                value="No payment submitted"
-                rows="4"
-                cols="28"
-              >
-              </textarea>
-        </section>`;
+  function payForm(payMethod) {
+    const section = document.createElement("section");
+    const span = document.createElement("span");
+    const amountWrapper = document.createElement("div");
+    const amountLabel = document.createElement("label");
+    const amountInput = document.createElement("input");
+    const buttonWrapper = document.createElement("div");
+    const payButton = document.createElement("input");
+    const statusWrapper = document.createElement("div");
+    const statusLabel = document.createElement("label");
+    const statusTextarea = document.createElement("textarea");
+
+    section.classList.add("card-form");
+
+    span.classList.add("subtitle");
+    span.textContent = "Payment Details";
+    section.appendChild(span);
+
+    amountWrapper.classList.add("label-input-wrapper");
+
+    amountLabel.setAttribute("for", "payment-amount");
+    amountLabel.textContent = "Amount";
+
+    amountInput.setAttribute("type", "text");
+    amountInput.setAttribute("placeholder", "Enter transaction amount");
+    amountInput.setAttribute("name", "payment-amount");
+    amountInput.setAttribute("id", "payment-amount");
+
+    amountWrapper.appendChild(amountLabel);
+    amountWrapper.appendChild(amountInput);
+    section.appendChild(amountWrapper);
+
+    buttonWrapper.classList.add("label-input-wrapper");
+
+    payButton.classList.add("button");
+    payButton.setAttribute("type", "button");
+    payButton.setAttribute("value", "Pay");
+    payButton.setAttribute("id", "pay-btn");
+    payButton.addEventListener("click", payMethod);
+
+    buttonWrapper.appendChild(payButton);
+    section.appendChild(buttonWrapper);
+
+    statusWrapper.classList.add("label-input-wrapper");
+
+    statusLabel.setAttribute("for", "payment-status");
+    statusLabel.textContent = "Payment Status";
+
+    statusTextarea.setAttribute("disabled", "true");
+    statusTextarea.setAttribute("id", "payment-status");
+    statusTextarea.setAttribute("rows", "4");
+    statusTextarea.setAttribute("cols", "28");
+    statusTextarea.textContent = "No payment submitted";
+
+    statusWrapper.appendChild(statusLabel);
+    statusWrapper.appendChild(statusTextarea);
+    section.appendChild(statusWrapper);
+
+    return section;
   }
 
   /**
@@ -143,7 +174,7 @@ export const mainView = (function () {
     modalContent.appendChild(closeButton);
     modalContent.appendChild(modalMainContent);
     modal.appendChild(modalContent);
-    document.getElementById("device-space").appendChild(modal);
+    document.getElementById("payment-gateway-space").appendChild(modal);
 
     closeButton.addEventListener("click", () => {
       modal.remove();
@@ -179,8 +210,8 @@ export const mainView = (function () {
       divGateway.textContent = gateway.LABEL;
       divGateway.addEventListener("click", () => {
         clearSettingsMenu();
-        currentActiveController.CONTROLLER = gateway.CONTROLLER;
-        showPaymentGateway(gateway.CONTROLLER);
+        currentActiveDriver.DRIVER = gateway.DRIVER;
+        showPaymentGateway(gateway.DRIVER);
       });
       divWrapper.appendChild(divGateway);
     }
@@ -188,7 +219,7 @@ export const mainView = (function () {
     section.appendChild(span);
     section.appendChild(divWrapper);
 
-    document.getElementById("device-space").appendChild(section);
+    document.getElementById("payment-gateway-space").appendChild(section);
   };
 
   return {

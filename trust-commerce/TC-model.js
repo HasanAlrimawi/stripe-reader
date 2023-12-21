@@ -1,4 +1,4 @@
-import { TCConnectionDetails } from "../constants/TC-connection-details.js";
+import { TCLocalStorageKeys } from "../constants/TC-connection-details.js";
 
 /**
  * @fileoverview Includes what readers are available, and which one is connnected.
@@ -20,7 +20,7 @@ export const TCReadersModel = (function () {
   function setReaderUsed(newReaderToUse) {
     readerUsed_ = newReaderToUse;
     localStorage.setItem(
-      TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE_KEY,
+      TCLocalStorageKeys.TC_READER_SAVED_LOCAL_STORAGE_KEY,
       newReaderToUse
     );
   }
@@ -34,7 +34,7 @@ export const TCReadersModel = (function () {
   function setAccountCredentials(credentials) {
     accountCredentials_ = credentials;
     localStorage.setItem(
-      TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE_KEY,
+      TCLocalStorageKeys.TC_ACCOUNT_LOCAL_STORAGE_KEY,
       JSON.stringify(credentials)
     );
   }
@@ -51,22 +51,22 @@ export const TCReadersModel = (function () {
     // To use the device that is already added and saved in the local storage.
     if (
       localStorage.getItem(
-        TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE_KEY
+        TCLocalStorageKeys.TC_READER_SAVED_LOCAL_STORAGE_KEY
       ) !== null
     ) {
       setReaderUsed(
         localStorage.getItem(
-          TCConnectionDetails.TC_READER_SAVED_LOCAL_STORAGE_KEY
+          TCLocalStorageKeys.TC_READER_SAVED_LOCAL_STORAGE_KEY
         )
       );
     }
     // To use the account credentials that are already added and saved in the local storage.
     if (
-      localStorage.getItem(TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE_KEY) !==
+      localStorage.getItem(TCLocalStorageKeys.TC_ACCOUNT_LOCAL_STORAGE_KEY) !==
       null
     ) {
       accountCredentials_ = JSON.parse(
-        localStorage.getItem(TCConnectionDetails.TC_ACCOUNT_LOCAL_STORAGE_KEY)
+        localStorage.getItem(TCLocalStorageKeys.TC_ACCOUNT_LOCAL_STORAGE_KEY)
       );
     }
   }
