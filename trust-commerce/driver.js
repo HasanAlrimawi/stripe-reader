@@ -1,4 +1,4 @@
-import { TCLocalStorageKeys } from "../constants/TC-connection-details.js";
+import { TCLocalStorageKeys } from "./local-storage-keys.js";
 import { BaseDriver } from "../drivers/base-driver.js";
 
 export class TCDriver extends BaseDriver {
@@ -67,7 +67,7 @@ export class TCDriver extends BaseDriver {
   saveReader = (readerModel) => {
     this.#readerUnderUse = readerModel;
     localStorage.setItem(
-      TCLocalStorageKeys.TC_READER_SAVED_LOCAL_STORAGE_KEY,
+      TCLocalStorageKeys.READER_UNDER_USE,
       this.#readerUnderUse
     );
   };
@@ -82,7 +82,7 @@ export class TCDriver extends BaseDriver {
   saveAuthenticationDetails = (customerId, password) => {
     this.#accountCredentials = { customerId: customerId, password: password };
     localStorage.setItem(
-      TCLocalStorageKeys.TC_ACCOUNT_LOCAL_STORAGE_KEY,
+      TCLocalStorageKeys.RETAIL_ACCOUNT,
       JSON.stringify(this.#accountCredentials)
     );
   };
@@ -92,15 +92,16 @@ export class TCDriver extends BaseDriver {
    *     todos the driver should do first.
    */
   load = () => {
-    if (localStorage.getItem("TC_ACCOUNT_CREDENTIALS")) {
+    if (localStorage.getItem(TCLocalStorageKeys.RETAIL_ACCOUNT)) {
       this.#accountCredentials = JSON.parse(
-        localStorage.getItem("TC_ACCOUNT_CREDENTIALS")
+        localStorage.getItem(TCLocalStorageKeys.RETAIL_ACCOUNT)
       );
-      console.log(this.#accountCredentials);
     }
 
-    if (localStorage.getItem("TC_READER_LOCAL_STORAGE")) {
-      this.#readerUnderUse = localStorage.getItem("TC_READER_LOCAL_STORAGE");
+    if (localStorage.getItem(TCLocalStorageKeys.READER_UNDER_USE)) {
+      this.#readerUnderUse = localStorage.getItem(
+        TCLocalStorageKeys.READER_UNDER_USE
+      );
     }
   };
 

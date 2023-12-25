@@ -1,6 +1,5 @@
-import { AUTHENTICATION_METHODS } from "../constants/auth-methods-constants.js";
-import { READER_SELECTION_METHODS } from "../constants/reader-selection-constants.js";
 import { BaseDriver } from "../drivers/base-driver.js";
+import { stripeLocalStorageKeys } from "./local-storage-keys.js";
 export class StripeDriver extends BaseDriver {
   static stripeDriverInstance_;
 
@@ -25,7 +24,7 @@ export class StripeDriver extends BaseDriver {
    * @returns {string} The authentication method type
    */
   getAuthenticationMethod = () => {
-    return AUTHENTICATION_METHODS.KEY;
+    return "KEY";
   };
 
   /**
@@ -36,7 +35,7 @@ export class StripeDriver extends BaseDriver {
    * @returns {string} The reader selection method
    */
   getReaderChoosingMethod = () => {
-    return READER_SELECTION_METHODS.PICK_FROM_LIST_BY_API;
+    return "PICK_FROM_LIST_BY_API";
   };
 
   /**
@@ -66,7 +65,10 @@ export class StripeDriver extends BaseDriver {
    */
   saveReader = (readerModel) => {
     this.#readerUnderUse = readerModel;
-    localStorage.setItem("STRIPE_READER_LOCAL_STORAGE", this.#readerUnderUse);
+    localStorage.setItem(
+      stripeLocalStorageKeys.READER_UNDER_USE,
+      this.#readerUnderUse
+    );
   };
 
   /**
@@ -78,7 +80,7 @@ export class StripeDriver extends BaseDriver {
    */
   saveAuthenticationDetails = (apiKey) => {
     this.#apiKey = apiKey;
-    localStorage.setItem("API_KEY", this.#apiKey);
+    localStorage.setItem(stripeLocalStorageKeys.API_KEY, this.#apiKey);
   };
 
   /**
@@ -86,14 +88,13 @@ export class StripeDriver extends BaseDriver {
    *     todos the driver should do first.
    */
   load = () => {
-    if (localStorage.getItem("API_KEY")) {
-      this.#apiKey = localStorage.getItem("API_KEY");
-      console.log(this.#apiKey);
+    if (localStorage.getItem(stripeLocalStorageKeys.READER_UNDER_USE)) {
+      this.#apiKey = localStorage.getItem(stripeLocalStorageKeys.API_KEY);
     }
 
-    if (localStorage.getItem("STRIPE_READER_LOCAL_STORAGE")) {
+    if (localStorage.getItem(stripeLocalStorageKeys.READER_UNDER_USE)) {
       this.#readerUnderUse = localStorage.getItem(
-        "STRIPE_READER_LOCAL_STORAGE"
+        stripeLocalStorageKeys.READER_UNDER_USE
       );
     }
   };

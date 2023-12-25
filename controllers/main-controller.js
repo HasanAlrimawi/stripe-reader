@@ -74,10 +74,9 @@ const pay = async () => {
   const payButton = document.getElementById("pay-btn");
   const amount = document.getElementById("payment-amount").value;
   payButton.setAttribute("disabled", true);
-  const amountAndPresetsCheck = checkPresetsAndAmount(amount);
 
-  if (amountAndPresetsCheck?.error) {
-    paymentStatus.value = amountAndPresetsCheck.error;
+  if (isNaN(amount) || !amount) {
+    paymentStatus.value = "Make sure to enter a numeric amount";
     payButton.removeAttribute("disabled");
     return;
   }
@@ -90,7 +89,6 @@ const pay = async () => {
     if (transactionResponse?.error) {
       message = `Transaction failure\nCause: ${transactionResponse.error}.`;
     } else {
-      console.log(transactionResponse);
       message = `Transaction is ${transactionResponse}`;
     }
   } catch (faultyTransaction) {
@@ -104,21 +102,4 @@ const pay = async () => {
     message = faultyTransaction;
   }
   paymentStatus.value = message;
-};
-
-/**
- * Checks if there is a defined reader for transaction or account credentials
- *     not specified or if the amount entered isn't numeric then payment
- *     can't be done and returns error
- *
- * @param {number} amount
- * @returns {Object} An object with error attribute if violation found
- */
-const checkPresetsAndAmount = (amount) => {
-  if (isNaN(amount) || !amount) {
-    return {
-      error: "Make sure to enter a numeric amount",
-    };
-  }
-  return;
 };

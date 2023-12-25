@@ -36,7 +36,6 @@ export const mainView = (function () {
         if (gateway.DRIVER != currentActiveDriver.DRIVER) {
           clearSettingsMenu();
           updateTitle(gateway.LABEL);
-          // currentActiveController.CONTROLLER?.destroy();
           currentActiveDriver.DRIVER = gateway.DRIVER;
           showPaymentGateway(gateway.DRIVER);
         }
@@ -53,7 +52,7 @@ export const mainView = (function () {
    * @returns {string} The form HTML
    */
   function payForm(payMethod) {
-    const section = document.createElement("section");
+    const form = document.createElement("form");
     const span = document.createElement("span");
     const amountWrapper = document.createElement("div");
     const amountLabel = document.createElement("label");
@@ -64,11 +63,11 @@ export const mainView = (function () {
     const statusLabel = document.createElement("label");
     const statusTextarea = document.createElement("textarea");
 
-    section.classList.add("card-form");
+    form.classList.add("card-form");
 
     span.classList.add("subtitle");
     span.textContent = "Payment Details";
-    section.appendChild(span);
+    form.appendChild(span);
 
     amountWrapper.classList.add("label-input-wrapper");
 
@@ -79,21 +78,21 @@ export const mainView = (function () {
     amountInput.setAttribute("placeholder", "Enter transaction amount");
     amountInput.setAttribute("name", "payment-amount");
     amountInput.setAttribute("id", "payment-amount");
+    amountInput.setAttribute("required", true);
 
     amountWrapper.appendChild(amountLabel);
     amountWrapper.appendChild(amountInput);
-    section.appendChild(amountWrapper);
+    form.appendChild(amountWrapper);
 
     buttonWrapper.classList.add("label-input-wrapper");
 
     payButton.classList.add("button");
-    payButton.setAttribute("type", "button");
+    payButton.setAttribute("type", "submit");
     payButton.setAttribute("value", "Pay");
     payButton.setAttribute("id", "pay-btn");
-    payButton.addEventListener("click", payMethod);
 
     buttonWrapper.appendChild(payButton);
-    section.appendChild(buttonWrapper);
+    form.appendChild(buttonWrapper);
 
     statusWrapper.classList.add("label-input-wrapper");
 
@@ -108,9 +107,14 @@ export const mainView = (function () {
 
     statusWrapper.appendChild(statusLabel);
     statusWrapper.appendChild(statusTextarea);
-    section.appendChild(statusWrapper);
+    form.appendChild(statusWrapper);
 
-    return section;
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      payMethod();
+    });
+
+    return form;
   }
 
   /**

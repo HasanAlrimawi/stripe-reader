@@ -1,14 +1,14 @@
-import { StripeDriver } from "../stripe/stripe-driver.js";
-import { TCDriver } from "../trust-commerce/TC-driver.js";
+import { StripeDriver } from "../stripe/driver.js";
+import { TCDriver } from "../trust-commerce/driver.js";
 
 /**
  * @fileoverview This file contains the list of payment gateways supported
- * by the application listed with their controllers for ease of adding the
+ * by the application listed with their drivers for ease of adding the
  * gateway functionality to the application
  */
 
 /**
- * Wraps the peripherals accessible within an array to ease access
+ * Wraps the drivers accessible within an array to ease access
  * and prevent typos.
  */
 export const paymentGateways = [

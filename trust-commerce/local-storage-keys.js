@@ -1,6 +1,6 @@
 export const TCLocalStorageKeys = {
   /** Represents local storage key of the reader device to use */
-  TC_READER_SAVED_LOCAL_STORAGE_KEY: "TC_READER_LOCAL_STORAGE",
+  READER_UNDER_USE: "TC_READER",
   /** Represents local storage key of the account credentials to use */
-  TC_ACCOUNT_LOCAL_STORAGE_KEY: "TC_ACCOUNT_CREDENTIALS",
+  RETAIL_ACCOUNT: "TC_RETAIL_ACCOUNT_CREDENTIALS",
 };
