@@ -1,12 +1,12 @@
-import { multipleStepsForms } from "../multiple-steps-forms.js";
-import { AUTHENTICATION_METHODS } from "../constants/auth-methods-constants.js";
+import { multipleStepsFormGeneration } from "../ui-components/multiple-steps-forms.js";
 import { currentActiveDriver } from "../constants/payment-gateways.js";
-import { READER_SELECTION_METHODS } from "../constants/reader-selection-constants.js";
 import { mainView } from "../views/main-view.js";
+import { authMethods } from "../ui-components/auth-methods.js";
+import { readerChoosingMethods } from "../ui-components/reader-selection-methods.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   mainView.listPaymentGateways(showPaymentGateway);
-  mainView.listAccessibleDevices(showPaymentGateway);
+  mainView.listPaymentGatewaysinDropdown(showPaymentGateway);
   document
     .getElementById("theme-icon")
     .addEventListener("click", mainView.changeTheme);
@@ -20,25 +20,46 @@ document.addEventListener("DOMContentLoaded", () => {
 const showPaymentGateway = (driver) => {
   document.getElementById("payment-gateway-space").innerHTML = "";
   driver.load();
+  mainView.addSettings([
+    {
+      name: "Change credentials",
+      callbackFunction: () => {
+        return authMethods[driver.getAuthenticationMethod()](
+          driver.saveAuthenticationDetails,
+          driver.getAuthenticationUnderUse()
+        );
+      },
+    },
+    {
+      name: "Change reader",
+      callbackFunction: () => {
+        return readerChoosingMethods[driver.getReaderChoosingMethod()](
+          driver.saveReader,
+          driver.getReaderUnderUse()
+        );
+      },
+    },
+  ]);
 
   if (driver.getReaderUnderUse() && driver.getAuthenticationUnderUse()) {
     renderPayForm(pay);
   } else {
-    if (
-      driver.getAuthMethod() === AUTHENTICATION_METHODS.USER_AND_PASSWORD &&
-      driver.getReaderChoosingMethod() === READER_SELECTION_METHODS.MANUAL_ENTRY
-    ) {
-      document
-        .getElementById("payment-gateway-space")
-        .insertAdjacentElement(
-          "beforeend",
-          multipleStepsForms.accountAndManualReaderEntry(
-            driver.saveAuthDetails,
+    document
+      .getElementById("payment-gateway-space")
+      .insertAdjacentElement(
+        "beforeend",
+        multipleStepsFormGeneration[driver.getMultipleStepsFormMethod()](
+          authMethods[driver.getAuthenticationMethod()](
+            driver.saveAuthenticationDetails,
+            driver.getAuthenticationUnderUse()
+          ),
+          readerChoosingMethods[driver.getReaderChoosingMethod()](
             driver.saveReader,
-            renderPayForm
-          )
-        );
-    }
+            driver.getReaderUnderUse()
+          ),
+          renderPayForm
+        )
+      );
   }
 };
 
@@ -46,12 +67,6 @@ const renderPayForm = () => {
   document
     .getElementById("payment-gateway-space")
     .insertAdjacentElement("beforeend", mainView.payForm(pay));
-
-    // TODO 
-    // mainView.addSettings([
-      // {name: "Change credentials",
-    // callbackFunction: }
-    // ])
 };
 
 const pay = async () => {

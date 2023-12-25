@@ -1,3 +1,5 @@
+import { AUTHENTICATION_METHODS } from "../constants/auth-methods-constants.js";
+import { READER_SELECTION_METHODS } from "../constants/reader-selection-constants.js";
 import { BaseDriver } from "../drivers/base-driver.js";
 export class StripeDriver extends BaseDriver {
   static stripeDriverInstance_;
@@ -9,21 +11,113 @@ export class StripeDriver extends BaseDriver {
     return this.stripeDriverInstance_;
   }
 
+  #apiKey = undefined;
+  #readerUnderUse = undefined;
+
   /** Represents the APIs endpoint URL used */
   #STRIPE_API_URL = "https://api.stripe.com/v1";
+
+  /**
+   * Returns what authentication method this driver needs so that the
+   *     controller knows what form to show so the
+   *     user enters his/her credentials.
+   *
+   * @returns {string} The authentication method type
+   */
+  getAuthenticationMethod = () => {
+    return AUTHENTICATION_METHODS.KEY;
+  };
+
+  /**
+   * Returns what reader choosing method this driver supports so that the
+   *     controller knows what form to show so the user
+   *     can enter or choose his/her reader device.
+   *
+   * @returns {string} The reader selection method
+   */
+  getReaderChoosingMethod = () => {
+    return READER_SELECTION_METHODS.PICK_FROM_LIST_BY_API;
+  };
+
+  /**
+   * Returns what reader is under use.
+   *
+   * @returns {string} reader under use
+   */
+  getReaderUnderUse = () => {
+    return this.#readerUnderUse;
+  };
+
+  /**
+   * Returns the method this driver uses for making multi steps form
+   *
+   * @returns {string}
+   */
+  getMultipleStepsFormMethod = () => {
+    return "DEFAULT";
+  };
+
+  /**
+   * Saves the reader device name and modelNumber to be used for transactions
+   *     in the local storage and for this driver's attribute.
+   *
+   * @param {string} readerModel Represents the reader to be used for
+   *     transactions
+   */
+  saveReader = (readerModel) => {
+    this.#readerUnderUse = readerModel;
+    localStorage.setItem("STRIPE_READER_LOCAL_STORAGE", this.#readerUnderUse);
+  };
+
+  /**
+   * Saves the credentials which are the customer id and the password
+   *     that shall be used for making transactions on the account's behalf.
+   *
+   * @param {Object} credentials Represents the customer id and password
+   *     wrapped in an object
+   */
+  saveAuthenticationDetails = (apiKey) => {
+    this.#apiKey = apiKey;
+    localStorage.setItem("API_KEY", this.#apiKey);
+  };
+
+  /**
+   * Loads any saved values the driver needs from local storage and any
+   *     todos the driver should do first.
+   */
+  load = () => {
+    if (localStorage.getItem("API_KEY")) {
+      this.#apiKey = localStorage.getItem("API_KEY");
+      console.log(this.#apiKey);
+    }
+
+    if (localStorage.getItem("STRIPE_READER_LOCAL_STORAGE")) {
+      this.#readerUnderUse = localStorage.getItem(
+        "STRIPE_READER_LOCAL_STORAGE"
+      );
+    }
+  };
+
+  /**
+   * Returns the api key that is under use.
+   *
+   * @returns {string} api key
+   */
+  getAuthenticationUnderUse = () => {
+    return this.#apiKey;
+  };
 
   /**
    * Gets the readers that are registered to the stripe terminal
    *     and saves them in the reader model.
    *
-   * @param {string} apiSecretKey
    * @returns {object<string, string} The availabe readers registered to terminal
    */
-  async getReadersAvailable(apiSecretKey) {
+  async getReadersAvailable() {
     return await fetch(`${this.#STRIPE_API_URL}/terminal/readers`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${apiSecretKey}`,
+        Authorization: `Bearer ${this.#apiKey}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
     }).then((res) => {
@@ -113,33 +207,46 @@ export class StripeDriver extends BaseDriver {
    * @param {string} readerId
    * @returns {object}
    */
-  pay = async (apiSecretKey, amount, readerId) => {
-    const intent = await this.#startIntent(apiSecretKey, amount);
+  pay = async (amount) => {
+    const intent = await this.#startIntent(this.#apiKey, amount);
 
     if (intent?.error) {
       // In this case the intent has been created but should be canceled
       if (intent.error.code == !"amount_too_small") {
-        await this.#cancelIntent(apiSecretKey, intent.id);
+        await this.#cancelIntent(this.#apiKey, intent.id);
       }
-      throw `Payment failed: ${intent.error.message}`;
+      return { error: intent.error.message.split(".")[0] };
     } else {
       const result = await this.#processPayment(
-        apiSecretKey,
+        this.#apiKey,
         intent.id,
-        readerId
+        this.#readerUnderUse
       );
 
       if (result?.error) {
-        await this.#cancelIntent(apiSecretKey, intent.id);
-        throw `Payment failed: ${result.error.message}`;
+        await this.#cancelIntent(this.#apiKey, intent.id);
+
+        if (result.error.code === "terminal_reader_timeout") {
+          return {
+            error:
+              "Check internet connectivity on your reader, then try again.",
+          };
+        }
+        return { error: result.error.message.split(".")[0] };
       } else {
         try {
           const transactionResult = await this.#transactionChecker(
-            apiSecretKey,
+            this.#apiKey,
             intent.id,
-            readerId
+            this.#readerUnderUse
           );
-          return transactionResult;
+
+          if (transactionResult.last_payment_error) {
+            return {
+              error: transactionResult.last_payment_error.message.split(".")[0],
+            };
+          }
+          return transactionResult.status;
         } catch (error) {
           throw error;
         }

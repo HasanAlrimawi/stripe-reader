@@ -1,11 +1,12 @@
-export const multipleStepsForms = (function () {
+const multipleStepsForms = (function () {
   let formStepsNum = 0;
 
-  const accountAndManualReaderEntry = (
-    saveAccountCredentials,
-    saveReaderDetails,
+  const createMultiStepForm = (
+    credentialsForm,
+    readerSelectionForm,
     renderPayForm
   ) => {
+    formStepsNum = 0;
     // Create elements
     const h1 = document.createElement("h1");
     const progressBar = document.createElement("div");
@@ -32,109 +33,33 @@ export const multipleStepsForms = (function () {
       progressBar.appendChild(step);
     });
 
-    // Creating form steps individually
     // Form Step 1
-    const formStep1 = document.createElement("form");
+    const formStep1 = document.createElement("div");
     formStep1.classList.add("form-step", "form-step-active");
-
-    const inputGroup1 = document.createElement("div");
-    inputGroup1.classList.add("input-group");
-    formStep1.appendChild(inputGroup1);
-
-    const customerIdLabel = document.createElement("label");
-    customerIdLabel.classList.add("subtitle");
-    customerIdLabel.setAttribute("for", "customer-id");
-    customerIdLabel.textContent = "Account customer id";
-    inputGroup1.appendChild(customerIdLabel);
-
-    const customerIdInput = document.createElement("input");
-    customerIdInput.required = true;
-    customerIdInput.type = "text";
-    customerIdInput.name = "customerId";
-    customerIdInput.id = "customer-id";
-    customerIdInput.placeholder = "Enter your account customer id";
-    inputGroup1.appendChild(customerIdInput);
-
-    const passwordLabel = document.createElement("label");
-    passwordLabel.classList.add("subtitle");
-    passwordLabel.setAttribute("for", "password");
-    passwordLabel.textContent = "Password";
-    inputGroup1.appendChild(passwordLabel);
-
-    const passwordInput = document.createElement("input");
-    passwordInput.required = true;
-    passwordInput.type = "password";
-    passwordInput.name = "password";
-    passwordInput.id = "password";
-    passwordInput.placeholder = "Enter your account password";
-    inputGroup1.appendChild(passwordInput);
-
-    const buttonsGroup1 = document.createElement("div");
-    buttonsGroup1.classList.add("buttons-group");
-    formStep1.appendChild(buttonsGroup1);
-
-    const nextButton1 = document.createElement("input");
-    nextButton1.type = "submit";
-    nextButton1.classList.add("button", "button-next", "ml-auto");
-    nextButton1.value = "Next";
-    buttonsGroup1.appendChild(nextButton1);
-
-    formStep1.addEventListener("submit", (e) => {
-      e.preventDefault();
+    formStep1.appendChild(credentialsForm);
+    credentialsForm.addEventListener("submit", (e) => {
       formStepsNum++;
       updateFormSteps();
       updateProgressbar();
-      saveAccountCredentials(customerIdInput.value, passwordInput.value);
     });
 
     // Form Step 2
-    const formStep2 = document.createElement("form");
+    const formStep2 = document.createElement("div");
     formStep2.classList.add("form-step");
-
-    const inputGroup2 = document.createElement("div");
-    inputGroup2.classList.add("input-group");
-    formStep2.appendChild(inputGroup2);
-
-    const readerLabel = document.createElement("label");
-    readerLabel.classList.add("subtitle");
-    readerLabel.setAttribute("for", "device-model");
-    readerLabel.textContent = "Device Model & Serial Number";
-    inputGroup2.appendChild(readerLabel);
-
-    // Creating input element
-    const readerInput = document.createElement("input");
-    readerInput.required = true;
-    readerInput.type = "text";
-    readerInput.name = "deviceModel";
-    readerInput.id = "device-model";
-    readerInput.placeholder =
-      "Enter device model with the serial number [model_serialnumber] (e.g. A920PRO_578111)";
-    inputGroup2.appendChild(readerInput);
-
-    const buttonsGroup2 = document.createElement("div");
-    buttonsGroup2.classList.add("buttons-group");
-    formStep2.appendChild(buttonsGroup2);
-
+    formStep2.appendChild(readerSelectionForm);
     const prevButton2 = document.createElement("input");
     prevButton2.classList.add("button", "button-previous");
     prevButton2.value = "Previous";
-    buttonsGroup2.appendChild(prevButton2);
-
-    const nextButton2 = document.createElement("input");
-    nextButton2.type = "submit";
-    nextButton2.classList.add("button", "button-next");
-    nextButton2.value = "Next";
-    buttonsGroup2.appendChild(nextButton2);
-
-    formStep2.addEventListener("submit", (e) => {
-      e.preventDefault();
+    readerSelectionForm.lastElementChild.insertBefore(
+      prevButton2,
+      readerSelectionForm.lastElementChild.lastElementChild
+    );
+    readerSelectionForm.addEventListener("submit", (e) => {
       formStepsNum++;
       updateFormSteps();
       updateProgressbar();
-      saveReaderDetails(readerInput.value);
     });
 
-    // Form Step 3
     const formStep3 = document.createElement("form");
     formStep3.classList.add("form-step");
 
@@ -193,8 +118,6 @@ export const multipleStepsForms = (function () {
     return form;
   };
 
-  const keyAndPickReaderFromAPIMultipleStepsForm = () => {};
-
   /**
    * Responsible for updating the progress bar of the multi-step form.
    */
@@ -231,7 +154,10 @@ export const multipleStepsForms = (function () {
   };
 
   return {
-    accountAndManualReaderEntry,
-    keyAndPickReaderFromAPIMultipleStepsForm,
+    createMultiStepForm,
   };
 })();
+
+export const multipleStepsFormGeneration = {
+  DEFAULT: multipleStepsForms.createMultiStepForm,
+};

@@ -12,7 +12,7 @@ export const mainView = (function () {
    * @param {Function} showPaymentGateway The callback function to be executed
    *     in order to show the payment gateway chosen
    */
-  function listAccessibleDevices(showPaymentGateway) {
+  function listPaymentGatewaysinDropdown(showPaymentGateway) {
     const dropDownContainer = document.getElementById("dropdown-holder-div");
     const dropDownHead = document.createElement("div");
     const dropDownBody = document.createElement("div");
@@ -21,6 +21,7 @@ export const mainView = (function () {
 
     dropDownHead.setAttribute("class", "dropdown-head");
     dropDownTitle.textContent = "Select gateway";
+    dropDownTitle.setAttribute("id", "drop-down-title");
     caret.setAttribute("class", "caret");
     dropDownHead.appendChild(dropDownTitle);
     dropDownHead.appendChild(caret);
@@ -34,7 +35,7 @@ export const mainView = (function () {
       element.addEventListener("click", () => {
         if (gateway.DRIVER != currentActiveDriver.DRIVER) {
           clearSettingsMenu();
-          dropDownTitle.textContent = gateway.LABEL;
+          updateTitle(gateway.LABEL);
           // currentActiveController.CONTROLLER?.destroy();
           currentActiveDriver.DRIVER = gateway.DRIVER;
           showPaymentGateway(gateway.DRIVER);
@@ -143,7 +144,10 @@ export const mainView = (function () {
       const newSettingHolder = document.createElement("p");
       newSettingHolder.classList.add("settings-dropdown-elements");
       newSettingHolder.textContent = setting.name;
-      newSettingHolder.addEventListener("click", setting.callbackFunction);
+      newSettingHolder.addEventListener("click", () => {
+        const modalContent = setting.callbackFunction();
+        makeModal(modalContent);
+      });
       settingsContentWrapper.appendChild(newSettingHolder);
     });
   };
@@ -211,6 +215,7 @@ export const mainView = (function () {
       divGateway.addEventListener("click", () => {
         clearSettingsMenu();
         currentActiveDriver.DRIVER = gateway.DRIVER;
+        updateTitle(gateway.LABEL);
         showPaymentGateway(gateway.DRIVER);
       });
       divWrapper.appendChild(divGateway);
@@ -222,8 +227,13 @@ export const mainView = (function () {
     document.getElementById("payment-gateway-space").appendChild(section);
   };
 
+  function updateTitle(title) {
+    document.getElementById("title").textContent = title;
+    document.getElementById("drop-down-title").textContent = title;
+  }
+
   return {
-    listAccessibleDevices,
+    listPaymentGatewaysinDropdown,
     payForm,
     changeTheme,
     addSettings,

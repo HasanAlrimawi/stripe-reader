@@ -1,5 +1,4 @@
 import { TCLocalStorageKeys } from "../constants/TC-connection-details.js";
-import { AUTHENTICATION_METHODS } from "../constants/auth-methods-constants.js";
 import { BaseDriver } from "../drivers/base-driver.js";
 
 export class TCDriver extends BaseDriver {
@@ -25,8 +24,8 @@ export class TCDriver extends BaseDriver {
    *
    * @returns {string} The authentication method type
    */
-  getAuthMethod = () => {
-    return AUTHENTICATION_METHODS.USER_AND_PASSWORD;
+  getAuthenticationMethod = () => {
+    return "USER_AND_PASSWORD";
   };
 
   /**
@@ -47,6 +46,15 @@ export class TCDriver extends BaseDriver {
    */
   getReaderUnderUse = () => {
     return this.#readerUnderUse;
+  };
+
+  /**
+   * Returns the method this driver uses for making multi steps form
+   *
+   * @returns {string}
+   */
+  getMultipleStepsFormMethod = () => {
+    return "DEFAULT";
   };
 
   /**
@@ -71,7 +79,7 @@ export class TCDriver extends BaseDriver {
    * @param {Object} credentials Represents the customer id and password
    *     wrapped in an object
    */
-  saveAuthDetails = (customerId, password) => {
+  saveAuthenticationDetails = (customerId, password) => {
     this.#accountCredentials = { customerId: customerId, password: password };
     localStorage.setItem(
       TCLocalStorageKeys.TC_ACCOUNT_LOCAL_STORAGE_KEY,
@@ -205,9 +213,14 @@ export class TCDriver extends BaseDriver {
       this.#readerUnderUse
     );
 
-    if (deviceCheckResult.devicestatus !== "connected") {
+    if (deviceCheckResult?.message) {
+      return { error: deviceCheckResult.message };
+    }
+
+    if (deviceCheckResult?.devicestatus !== "connected") {
       return { error: deviceCheckResult.description }; // can be returned as object containing error msg not just deviceCheckResult
     }
+
     const transactionResponse = await this.#makeTransaction(
       this.#accountCredentials.customerId,
       this.#accountCredentials.password,

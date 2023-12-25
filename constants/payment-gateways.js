@@ -1,6 +1,4 @@
-import { StripeController } from "../stripe/stripe-controller.js";
 import { StripeDriver } from "../stripe/stripe-driver.js";
-import { TCController } from "../trust-commerce/TC-controller.js";
 import { TCDriver } from "../trust-commerce/TC-driver.js";
 
 /**

@@ -438,6 +438,12 @@ textarea {
   cursor: pointer;
   transition: background-color 0.2s ease;
   width: 50%;
+  max-width: 150px;
+}
+
+.buttons-group .button:disabled {
+  background-color: var(--button-disabled-color);
+  cursor: default;
 }
 
 .progress-bar::before {
@@ -573,7 +579,7 @@ textarea {
 
 .settings-dropdown-content {
   padding: 0.2em 1em;
-  /* background: #ededf9; */
+  margin-top: -5px;
   background: var(--dropdown-content);
   border: 1px #363a43;
   box-shadow: 0 0.5em 1em rgba(0, 0, 0, 0.2);
