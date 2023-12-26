@@ -1,7 +1,11 @@
+import { HTML_ELEMENTS_IDS } from "../constants/elements-ids.js";
 import {
-  currentActiveDriver,
-  paymentGateways,
-} from "../constants/payment-gateways.js";
+  CURRENT_ACTIVE_DRIVER,
+  PAYMENT_GATEWAYS,
+} from "../constants/payment-gateways-registered.js";
+import { AUTHENTICATION_METHODS_FORMS } from "../ui-components/authentication-forms.js";
+import { MULTIPLE_STEPS_FORM_GENERATION } from "../ui-components/multiple-steps-forms.js";
+import { READER_SELECTION_METHODS_FORMS } from "../ui-components/reader-selection-forms.js";
 
 export const mainView = (function () {
   let darkThemeSelected_ = false;
@@ -28,15 +32,16 @@ export const mainView = (function () {
     dropDownContainer.appendChild(dropDownHead);
     dropDownBody.setAttribute("class", "dropdown-content");
 
-    for (const gateway of paymentGateways) {
+    for (const gateway of PAYMENT_GATEWAYS) {
       const element = document.createElement("p");
       element.setAttribute("class", "dropdown-elements");
       element.textContent = gateway.LABEL;
       element.addEventListener("click", () => {
-        if (gateway.DRIVER != currentActiveDriver.DRIVER) {
+        if (gateway.DRIVER != CURRENT_ACTIVE_DRIVER.DRIVER) {
           clearSettingsMenu();
+          clearPaymentGatewaySpace();
           updateTitle(gateway.LABEL);
-          currentActiveDriver.DRIVER = gateway.DRIVER;
+          CURRENT_ACTIVE_DRIVER.DRIVER = gateway.DRIVER;
           showPaymentGateway(gateway.DRIVER);
         }
       });
@@ -49,9 +54,10 @@ export const mainView = (function () {
    * Returns the payment form that permits defining amount of transaction
    *     and payment button with payment status text area.
    *
-   * @returns {string} The form HTML
+   * @returns {HTMLElement} The form element that takes user's input to make
+   *     transaction
    */
-  function payForm(payMethod) {
+  function payForm() {
     const form = document.createElement("form");
     const span = document.createElement("span");
     const amountWrapper = document.createElement("div");
@@ -129,6 +135,10 @@ export const mainView = (function () {
     }
   };
 
+  document
+    .getElementById(HTML_ELEMENTS_IDS.TOGGLE_THEME_ICON)
+    .addEventListener("click", changeTheme);
+
   /**
    * @typedef {Object} Setting
    * @property {string} name
@@ -175,14 +185,16 @@ export const mainView = (function () {
     const modalContent = document.createElement("div");
     const closeButton = document.createElement("div");
     modal.setAttribute("class", "modal");
-    modal.setAttribute("id", "current-modal");
+    modal.setAttribute("id", HTML_ELEMENTS_IDS.CURRENT_MODAL_SHOWN);
     modalContent.setAttribute("id", "modal-content");
     closeButton.setAttribute("class", "close");
     closeButton.innerHTML = `&times;`;
     modalContent.appendChild(closeButton);
     modalContent.appendChild(modalMainContent);
     modal.appendChild(modalContent);
-    document.getElementById("payment-gateway-space").appendChild(modal);
+    document
+      .getElementById(HTML_ELEMENTS_IDS.PAYMENT_GATEWAY_VIEW_SPACE)
+      .appendChild(modal);
 
     closeButton.addEventListener("click", () => {
       modal.remove();
@@ -196,7 +208,57 @@ export const mainView = (function () {
   };
 
   /**
-   * Responsible of showing the available payment gateways for user to choose.
+   * Responsible for appending the pay form into the webpage.
+   */
+  const renderPayForm = () => {
+    document
+      .getElementById(HTML_ELEMENTS_IDS.PAYMENT_GATEWAY_VIEW_SPACE)
+      .insertAdjacentElement("beforeend", payForm());
+  };
+
+  /**
+   * Responsible for making the payment using the driver's pay method, and shows
+   *     the result for the user on the payment form.
+   */
+  const payMethod = async () => {
+    const paymentStatus = document.getElementById("payment-status");
+    const payButton = document.getElementById("pay-btn");
+    const amount = document.getElementById("payment-amount").value;
+    payButton.setAttribute("disabled", true);
+
+    if (isNaN(amount) || !amount) {
+      paymentStatus.value = "Make sure to enter a numeric amount";
+      payButton.removeAttribute("disabled");
+      return;
+    }
+    paymentStatus.value = "pending...";
+    let message = "Transaction Unsuccessful";
+
+    try {
+      const transactionResponse = await CURRENT_ACTIVE_DRIVER.DRIVER.pay(
+        amount
+      );
+      payButton.removeAttribute("disabled");
+      if (transactionResponse?.error) {
+        message = `Transaction failure\nCause: ${transactionResponse.error}.`;
+      } else {
+        message = `Transaction is ${transactionResponse}`;
+      }
+    } catch (faultyTransaction) {
+      payButton.removeAttribute("disabled");
+
+      if (faultyTransaction == "TypeError: Failed to fetch") {
+        paymentStatus.value =
+          "Make sure you're connected to internet then try again.";
+        return;
+      }
+      message = faultyTransaction;
+    }
+    paymentStatus.value = message;
+  };
+
+  /**
+   * Responsible for showing the available payment gateways for user to choose.
    *
    * @param {function} showPaymentGateway The callback function to be executed
    *     in order to show the payment gateway chosen
@@ -212,13 +274,14 @@ export const mainView = (function () {
     const divWrapper = document.createElement("div");
     divWrapper.classList.add("wrapper-horizontal");
 
-    for (const gateway of paymentGateways) {
+    for (const gateway of PAYMENT_GATEWAYS) {
       const divGateway = document.createElement("div");
       divGateway.classList.add("main-menu-selection");
       divGateway.textContent = gateway.LABEL;
       divGateway.addEventListener("click", () => {
         clearSettingsMenu();
-        currentActiveDriver.DRIVER = gateway.DRIVER;
+        clearPaymentGatewaySpace();
+        CURRENT_ACTIVE_DRIVER.DRIVER = gateway.DRIVER;
         updateTitle(gateway.LABEL);
         showPaymentGateway(gateway.DRIVER);
       });
@@ -228,20 +291,67 @@ export const mainView = (function () {
     section.appendChild(span);
     section.appendChild(divWrapper);
 
-    document.getElementById("payment-gateway-space").appendChild(section);
+    document
+      .getElementById(HTML_ELEMENTS_IDS.PAYMENT_GATEWAY_VIEW_SPACE)
+      .appendChild(section);
   };
 
+  /**
+   * Responsible for updating the title of the header and gateways'
+   *     dropdown list
+   *
+   * @param {string} title The new title to be set
+   */
   function updateTitle(title) {
     document.getElementById("title").textContent = title;
     document.getElementById("drop-down-title").textContent = title;
   }
 
+  /**
+   * Clears the space where the interaction with the payment gateway forms
+   *     and payment will take place.
+   */
+  function clearPaymentGatewaySpace() {
+    document.getElementById(
+      HTML_ELEMENTS_IDS.PAYMENT_GATEWAY_VIEW_SPACE
+    ).innerHTML = "";
+  }
+
+  /**
+   * Shows the multi-step form based on the currently active driver.
+   */
+  function renderMultiStepForm() {
+    document
+      .getElementById(HTML_ELEMENTS_IDS.PAYMENT_GATEWAY_VIEW_SPACE)
+      .insertAdjacentElement(
+        "beforeend",
+        MULTIPLE_STEPS_FORM_GENERATION[
+          CURRENT_ACTIVE_DRIVER.DRIVER.getMultipleStepsFormMethod()
+        ](
+          AUTHENTICATION_METHODS_FORMS[
+            CURRENT_ACTIVE_DRIVER.DRIVER.getAuthenticationMethod()
+          ](
+            CURRENT_ACTIVE_DRIVER.DRIVER.saveAuthenticationDetails,
+            CURRENT_ACTIVE_DRIVER.DRIVER.getAuthenticationUnderUse()
+          ),
+          READER_SELECTION_METHODS_FORMS[
+            CURRENT_ACTIVE_DRIVER.DRIVER.getReaderChoosingMethod()
+          ](
+            CURRENT_ACTIVE_DRIVER.DRIVER.saveReader,
+            CURRENT_ACTIVE_DRIVER.DRIVER.getReaderUnderUse()
+          ),
+          renderPayForm
+        )
+      );
+  }
+
   return {
     listPaymentGatewaysinDropdown,
-    payForm,
     changeTheme,
     addSettings,
     makeModal,
     listPaymentGateways,
+    renderPayForm,
+    renderMultiStepForm,
   };
 })();

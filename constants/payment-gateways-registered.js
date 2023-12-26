@@ -1,5 +1,5 @@
-import { StripeDriver } from "../stripe/driver.js";
-import { TCDriver } from "../trust-commerce/driver.js";
+import { StripeDriver } from "../drivers/stripe-driver.js";
+import { TCDriver } from "../drivers/trust-commerce-driver.js";
 
 /**
  * @fileoverview This file contains the list of payment gateways supported
@@ -11,7 +11,7 @@ import { TCDriver } from "../trust-commerce/driver.js";
  * Wraps the drivers accessible within an array to ease access
  * and prevent typos.
  */
-export const paymentGateways = [
+export const PAYMENT_GATEWAYS = [
   Object.freeze({
     LABEL: "Stripe",
     DRIVER: StripeDriver.getInstance(),
@@ -26,6 +26,6 @@ export const paymentGateways = [
 /**
  * Represents the gateway's controller that is in charge.
  */
-export const currentActiveDriver = {
+export const CURRENT_ACTIVE_DRIVER = {
   DRIVER: undefined,
 };

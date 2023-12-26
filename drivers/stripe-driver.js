@@ -1,5 +1,4 @@
-import { BaseDriver } from "../drivers/base-driver.js";
-import { stripeLocalStorageKeys } from "./local-storage-keys.js";
+import { BaseDriver } from "./base-driver.js";
 export class StripeDriver extends BaseDriver {
   static stripeDriverInstance_;
 
@@ -10,8 +9,13 @@ export class StripeDriver extends BaseDriver {
     return this.stripeDriverInstance_;
   }
 
+  /** Represents the api key used to authenticate requests to stripe */
   #apiKey = undefined;
+  /** Represents the reader id that is used for making transactions */
   #readerUnderUse = undefined;
+
+  #LOCAL_STORAGE_API_KEY = "STRIPE_API_KEY";
+  #LOCAL_STORAGE_READER_UNDER_USE_KEY = "STRIPE_READER_UNDER_USE";
 
   /** Represents the APIs endpoint URL used */
   #STRIPE_API_URL = "https://api.stripe.com/v1";
@@ -66,7 +70,7 @@ export class StripeDriver extends BaseDriver {
   saveReader = (readerModel) => {
     this.#readerUnderUse = readerModel;
     localStorage.setItem(
-      stripeLocalStorageKeys.READER_UNDER_USE,
+      this.#LOCAL_STORAGE_READER_UNDER_USE_KEY,
       this.#readerUnderUse
     );
   };
@@ -80,7 +84,7 @@ export class StripeDriver extends BaseDriver {
    */
   saveAuthenticationDetails = (apiKey) => {
     this.#apiKey = apiKey;
-    localStorage.setItem(stripeLocalStorageKeys.API_KEY, this.#apiKey);
+    localStorage.setItem(this.#LOCAL_STORAGE_API_KEY, this.#apiKey);
   };
 
   /**
@@ -88,13 +92,13 @@ export class StripeDriver extends BaseDriver {
    *     todos the driver should do first.
    */
   load = () => {
-    if (localStorage.getItem(stripeLocalStorageKeys.READER_UNDER_USE)) {
-      this.#apiKey = localStorage.getItem(stripeLocalStorageKeys.API_KEY);
+    if (localStorage.getItem(this.#LOCAL_STORAGE_API_KEY)) {
+      this.#apiKey = localStorage.getItem(this.#LOCAL_STORAGE_API_KEY);
     }
 
-    if (localStorage.getItem(stripeLocalStorageKeys.READER_UNDER_USE)) {
+    if (localStorage.getItem(this.#LOCAL_STORAGE_READER_UNDER_USE_KEY)) {
       this.#readerUnderUse = localStorage.getItem(
-        stripeLocalStorageKeys.READER_UNDER_USE
+        this.#LOCAL_STORAGE_READER_UNDER_USE_KEY
       );
     }
   };

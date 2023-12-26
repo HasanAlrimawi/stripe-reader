@@ -1,5 +1,4 @@
-import { TCLocalStorageKeys } from "./local-storage-keys.js";
-import { BaseDriver } from "../drivers/base-driver.js";
+import { BaseDriver } from "./base-driver.js";
 
 export class TCDriver extends BaseDriver {
   static #tcDriver;
@@ -11,8 +10,17 @@ export class TCDriver extends BaseDriver {
     return this.#tcDriver;
   }
 
+  /** Represents the account credentials used to authenticate requests made
+   *     to Trust commerce
+   */
   #accountCredentials = undefined;
+  /** Represents the reader model and serial number that is used for
+   *     making transactions
+   */
   #readerUnderUse = undefined;
+
+  #LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY = "TC_RETAIL_ACCOUNT_CREDENTIALS";
+  #LOCAL_STORAGE_READER_UNDER_USE_KEY = "TC_READER";
 
   /** Trust commerce API URL to make transactions */
   #TC_API_URL = "https://drab-puce-ladybug-coat.cyclic.app/tc-proxy";
@@ -67,7 +75,7 @@ export class TCDriver extends BaseDriver {
   saveReader = (readerModel) => {
     this.#readerUnderUse = readerModel;
     localStorage.setItem(
-      TCLocalStorageKeys.READER_UNDER_USE,
+      this.#LOCAL_STORAGE_READER_UNDER_USE_KEY,
       this.#readerUnderUse
     );
   };
@@ -82,7 +90,7 @@ export class TCDriver extends BaseDriver {
   saveAuthenticationDetails = (customerId, password) => {
     this.#accountCredentials = { customerId: customerId, password: password };
     localStorage.setItem(
-      TCLocalStorageKeys.RETAIL_ACCOUNT,
+      this.#LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY,
       JSON.stringify(this.#accountCredentials)
     );
   };
@@ -92,15 +100,15 @@ export class TCDriver extends BaseDriver {
    *     todos the driver should do first.
    */
   load = () => {
-    if (localStorage.getItem(TCLocalStorageKeys.RETAIL_ACCOUNT)) {
+    if (localStorage.getItem(this.#LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY)) {
       this.#accountCredentials = JSON.parse(
-        localStorage.getItem(TCLocalStorageKeys.RETAIL_ACCOUNT)
+        localStorage.getItem(this.#LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY)
       );
     }
 
-    if (localStorage.getItem(TCLocalStorageKeys.READER_UNDER_USE)) {
+    if (localStorage.getItem(this.#LOCAL_STORAGE_READER_UNDER_USE_KEY)) {
       this.#readerUnderUse = localStorage.getItem(
-        TCLocalStorageKeys.READER_UNDER_USE
+        this.#LOCAL_STORAGE_READER_UNDER_USE_KEY
       );
     }
   };

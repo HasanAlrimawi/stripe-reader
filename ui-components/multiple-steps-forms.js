@@ -1,6 +1,17 @@
 const multipleStepsForms = (function () {
   let formStepsNum = 0;
 
+  /**
+   * Creates and returns sa multi step form in order to take user's entries
+   *     concerning credentials and reader needed for the payment gateway used
+   *     to make transactions.
+   *
+   * @param {HTMLElement} credentialsForm
+   * @param {HTMLElement} readerSelectionForm
+   * @param {function(undefined): undefined} renderPayForm Responsible for
+   *     rendering the payment form to make transaction
+   * @returns {HTMLElement} the Multi step form
+   */
   const createMultiStepForm = (
     credentialsForm,
     readerSelectionForm,
@@ -158,6 +169,9 @@ const multipleStepsForms = (function () {
   };
 })();
 
-export const multipleStepsFormGeneration = {
+/**
+ * Contains different multi step forms.
+ */
+export const MULTIPLE_STEPS_FORM_GENERATION = {
   DEFAULT: multipleStepsForms.createMultiStepForm,
 };

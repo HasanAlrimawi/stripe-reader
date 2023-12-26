@@ -1,4 +1,17 @@
+import { HTML_ELEMENTS_IDS } from "../constants/elements-ids.js";
+
 const authenticationForms = (function () {
+  /**
+   * Creates and returns form for taking account credentials, the customer
+   *     id and password.
+   *
+   * @param {function(string, string): undefined} saveAccountCredentials
+   *     Responsible for saving the account credentials to the driver and
+   *     local storage
+   * @param {?string} usedAccount The account credentials already saved and used
+   *     by the driver
+   * @returns {HTMLElement}
+   */
   const accountCredentialsForm = (saveAccountCredentials, usedAccount) => {
     const form = document.createElement("form");
     const customerIdLabel = document.createElement("label");
@@ -18,7 +31,9 @@ const authenticationForms = (function () {
       setTimeout(() => {
         submitButton.removeAttribute("disabled");
         submitButton.value = "Save";
-        document.getElementById("current-modal")?.remove();
+        document
+          .getElementById(HTML_ELEMENTS_IDS.CURRENT_MODAL_SHOWN)
+          ?.remove();
       }, 1500);
     });
     customerIdLabel.setAttribute("class", "subtitle");
@@ -57,6 +72,16 @@ const authenticationForms = (function () {
     return form;
   };
 
+  /**
+   * Creates and returns form for taking secret key that the driver will use
+   *     for making transctions.
+   *
+   * @param {function(string): undefined} saveKey Responsible for saving the
+   *     secret key on local storage and the driver using it
+   * @param {?string} usedKey Secret key already saved in local storage and
+   *     used by the driver
+   * @returns {HTMLElement}
+   */
   const keyForm = (saveKey, usedKey) => {
     const form = document.createElement("form");
     const keyLabel = document.createElement("label");
@@ -74,7 +99,9 @@ const authenticationForms = (function () {
       setTimeout(() => {
         submitButton.removeAttribute("disabled");
         submitButton.value = "Save";
-        document.getElementById("current-modal")?.remove();
+        document
+          .getElementById(HTML_ELEMENTS_IDS.CURRENT_MODAL_SHOWN)
+          ?.remove();
       }, 1500);
     });
     keyLabel.setAttribute("class", "subtitle");
@@ -111,7 +138,10 @@ const authenticationForms = (function () {
   };
 })();
 
-export const authMethods = {
+/**
+ * Contains authentication methods accompanied with their forms
+ */
+export const AUTHENTICATION_METHODS_FORMS = {
   USER_AND_PASSWORD: authenticationForms.accountCredentialsForm,
   KEY: authenticationForms.keyForm,
 };

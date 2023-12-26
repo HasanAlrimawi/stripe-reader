@@ -1,6 +1,17 @@
-import { currentActiveDriver } from "../constants/payment-gateways.js";
+import { HTML_ELEMENTS_IDS } from "../constants/elements-ids.js";
+import { CURRENT_ACTIVE_DRIVER } from "../constants/payment-gateways-registered.js";
 
 const readerChoosingForms = (function () {
+  /**
+   * Shows a form for the user to enter the reader model and serial number
+   *     in order for the driver to save and use it in transactions.
+   *
+   * @param {function(string): undefined} saveReader The function responsible
+   *     for saving the new reader to local storage to be used by the driver
+   * @param {?string} usedReader Represents the reader that is under use
+   *     by the driver
+   * @returns {HTMLElement} Form for the user to enter the reader details
+   */
   const manual = (saveReader, usedReader) => {
     const form = document.createElement("form");
     const deviceNameLabel = document.createElement("label");
@@ -16,7 +27,9 @@ const readerChoosingForms = (function () {
       submitButton.setAttribute("disabled", true);
       submitButton.value = "Saved successfully";
       setTimeout(() => {
-        document.getElementById("current-modal")?.remove();
+        document
+          .getElementById(HTML_ELEMENTS_IDS.CURRENT_MODAL_SHOWN)
+          ?.remove();
         submitButton.removeAttribute("disabled");
         submitButton.value = "Save";
       }, 1500);
@@ -49,6 +62,17 @@ const readerChoosingForms = (function () {
     return form;
   };
 
+  /**
+   * Uses the driver selected method getReadersAvailable to list the available
+   *     readers so that the user chooses the reader he/she wants.
+   *
+   * @param {function(string): undefined} saveReader The function responsible
+   *     for saving the new reader to local storage to be used by the driver
+   * @param {?string} usedReaderId Represents the reader that is under use
+   *     by the driver
+   * @returns {HTMLElement} The form that will show the list of readers
+   *     to choose from
+   */
   const pickFromListByAPI = (saveReader, usedReaderId) => {
     const form = document.createElement("form");
     const submitButton = document.createElement("input");
@@ -63,9 +87,14 @@ const readerChoosingForms = (function () {
       listReadersButton.setAttribute("disabled", true);
       listReadersButton.value = "Getting readers...";
       const availableReaders =
-        await currentActiveDriver.DRIVER.getReadersAvailable();
+        await CURRENT_ACTIVE_DRIVER.DRIVER.getReadersAvailable();
       listReadersButton.value = "List readers registered";
       listReadersButton.removeAttribute("disabled");
+
+      if (availableReaders.error) {
+        console.log();
+        alert(availableReaders.error.message);
+      }
 
       if (availableReaders) {
         for (const reader of availableReaders.data) {
@@ -130,7 +159,9 @@ const readerChoosingForms = (function () {
       setTimeout(() => {
         submitButton.removeAttribute("disabled");
         submitButton.value = "Save";
-        document.getElementById("current-modal")?.remove();
+        document
+          .getElementById(HTML_ELEMENTS_IDS.CURRENT_MODAL_SHOWN)
+          ?.remove();
       }, 1500);
     });
     return form;
@@ -158,7 +189,10 @@ const readerChoosingForms = (function () {
   };
 })();
 
-export const readerChoosingMethods = {
+/**
+ * Contains readers selection methods accompanied with their forms
+ */
+export const READER_SELECTION_METHODS_FORMS = {
   MANUAL_ENTRY: readerChoosingForms.manual,
   PICK_FROM_LIST_BY_API: readerChoosingForms.pickFromListByAPI,
 };
