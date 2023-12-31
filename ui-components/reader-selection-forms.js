@@ -1,5 +1,4 @@
 import { HTML_ELEMENTS_IDS } from "../constants/elements-ids.js";
-import { CURRENT_ACTIVE_DRIVER } from "../constants/payment-gateways-registered.js";
 
 const readerChoosingForms = (function () {
   /**
@@ -70,10 +69,12 @@ const readerChoosingForms = (function () {
    *     for saving the new reader to local storage to be used by the driver
    * @param {?string} usedReaderId Represents the reader that is under use
    *     by the driver
+   * @param {Promise<object>} getReadersPromise The promise that retrieves the
+   *     readers registered to the account used
    * @returns {HTMLElement} The form that will show the list of readers
    *     to choose from
    */
-  const pickFromListByAPI = (saveReader, usedReaderId) => {
+  const pickFromListByAPI = (saveReader, usedReaderId, getReadersPromise) => {
     const form = document.createElement("form");
     const submitButton = document.createElement("input");
     const subtitle = document.createElement("span");
@@ -86,46 +87,46 @@ const readerChoosingForms = (function () {
       readersHolderElement.innerHTML = "";
       listReadersButton.setAttribute("disabled", true);
       listReadersButton.value = "Getting readers...";
-      const availableReaders =
-        await CURRENT_ACTIVE_DRIVER.DRIVER.getReadersAvailable();
       listReadersButton.value = "List readers registered";
       listReadersButton.removeAttribute("disabled");
 
-      if (availableReaders.error) {
-        console.log();
-        alert(availableReaders.error.message);
-      }
-
-      if (availableReaders) {
-        for (const reader of availableReaders.data) {
-          const readerWrapper = document.createElement("div");
-          const readerLabel = document.createElement("label");
-          const useReaderButton = createUseReaderButton(reader.id);
-
-          if (usedReaderId == reader.id) {
-            useReaderButton.setAttribute("value", "Chosen");
-            readerSelected = usedReaderId;
-            submitButton.removeAttribute("disabled");
-          }
-          useReaderButton.addEventListener("click", () => {
-            document
-              .querySelectorAll(".connect-button")
-              .forEach((connectButton) => {
-                connectButton.setAttribute("value", "Select");
-              });
-            useReaderButton.value = "Chosen";
-            submitButton.removeAttribute("disabled");
-            readerSelected = reader.id;
-          });
-
-          readerWrapper.setAttribute("class", "vertical-wrapper");
-          readerLabel.textContent = reader.label;
-
-          readerWrapper.appendChild(readerLabel);
-          readerWrapper.appendChild(useReaderButton);
-          readersHolderElement.appendChild(readerWrapper);
+      getReadersPromise.then((availableReaders) => {
+        if (availableReaders?.error) {
+          console.log();
+          alert(availableReaders.error.message);
         }
-      }
+
+        if (availableReaders) {
+          for (const reader of availableReaders.data) {
+            const readerWrapper = document.createElement("div");
+            const readerLabel = document.createElement("label");
+            const useReaderButton = createUseReaderButton(reader.id);
+
+            if (usedReaderId == reader.id) {
+              useReaderButton.setAttribute("value", "Chosen");
+              readerSelected = usedReaderId;
+              submitButton.removeAttribute("disabled");
+            }
+            useReaderButton.addEventListener("click", () => {
+              document
+                .querySelectorAll(".connect-button")
+                .forEach((connectButton) => {
+                  connectButton.setAttribute("value", "Select");
+                });
+              useReaderButton.value = "Chosen";
+              submitButton.removeAttribute("disabled");
+              readerSelected = reader.id;
+            });
+
+            readerWrapper.setAttribute("class", "vertical-wrapper");
+            readerLabel.textContent = reader.label;
+
+            readerWrapper.appendChild(readerLabel);
+            readerWrapper.appendChild(useReaderButton);
+            readersHolderElement.appendChild(readerWrapper);
+          }
+        }
+      });
     });
 
     submitButton.setAttribute("type", "submit");

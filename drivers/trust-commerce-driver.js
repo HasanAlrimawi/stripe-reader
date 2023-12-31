@@ -88,8 +88,11 @@ export class TCDriver extends BaseDriver {
    * @param {Object} credentials Represents the customer id and password
    *     wrapped in an object
    */
-  saveAuthenticationDetails = (customerId, password) => {
-    this.#accountCredentials = { customerId: customerId, password: password };
+  saveAuthenticationDetails = (credentials) => {
+    this.#accountCredentials = {
+      customerId: credentials.customerId,
+      password: credentials.password,
+    };
     localStorage.setItem(
       this.#LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY,
       JSON.stringify(this.#accountCredentials)

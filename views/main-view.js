@@ -1,11 +1,4 @@
 import { HTML_ELEMENTS_IDS } from "../constants/elements-ids.js";
-import {
-  CURRENT_ACTIVE_DRIVER,
-  PAYMENT_GATEWAYS,
-} from "../constants/payment-gateways-registered.js";
-import { AUTHENTICATION_METHODS_FORMS } from "../ui-components/authentication-forms.js";
-import { MULTIPLE_STEPS_FORM_GENERATION } from "../ui-components/multiple-steps-forms.js";
-import { READER_SELECTION_METHODS_FORMS } from "../ui-components/reader-selection-forms.js";
 
 export const mainView = (function () {
   let darkThemeSelected_ = false;
@@ -16,7 +9,7 @@ export const mainView = (function () {
    * @param {Function} showPaymentGateway The callback function to be executed
    *     in order to show the payment gateway chosen
    */
-  function listPaymentGatewaysinDropdown(showPaymentGateway) {
+  function listPaymentGatewaysinDropdown(paymentGateways, showPaymentGateway) {
     const dropDownContainer = document.getElementById("dropdown-holder-div");
     const dropDownHead = document.createElement("div");
     const dropDownBody = document.createElement("div");
@@ -32,18 +25,12 @@ export const mainView = (function () {
     dropDownContainer.appendChild(dropDownHead);
     dropDownBody.setAttribute("class", "dropdown-content");
 
-    for (const gateway of PAYMENT_GATEWAYS) {
+    for (const gateway of paymentGateways) {
       const element = document.createElement("p");
       element.setAttribute("class", "dropdown-elements");
-      element.textContent = gateway.LABEL;
+      element.textContent = gateway;
       element.addEventListener("click", () => {
-        if (gateway.DRIVER != CURRENT_ACTIVE_DRIVER.DRIVER) {
-          clearSettingsMenu();
-          clearPaymentGatewaySpace();
-          updateTitle(gateway.LABEL);
-          CURRENT_ACTIVE_DRIVER.DRIVER = gateway.DRIVER;
-          showPaymentGateway(gateway.DRIVER);
-        }
+        showPaymentGateway(gateway);
       });
       dropDownBody.appendChild(element);
     }
@@ -57,7 +44,7 @@ export const mainView = (function () {
    * @returns {HTMLElement} The form element that takes user's input to make
    *     transaction
    */
-  function payForm() {
+  function payForm(makePayment) {
     const form = document.createElement("form");
     const span = document.createElement("span");
     const amountWrapper = document.createElement("div");
@@ -117,7 +104,7 @@ export const mainView = (function () {
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();
-      payMethod();
+      payMethod(makePayment);
     });
 
     return form;
@@ -210,17 +197,17 @@ export const mainView = (function () {
   /**
    * Responsible for appending the pay form into the webpage.
    */
-  const renderPayForm = () => {
+  const renderPayForm = (makePayment) => {
     document
       .getElementById(HTML_ELEMENTS_IDS.PAYMENT_GATEWAY_VIEW_SPACE)
-      .insertAdjacentElement("beforeend", payForm());
+      .insertAdjacentElement("beforeend", payForm(makePayment));
   };
 
   /**
    * Responsible for making the payment using the driver's pay method, and shows
    *     the result for the user on the payment form.
    */
-  const payMethod = async () => {
+  const payMethod = async (makePayment) => {
     const paymentStatus = document.getElementById("payment-status");
     const payButton = document.getElementById("pay-btn");
     const amount = document.getElementById("payment-amount").value;
@@ -235,9 +222,7 @@ export const mainView = (function () {
     let message = "Transaction Unsuccessful";
 
     try {
-      const transactionResponse = await CURRENT_ACTIVE_DRIVER.DRIVER.pay(
-        amount
-      );
+      const transactionResponse = await makePayment(amount);
       payButton.removeAttribute("disabled");
       if (transactionResponse?.error) {
         message = `Transaction failure\nCause: ${transactionResponse.error}.`;
@@ -263,7 +248,7 @@ export const mainView = (function () {
    * @param {function} showPaymentGateway The callback function to be executed
    *     in order to show the payment gateway chosen
    */
-  const listPaymentGateways = (showPaymentGateway) => {
+  const listPaymentGateways = (paymentGateways, showPaymentGateway) => {
     const section = document.createElement("section");
     section.classList.add("card-form");
 
@@ -274,16 +259,12 @@ export const mainView = (function () {
     const divWrapper = document.createElement("div");
     divWrapper.classList.add("wrapper-horizontal");
 
-    for (const gateway of PAYMENT_GATEWAYS) {
+    for (const gateway of paymentGateways) {
       const divGateway = document.createElement("div");
       divGateway.classList.add("main-menu-selection");
-      divGateway.textContent = gateway.LABEL;
+      divGateway.textContent = gateway;
       divGateway.addEventListener("click", () => {
-        clearSettingsMenu();
-        clearPaymentGatewaySpace();
-        CURRENT_ACTIVE_DRIVER.DRIVER = gateway.DRIVER;
-        updateTitle(gateway.LABEL);
-        showPaymentGateway(gateway.DRIVER);
+        showPaymentGateway(gateway);
       });
       divWrapper.appendChild(divGateway);
     }
@@ -320,29 +301,10 @@ export const mainView = (function () {
   /**
    * Shows the multi-step form based on the currently active driver.
    */
-  function renderMultiStepForm() {
+  function renderMultiStepForm(form) {
     document
       .getElementById(HTML_ELEMENTS_IDS.PAYMENT_GATEWAY_VIEW_SPACE)
-      .insertAdjacentElement(
-        "beforeend",
-        MULTIPLE_STEPS_FORM_GENERATION[
-          CURRENT_ACTIVE_DRIVER.DRIVER.getMultipleStepsFormMethod()
-        ](
-          AUTHENTICATION_METHODS_FORMS[
-            CURRENT_ACTIVE_DRIVER.DRIVER.getAuthenticationMethod()
-          ](
-            CURRENT_ACTIVE_DRIVER.DRIVER.saveAuthenticationDetails,
-            CURRENT_ACTIVE_DRIVER.DRIVER.getAuthenticationUnderUse()
-          ),
-          READER_SELECTION_METHODS_FORMS[
-            CURRENT_ACTIVE_DRIVER.DRIVER.getReaderChoosingMethod()
-          ](
-            CURRENT_ACTIVE_DRIVER.DRIVER.saveReader,
-            CURRENT_ACTIVE_DRIVER.DRIVER.getReaderUnderUse()
-          ),
-          renderPayForm
-        )
-      );
+      .insertAdjacentElement("beforeend", form);
   }
 
   return {
@@ -353,5 +315,8 @@ export const mainView = (function () {
     listPaymentGateways,
     renderPayForm,
     renderMultiStepForm,
+    clearSettingsMenu,
+    clearPaymentGatewaySpace,
+    updateTitle,
   };
 })();

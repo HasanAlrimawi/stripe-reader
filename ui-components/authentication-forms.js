@@ -25,7 +25,11 @@ const authenticationForms = (function () {
     form.setAttribute("class", "input-group");
     form.addEventListener("submit", (event) => {
       event.preventDefault();
-      saveAccountCredentials(customerIdInput.value, passwordInput.value);
+      const credentials = {
+        customerId: customerIdInput.value,
+        password: passwordInput.value,
+      };
+      saveAccountCredentials(credentials);
       submitButton.setAttribute("disabled", true);
       submitButton.value = "Saved successfully";
       setTimeout(() => {
