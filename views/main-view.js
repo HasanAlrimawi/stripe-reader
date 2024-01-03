@@ -6,6 +6,8 @@ export const mainView = (function () {
   /**
    * Responsible for loading the supported devices in a dropdown list.
    *
+   * @param {Array<PaymentGateway>} paymentGateways Represents the supported
+   *     payment gateways that can be used to make transactions
    * @param {Function} showPaymentGateway The callback function to be executed
    *     in order to show the payment gateway chosen
    */
@@ -41,6 +43,8 @@ export const mainView = (function () {
    * Returns the payment form that permits defining amount of transaction
    *     and payment button with payment status text area.
    *
+   * @param {function(Number): Object} makePayment Responsible for making the
+   *     payment transaction
    * @returns {HTMLElement} The form element that takes user's input to make
    *     transaction
    */
@@ -196,6 +200,9 @@ export const mainView = (function () {
 
   /**
    * Responsible for appending the pay form into the webpage.
+   *
+   * @param {function(Number): Object} makePayment Responsible for making the
+   *     payment transaction
    */
   const renderPayForm = (makePayment) => {
     document
@@ -204,8 +211,11 @@ export const mainView = (function () {
   };
 
   /**
-   * Responsible for making the payment using the driver's pay method, and shows
-   *     the result for the user on the payment form.
+   * Responsible for making the payment using the driver's pay method, and
+   *     shows the result for the user on the payment form.
+   *
+   * @param {function(Number): Object} makePayment Responsible for making the
+   *     payment transaction
    */
   const payMethod = async (makePayment) => {
     const paymentStatus = document.getElementById("payment-status");
@@ -243,8 +253,16 @@ export const mainView = (function () {
   };
 
   /**
+   * @typedef {Object} PaymentGateway
+   * @property {String} label
+   * @property {BaseDriver} driver
+   */
+
+  /**
    * Responsible for showing the available payment gateways for user to choose.
    *
+   * @param {Array<PaymentGateway>} paymentGateways Represents the supported
+   *     payment gateways that can be used to make transactions
    * @param {function} showPaymentGateway The callback function to be executed
    *     in order to show the payment gateway chosen
    */
@@ -300,6 +318,9 @@ export const mainView = (function () {
 
   /**
    * Shows the multi-step form based on the currently active driver.
+   *
+   * @param {HTMLElement} form The HTML element of the form to be appended to
+   *     the view
    */
   function renderMultiStepForm(form) {
     document

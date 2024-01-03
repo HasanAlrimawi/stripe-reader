@@ -17,10 +17,20 @@ export class BaseDriver {
   getAuthenticationUnderUse() {}
   pay() {}
 
+  /**
+   * Sets the authentication details to be used.
+   *
+   * @param {object} newAuthentication
+   */
   setAuthentication(newAuthentication) {
     this.#authentication = newAuthentication;
   }
 
+  /**
+   * Sets the reader id or model number to be used for making transactions.
+   *
+   * @param {string} newReaderUnderUse
+   */
   setReaderUnderUse(newReaderUnderUse) {
     this.#readerUnderUse = newReaderUnderUse;
   }
@@ -29,7 +39,7 @@ export class BaseDriver {
    * Gets the readers that are registered to the stripe terminal
    *     and saves them in the reader model.
    *
-   * @returns {object<string, string} The availabe readers registered to terminal
+   * @returns {object} The availabe readers registered to stripe terminal
    */
   async getReadersAvailableKeyBased() {
     return await fetch(`${this.#baseUrl}/terminal/readers`, {
@@ -115,9 +125,7 @@ export class BaseDriver {
    * Takes the responsibility of the payment flow from intent making to
    *     payment processing and cancelling if needed.
    *
-   * @param {string} apiSecretKey
    * @param {number} amount Represents the transaction amount
-   * @param {string} readerId
    * @returns {object}
    */
   payBasedOnKey = async (amount) => {
@@ -222,6 +230,7 @@ export class BaseDriver {
    *
    * @param {string} apiSecretKey
    * @param {Object} intentId
+   * @param {string} readerId
    * @returns {Promise}
    */
   #transactionCheckerKeyBased = async (apiSecretKey, intentId, readerId) => {
@@ -273,14 +282,14 @@ export class BaseDriver {
     });
   };
 
-
-
   /**
    * Provides ability to check whether the device is ready for transaction
    *     and in what state it is.
    *
    * @param {string} customerId Trust commerce customer id
    * @param {string} password Trust commerce password
+   * @param {string} deviceName Represents the reader's model and serial number
+   *     to be used
    * @returns {object}
    */
   #checkDeviceAccountBased = async (customerId, password, deviceName) => {
@@ -310,7 +319,12 @@ export class BaseDriver {
    * @param {number} amount The amount of the transaction in cents
    * @returns {object}
    */
-  #makeTransactionAccountBased = async (customerId, password, deviceName, amount) => {
+  #makeTransactionAccountBased = async (
+    customerId,
+    password,
+    deviceName,
+    amount
+  ) => {
     return await fetch(`${this.#baseUrl}`, {
       method: "POST",
       headers: {
@@ -336,7 +350,12 @@ export class BaseDriver {
    * @param {string} cloudPayId
    * @returns {Object}
    */
-  #checkTransactionAccountBased = async (customerId, password, deviceName, cloudPayId) => {
+  #checkTransactionAccountBased = async (
+    customerId,
+    password,
+    deviceName,
+    cloudPayId
+  ) => {
     return await fetch(`${this.#baseUrl}`, {
       method: "POST",
       headers: {
@@ -362,10 +381,7 @@ export class BaseDriver {
    *     conveyed failure, only returns response when successfully made or
    *     customer canceled the transaction himself.
    *
-   * @param {number} customerId
-   * @param {string} password
    * @param {number} amount Transaction amount in cents
-   * @param {string} deviceName
    * @returns {Object}
    */
   payAccountBased = async (amount) => {
@@ -393,12 +409,13 @@ export class BaseDriver {
 
     if (transactionResponse.cloudpaystatus === "submitted") {
       try {
-        let transactionResult = await this.#getTransactionFinalStateAccountBased(
-          this.#authentication.customerId,
-          this.#authentication.password,
-          this.#readerUnderUse,
-          currentcloudPayId
-        );
+        let transactionResult =
+          await this.#getTransactionFinalStateAccountBased(
+            this.#authentication.customerId,
+            this.#authentication.password,
+            this.#readerUnderUse,
+            currentcloudPayId
+          );
         return transactionResult.cloudpaystatus;
       } catch (error) {
         throw error;
@@ -420,7 +437,12 @@ export class BaseDriver {
    * @param {string} cloudPayId
    * @returns {Object}
    */
-  #cancelTransactionAccountBased = async (customerId, password, deviceName, cloudPayId) => {
+  #cancelTransactionAccountBased = async (
+    customerId,
+    password,
+    deviceName,
+    cloudPayId
+  ) => {
     return await fetch(`${this.#baseUrl}`, {
       method: "POST",
       headers: {

@@ -129,6 +129,12 @@ export class TCDriver extends BaseDriver {
     return this.#accountCredentials;
   };
 
+  /**
+   * Responsible for making payment transaction.
+   *
+   * @param {number} amount The amount of transaction in cents
+   * @returns object
+   */
   pay = async (amount) => {
     try {
       return await this.payAccountBased(amount);

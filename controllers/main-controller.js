@@ -22,12 +22,10 @@ let CURRENT_ACTIVE_DRIVER = undefined;
 /**
  * Responsible for calling the driver selected.
  *
- * @param {Driver} driver
+ * @param {String} (paymentGatewaySelected Represents the label of the driver
+ *     selected
  */
 const showPaymentGateway = (paymentGatewaySelected) => {
-  console.log(paymentGatewaySelected);
-  console.log(CURRENT_ACTIVE_DRIVER);
-
   if (paymentGatewaySelected == CURRENT_ACTIVE_DRIVER?.LABEL) {
     return;
   }
@@ -35,8 +33,6 @@ const showPaymentGateway = (paymentGatewaySelected) => {
   CURRENT_ACTIVE_DRIVER = PAYMENT_GATEWAYS.filter(
     (gateway) => gateway.LABEL == paymentGatewaySelected
   )[0];
-
-  console.log(CURRENT_ACTIVE_DRIVER);
 
   mainView.clearSettingsMenu();
   mainView.clearPaymentGatewaySpace();
@@ -95,6 +91,7 @@ const showPaymentGateway = (paymentGatewaySelected) => {
         mainView.renderPayForm(pay);
       }
     );
+
     mainView.renderMultiStepForm(multipleStepsForm);
   }
 };

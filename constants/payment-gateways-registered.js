@@ -22,10 +22,3 @@ export const PAYMENT_GATEWAYS = [
     DRIVER: TCDriver.getInstance(),
   }),
 ];
-
-// /**
-//  * Represents the gateway's controller that is in charge.
-//  */
-// export const CURRENT_ACTIVE_DRIVER = {
-//   DRIVER: undefined,
-// };
