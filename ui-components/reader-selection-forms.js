@@ -69,12 +69,12 @@ const readerChoosingForms = (function () {
    *     for saving the new reader to local storage to be used by the driver
    * @param {?string} usedReaderId Represents the reader that is under use
    *     by the driver
-   * @param {Promise<object>} getReadersPromise The promise that retrieves the
-   *     readers registered to the account used
+   * @param {function(): object} getReaders The function that calls API that
+   *     retrieves the readers registered to the account used
    * @returns {HTMLElement} The form that will show the list of readers
    *     to choose from
    */
-  const pickFromListByAPI = (saveReader, usedReaderId, getReadersPromise) => {
+  const pickFromListByAPI = (saveReader, usedReaderId, getReaders) => {
     const form = document.createElement("form");
     const submitButton = document.createElement("input");
     const subtitle = document.createElement("span");
@@ -87,10 +87,11 @@ const readerChoosingForms = (function () {
       readersHolderElement.innerHTML = "";
       listReadersButton.setAttribute("disabled", true);
       listReadersButton.value = "Getting readers...";
-      listReadersButton.value = "List readers registered";
-      listReadersButton.removeAttribute("disabled");
 
-      getReadersPromise.then((availableReaders) => {
+      getReaders().then((availableReaders) => {
+        listReadersButton.value = "List readers registered";
+        listReadersButton.removeAttribute("disabled");
+
         if (availableReaders?.error) {
           console.log();
           alert(availableReaders.error.message);

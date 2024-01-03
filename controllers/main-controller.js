@@ -132,12 +132,12 @@ const pay = async (amount) => {
  * Calls the payment gateway's driver under use method if found to get the
  *     readers registered to the payment gateway account.
  *
- * @returns {Promise<object>} Holds the readers registered to the account used
+ * @returns {function(): object} Holds the readers registered to the account used
  */
-const getReadersByAPI = async () => {
+const getReadersByAPI = () => {
   try {
     return CURRENT_ACTIVE_DRIVER.DRIVER?.getReadersAvailable
-      ? await CURRENT_ACTIVE_DRIVER.DRIVER?.getReadersAvailable()
+      ? CURRENT_ACTIVE_DRIVER.DRIVER?.getReadersAvailable
       : undefined;
   } catch (error) {
     alert(error);
