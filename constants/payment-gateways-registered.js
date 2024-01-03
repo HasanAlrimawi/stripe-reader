@@ -1,5 +1,5 @@
-import { StripeDriver } from "../drivers/stripe-driver.js";
-import { TCDriver } from "../drivers/trust-commerce-driver.js";
+import { StripeController } from "../controllers/stripe-controller.js";
+import { TrustCommerceController } from "../controllers/trust-commerce-controller.js";
 
 /**
  * @fileoverview This file contains the list of payment gateways supported
@@ -14,11 +14,11 @@ import { TCDriver } from "../drivers/trust-commerce-driver.js";
 export const PAYMENT_GATEWAYS = [
   Object.freeze({
     LABEL: "Stripe",
-    DRIVER: StripeDriver.getInstance(),
+    CONTROLLER: StripeController.getInstance(),
   }),
 
   Object.freeze({
     LABEL: "Trust Commerce",
-    DRIVER: TCDriver.getInstance(),
+    CONTROLLER: TrustCommerceController.getInstance(),
   }),
 ];
