@@ -1,29 +1,29 @@
 const multipleStepsForms = (function () {
-  let formStepsNum = 0;
+  /**
+   * @typedef {Object} StepForm
+   * @property {string} title Represents what this form represents
+   * @property {HTMLElement} form Holds the form HTML element
+   */
 
   /**
-   * Creates and returns sa multi step form in order to take user's entries
-   *     concerning credentials and reader needed for the payment gateway used
-   *     to make transactions.
+   * Creates and returns a multi step form that's composed of the forms passed
+   *     then calls the function reponsible for rendering the view wanted after
+   *     completing the multi-step form.
    *
-   * @param {HTMLElement} credentialsForm
-   * @param {HTMLElement} readerSelectionForm
-   * @param {function(undefined): undefined} renderPayForm Responsible for
-   *     rendering the payment form to make transaction
+   * @param {Array<StepForm>} forms Represents the array of forms to be grouped
+   *     in a multi step form
+   * @param {function(undefined): undefined} renderNextView Represents function
+   *     that is expected to render the view wanted after finishing the multi
+   *     step form
    * @returns {HTMLElement} the Multi step form
    */
-  const createMultiStepForm = (
-    credentialsForm,
-    readerSelectionForm,
-    renderPayForm
-  ) => {
-    formStepsNum = 0;
-    // Create elements
+  const createMultiStepForm = (forms, renderNextView) => {
+    let formStepsNum = 0;
     const h1 = document.createElement("h1");
     const progressBar = document.createElement("div");
     const progress = document.createElement("div");
     const progressSteps = [];
-    // Setting up elements' attributes
+
     h1.textContent = "Setting up ...";
     h1.classList.add("text-center");
 
@@ -33,81 +33,95 @@ const multipleStepsForms = (function () {
     progress.classList.add("progress");
     progressBar.appendChild(progress);
 
-    const stepTitles = ["Account", "Reader", "Finished"];
-    stepTitles.forEach((title, index) => {
+    let elements = [h1, progressBar];
+    let previousButtons = [];
+
+    // Adds the forms titles to the progress-bar
+    forms.forEach((form, index) => {
       const step = document.createElement("div");
       index === 0
         ? step.classList.add("progress-step-active", "progress-step")
         : step.classList.add("progress-step");
-      step.setAttribute("data-title", title);
+      step.setAttribute("data-title", form.title);
       progressSteps.push(step);
       progressBar.appendChild(step);
     });
 
-    // Form Step 1
-    const formStep1 = document.createElement("div");
-    formStep1.classList.add("form-step", "form-step-active");
-    formStep1.appendChild(credentialsForm);
-    credentialsForm.addEventListener("submit", (e) => {
-      formStepsNum++;
-      updateFormSteps();
-      updateProgressbar();
+    // Adds previous button and the styling for the forms in order to
+    // show/hide the form
+    forms.forEach((form, index) => {
+      const formHolder = document.createElement("div");
+      if (index !== 0) {
+        formHolder.classList.add("form-step");
+        formHolder.appendChild(form.form);
+        const prevButton = document.createElement("input");
+        prevButton.classList.add("button", "button-previous");
+        prevButton.value = "Previous";
+        previousButtons.push(prevButton);
+        form.form.lastElementChild.insertBefore(
+          prevButton,
+          form.form.lastElementChild.lastElementChild
+        );
+        form.form.addEventListener("submit", (e) => {
+          formStepsNum++;
+          updateFormSteps();
+          updateProgressbar();
+        });
+      } else {
+        formHolder.classList.add("form-step", "form-step-active");
+        formHolder.appendChild(form.form);
+        form.form.addEventListener("submit", (e) => {
+          formStepsNum++;
+          updateFormSteps();
+          updateProgressbar();
+        });
+      }
+      elements.push(formHolder);
     });
 
-    // Form Step 2
-    const formStep2 = document.createElement("div");
-    formStep2.classList.add("form-step");
-    formStep2.appendChild(readerSelectionForm);
-    const prevButton2 = document.createElement("input");
-    prevButton2.classList.add("button", "button-previous");
-    prevButton2.value = "Previous";
-    readerSelectionForm.lastElementChild.insertBefore(
-      prevButton2,
-      readerSelectionForm.lastElementChild.lastElementChild
-    );
-    readerSelectionForm.addEventListener("submit", (e) => {
-      formStepsNum++;
-      updateFormSteps();
-      updateProgressbar();
-    });
+    const lastForm = document.createElement("form");
+    lastForm.classList.add("form-step");
 
-    const formStep3 = document.createElement("form");
-    formStep3.classList.add("form-step");
-
-    const inputGroup3 = document.createElement("div");
-    inputGroup3.classList.add("input-group");
-    formStep3.appendChild(inputGroup3);
+    const inputGroup = document.createElement("div");
+    inputGroup.classList.add("input-group");
+    lastForm.appendChild(inputGroup);
 
     const saveLabel = document.createElement("label");
     saveLabel.classList.add("subtitle");
     saveLabel.textContent = "Entries Saved! You can use the app";
-    inputGroup3.appendChild(saveLabel);
+    inputGroup.appendChild(saveLabel);
 
-    const buttonsGroup3 = document.createElement("div");
-    buttonsGroup3.classList.add("buttons-group");
-    formStep3.appendChild(buttonsGroup3);
+    const buttonsGroup = document.createElement("div");
+    buttonsGroup.classList.add("buttons-group");
+    lastForm.appendChild(buttonsGroup);
 
-    const prevButton3 = document.createElement("input");
-    prevButton3.classList.add("button", "button-previous");
-    prevButton3.value = "Previous";
-    buttonsGroup3.appendChild(prevButton3);
+    const prevButton = document.createElement("input");
+    prevButton.classList.add("button", "button-previous");
+    prevButton.value = "Previous";
+    previousButtons.push(prevButton);
+    buttonsGroup.appendChild(prevButton);
 
-    const nextButton3 = document.createElement("input");
-    nextButton3.type = "submit";
-    nextButton3.classList.add("button", "button-next");
-    nextButton3.value = "Use app";
-    buttonsGroup3.appendChild(nextButton3);
+    const nextButton = document.createElement("input");
+    nextButton.type = "submit";
+    nextButton.classList.add("button", "button-next");
+    nextButton.value = "Use app";
+    buttonsGroup.appendChild(nextButton);
 
-    formStep3.addEventListener("submit", (e) => {
+    lastForm.addEventListener("submit", (e) => {
       e.preventDefault();
       formStepsNum++;
       updateProgressbar();
       formStepsNum = 0;
       form.remove();
-      renderPayForm();
+      renderNextView();
     });
 
-    const elements = [h1, progressBar, formStep1, formStep2, formStep3];
+    const step = document.createElement("div");
+    step.classList.add("progress-step");
+    step.setAttribute("data-title", "Finished");
+    progressSteps.push(step);
+    progressBar.appendChild(step);
+    elements.push(lastForm);
 
     const form = document.createElement("div");
     form.classList.add("form");
@@ -115,8 +129,7 @@ const multipleStepsForms = (function () {
       form.appendChild(element);
     });
 
-    //------------------------------------
-    const previousButtons = [prevButton2, prevButton3];
+    // creates event listener for all previous buttons
     for (const btn of previousButtons) {
       btn.addEventListener("click", () => {
         formStepsNum--;
@@ -124,44 +137,45 @@ const multipleStepsForms = (function () {
         updateProgressbar();
       });
     }
-    //---------------------------------------
+
+    // Following functions responsible for showing/hiding forms as well as
+    // updating the progress bar
+    /**
+     * Responsible for updating the progress bar of the multi-step form.
+     */
+    const updateProgressbar = () => {
+      const progressSteps = document.getElementsByClassName("progress-step");
+      const progress = document.getElementById("progress");
+
+      [...progressSteps].forEach((progressStep, index) => {
+        if (index < formStepsNum + 1) {
+          progressStep.classList.add("progress-step-active");
+        } else {
+          progressStep.classList.remove("progress-step-active");
+        }
+      });
+      const progressActive = document.getElementsByClassName(
+        "progress-step-active"
+      );
+
+      progress.style.width =
+        ((progressActive.length - 1) / (progressSteps.length - 1)) * 100 + "%";
+    };
+
+    /**
+     * Responsible for viewing the needed step of the multi-step form.
+     */
+    const updateFormSteps = () => {
+      const formSteps = document.getElementsByClassName("form-step");
+      [...formSteps].forEach((formStep) => {
+        if (formStep.classList.contains("form-step-active")) {
+          formStep.classList.remove("form-step-active");
+        }
+      });
+      formSteps[formStepsNum].classList.add("form-step-active");
+    };
 
     return form;
-  };
-
-  /**
-   * Responsible for updating the progress bar of the multi-step form.
-   */
-  const updateProgressbar = () => {
-    const progressSteps = document.getElementsByClassName("progress-step");
-    const progress = document.getElementById("progress");
-
-    [...progressSteps].forEach((progressStep, index) => {
-      if (index < formStepsNum + 1) {
-        progressStep.classList.add("progress-step-active");
-      } else {
-        progressStep.classList.remove("progress-step-active");
-      }
-    });
-    const progressActive = document.getElementsByClassName(
-      "progress-step-active"
-    );
-
-    progress.style.width =
-      ((progressActive.length - 1) / (progressSteps.length - 1)) * 100 + "%";
-  };
-
-  /**
-   * Responsible for viewing the needed step of the multi-step form.
-   */
-  const updateFormSteps = () => {
-    const formSteps = document.getElementsByClassName("form-step");
-    [...formSteps].forEach((formStep) => {
-      if (formStep.classList.contains("form-step-active")) {
-        formStep.classList.remove("form-step-active");
-      }
-    });
-    formSteps[formStepsNum].classList.add("form-step-active");
   };
 
   return {

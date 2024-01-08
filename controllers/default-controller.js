@@ -3,7 +3,7 @@ import { READER_SELECTION_METHODS_FORMS } from "../ui-components/reader-selectio
 import { MULTIPLE_STEPS_FORM_GENERATION } from "../ui-components/multiple-steps-forms.js";
 import { mainView } from "../views/main-view.js";
 
-export class BaseController {
+export class DefaultController {
   constructor(driver) {
     this.driver = driver;
   }
@@ -46,22 +46,29 @@ export class BaseController {
     ) {
       mainView.renderPayForm(this.#pay);
     } else {
+      const forms = [
+        {
+          title: "Account",
+          form: AUTHENTICATION_METHODS_FORMS[
+            this.driver.getAuthenticationMethod()
+          ](this.#saveAuthentication, this.driver.getAuthenticationUnderUse()),
+        },
+        {
+          title: "Reader",
+          form: READER_SELECTION_METHODS_FORMS[
+            this.driver.getReaderChoosingMethod()
+          ](
+            this.#saveReader,
+            this.driver.getReaderUnderUse(),
+            this.#getReadersByAPI()
+          ),
+        },
+      ];
       const multipleStepsForm = MULTIPLE_STEPS_FORM_GENERATION[
         this.driver.getMultipleStepsFormMethod()
-      ](
-        AUTHENTICATION_METHODS_FORMS[this.driver.getAuthenticationMethod()](
-          this.#saveAuthentication,
-          this.driver.getAuthenticationUnderUse()
-        ),
-        READER_SELECTION_METHODS_FORMS[this.driver.getReaderChoosingMethod()](
-          this.#saveReader,
-          this.driver.getReaderUnderUse(),
-          this.#getReadersByAPI()
-        ),
-        () => {
-          mainView.renderPayForm(this.#pay);
-        }
-      );
+      ](forms, () => {
+        mainView.renderPayForm(this.#pay);
+      });
 
       mainView.renderMultiStepForm(multipleStepsForm);
     }

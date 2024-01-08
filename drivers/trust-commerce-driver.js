@@ -13,15 +13,6 @@ export class TCDriver extends BaseDriver {
     return this.#tcDriver;
   }
 
-  /** Represents the account credentials used to authenticate requests made
-   *     to Trust commerce
-   */
-  #accountCredentials = undefined;
-  /** Represents the reader model and serial number that is used for
-   *     making transactions
-   */
-  #readerUnderUse = undefined;
-
   #LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY = "TC_RETAIL_ACCOUNT_CREDENTIALS";
   #LOCAL_STORAGE_READER_UNDER_USE_KEY = "TC_READER";
 
@@ -48,21 +39,32 @@ export class TCDriver extends BaseDriver {
   };
 
   /**
-   * Returns what reader is under use.
-   *
-   * @returns {string} reader under use
-   */
-  getReaderUnderUse = () => {
-    return this.#readerUnderUse;
-  };
-
-  /**
    * Returns the method this driver uses for making multi steps form
    *
    * @returns {string}
    */
   getMultipleStepsFormMethod = () => {
     return "DEFAULT";
+  };
+
+  /**
+   * Returns what reader is under use.
+   *
+   * @returns {string} reader under use
+   */
+  getReaderUnderUse = () => {
+    return localStorage.getItem(this.#LOCAL_STORAGE_READER_UNDER_USE_KEY);
+  };
+
+  /**
+   * Returns the account credentials that are under use.
+   *
+   * @returns {Object} account credentials attribute
+   */
+  getAuthenticationUnderUse = () => {
+    return JSON.parse(
+      localStorage.getItem(this.#LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY)
+    );
   };
 
   /**
@@ -73,12 +75,8 @@ export class TCDriver extends BaseDriver {
    *     transactions
    */
   saveReader = (readerModel) => {
-    this.#readerUnderUse = readerModel;
-    localStorage.setItem(
-      this.#LOCAL_STORAGE_READER_UNDER_USE_KEY,
-      this.#readerUnderUse
-    );
-    this.setReaderUnderUse(this.#readerUnderUse);
+    localStorage.setItem(this.#LOCAL_STORAGE_READER_UNDER_USE_KEY, readerModel);
+    this.setReaderUnderUse(readerModel);
   };
 
   /**
@@ -89,15 +87,11 @@ export class TCDriver extends BaseDriver {
    *     wrapped in an object
    */
   saveAuthenticationDetails = (credentials) => {
-    this.#accountCredentials = {
-      customerId: credentials.customerId,
-      password: credentials.password,
-    };
     localStorage.setItem(
       this.#LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY,
-      JSON.stringify(this.#accountCredentials)
+      JSON.stringify(credentials)
     );
-    this.setAuthentication(this.#accountCredentials);
+    this.setAuthentication(credentials);
   };
 
   /**
@@ -106,27 +100,18 @@ export class TCDriver extends BaseDriver {
    */
   load = () => {
     if (localStorage.getItem(this.#LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY)) {
-      this.#accountCredentials = JSON.parse(
-        localStorage.getItem(this.#LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY)
+      this.setAuthentication(
+        JSON.parse(
+          localStorage.getItem(this.#LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY)
+        )
       );
-      this.setAuthentication(this.#accountCredentials);
     }
 
     if (localStorage.getItem(this.#LOCAL_STORAGE_READER_UNDER_USE_KEY)) {
-      this.#readerUnderUse = localStorage.getItem(
-        this.#LOCAL_STORAGE_READER_UNDER_USE_KEY
+      this.setReaderUnderUse(
+        localStorage.getItem(this.#LOCAL_STORAGE_READER_UNDER_USE_KEY)
       );
-      this.setReaderUnderUse(this.#readerUnderUse);
     }
-  };
-
-  /**
-   * Returns the account credentials that are under use.
-   *
-   * @returns {Object} account credentials attribute
-   */
-  getAuthenticationUnderUse = () => {
-    return this.#accountCredentials;
   };
 
   /**

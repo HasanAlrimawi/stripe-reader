@@ -12,11 +12,6 @@ export class StripeDriver extends BaseDriver {
     return this.stripeDriverInstance_;
   }
 
-  /** Represents the api key used to authenticate requests to stripe */
-  #apiKey = undefined;
-  /** Represents the reader id that is used for making transactions */
-  #readerUnderUse = undefined;
-
   #LOCAL_STORAGE_API_KEY = "STRIPE_API_KEY";
   #LOCAL_STORAGE_READER_UNDER_USE_KEY = "STRIPE_READER_UNDER_USE";
 
@@ -43,21 +38,30 @@ export class StripeDriver extends BaseDriver {
   };
 
   /**
-   * Returns what reader is under use.
-   *
-   * @returns {string} reader under use
-   */
-  getReaderUnderUse = () => {
-    return this.#readerUnderUse;
-  };
-
-  /**
    * Returns the method this driver uses for making multi steps form
    *
    * @returns {string}
    */
   getMultipleStepsFormMethod = () => {
     return "DEFAULT";
+  };
+
+  /**
+   * Returns what reader is under use.
+   *
+   * @returns {string} reader under use
+   */
+  getReaderUnderUse = () => {
+    return localStorage.getItem(this.#LOCAL_STORAGE_READER_UNDER_USE_KEY);
+  };
+
+  /**
+   * Returns the api key that is under use.
+   *
+   * @returns {string} api key
+   */
+  getAuthenticationUnderUse = () => {
+    return localStorage.getItem(this.#LOCAL_STORAGE_API_KEY);
   };
 
   /**
@@ -68,12 +72,8 @@ export class StripeDriver extends BaseDriver {
    *     transactions
    */
   saveReader = (readerModel) => {
-    this.#readerUnderUse = readerModel;
     this.setReaderUnderUse(readerModel);
-    localStorage.setItem(
-      this.#LOCAL_STORAGE_READER_UNDER_USE_KEY,
-      this.#readerUnderUse
-    );
+    localStorage.setItem(this.#LOCAL_STORAGE_READER_UNDER_USE_KEY, readerModel);
   };
 
   /**
@@ -84,9 +84,8 @@ export class StripeDriver extends BaseDriver {
    *     wrapped in an object
    */
   saveAuthenticationDetails = (apiKey) => {
-    this.#apiKey = apiKey;
     this.setAuthentication(apiKey);
-    localStorage.setItem(this.#LOCAL_STORAGE_API_KEY, this.#apiKey);
+    localStorage.setItem(this.#LOCAL_STORAGE_API_KEY, apiKey);
   };
 
   /**
@@ -95,25 +94,14 @@ export class StripeDriver extends BaseDriver {
    */
   load = () => {
     if (localStorage.getItem(this.#LOCAL_STORAGE_API_KEY)) {
-      this.#apiKey = localStorage.getItem(this.#LOCAL_STORAGE_API_KEY);
-      this.setAuthentication(this.#apiKey);
+      this.setAuthentication(localStorage.getItem(this.#LOCAL_STORAGE_API_KEY));
     }
 
     if (localStorage.getItem(this.#LOCAL_STORAGE_READER_UNDER_USE_KEY)) {
-      this.#readerUnderUse = localStorage.getItem(
-        this.#LOCAL_STORAGE_READER_UNDER_USE_KEY
+      this.setReaderUnderUse(
+        localStorage.getItem(this.#LOCAL_STORAGE_READER_UNDER_USE_KEY)
       );
-      this.setReaderUnderUse(this.#readerUnderUse);
     }
-  };
-
-  /**
-   * Returns the api key that is under use.
-   *
-   * @returns {string} api key
-   */
-  getAuthenticationUnderUse = () => {
-    return this.#apiKey;
   };
 
   getReadersAvailable = async () => {

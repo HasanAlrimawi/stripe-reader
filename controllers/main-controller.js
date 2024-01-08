@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 });
 
-/** Represents the payment gateways driver that is currently active */
+/** Represents the payment gateways controller that is currently active */
 let CURRENT_ACTIVE_CONTROLLER = undefined;
 
 /**
