@@ -17,18 +17,19 @@ document.addEventListener("DOMContentLoaded", () => {
 let CURRENT_ACTIVE_CONTROLLER = undefined;
 
 /**
- * Responsible for calling the driver selected.
+ * Responsible for calling the needed controller with the needed payment
+ *     gateway driver initiated in it.
  *
- * @param {String} (paymentGatewaySelected Represents the label of the driver
+ * @param {String} paymentGatewaySelected Represents the label of the driver
  *     selected
  */
 const showPaymentGateway = (paymentGatewaySelected) => {
-  if (paymentGatewaySelected == CURRENT_ACTIVE_CONTROLLER?.LABEL) {
+  if (paymentGatewaySelected === CURRENT_ACTIVE_CONTROLLER?.LABEL) {
     return;
   }
 
   CURRENT_ACTIVE_CONTROLLER = PAYMENT_GATEWAYS.filter(
-    (gateway) => gateway.LABEL == paymentGatewaySelected
+    (gateway) => gateway.LABEL === paymentGatewaySelected
   )[0];
 
   mainView.clearSettingsMenu();

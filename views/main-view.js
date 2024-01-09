@@ -1,4 +1,4 @@
-import { HTML_ELEMENTS_IDS } from "../constants/elements-ids.js";
+import { HTMLElementsIds } from "../constants/elements-ids.js";
 
 export const mainView = (function () {
   let darkThemeSelected_ = false;
@@ -6,8 +6,8 @@ export const mainView = (function () {
   /**
    * Responsible for loading the supported devices in a dropdown list.
    *
-   * @param {Array<PaymentGateway>} paymentGateways Represents the supported
-   *     payment gateways that can be used to make transactions
+   * @param {Array<string>} paymentGateways Represents the labels of supported
+   *     payment gateways
    * @param {Function} showPaymentGateway The callback function to be executed
    *     in order to show the payment gateway chosen
    */
@@ -127,17 +127,22 @@ export const mainView = (function () {
   };
 
   document
-    .getElementById(HTML_ELEMENTS_IDS.TOGGLE_THEME_ICON)
+    .getElementById(HTMLElementsIds.TOGGLE_THEME_ICON)
     .addEventListener("click", changeTheme);
 
   /**
    * @typedef {Object} Setting
    * @property {string} name
-   * @property {function} callbackFunction
+   * @property {function(): HTMLElement} callbackFunction Makes HTMLElement
+   *     and returns it so it can be used
    */
 
   /**
-   * Adds new settings of to the settings menu.
+   * Adds new settings of to the settings menu, so whenever a settings is
+   *     pressed, a modal will appear.
+   *
+   * Uses the callbackFunction attribute of the Setting object in order to get
+   *     the HTMLElement wanted, and shows it in a modal.
    *
    * @param {Array<Setting>} newSettings
    */
@@ -176,7 +181,7 @@ export const mainView = (function () {
     const modalContent = document.createElement("div");
     const closeButton = document.createElement("div");
     modal.setAttribute("class", "modal");
-    modal.setAttribute("id", HTML_ELEMENTS_IDS.CURRENT_MODAL_SHOWN);
+    modal.setAttribute("id", HTMLElementsIds.CURRENT_MODAL_SHOWN);
     modalContent.setAttribute("id", "modal-content");
     closeButton.setAttribute("class", "close");
     closeButton.innerHTML = `&times;`;
@@ -184,7 +189,7 @@ export const mainView = (function () {
     modalContent.appendChild(modalMainContent);
     modal.appendChild(modalContent);
     document
-      .getElementById(HTML_ELEMENTS_IDS.PAYMENT_GATEWAY_VIEW_SPACE)
+      .getElementById(HTMLElementsIds.PAYMENT_GATEWAY_VIEW_SPACE)
       .appendChild(modal);
 
     closeButton.addEventListener("click", () => {
@@ -206,13 +211,14 @@ export const mainView = (function () {
    */
   const renderPayForm = (makePayment) => {
     document
-      .getElementById(HTML_ELEMENTS_IDS.PAYMENT_GATEWAY_VIEW_SPACE)
+      .getElementById(HTMLElementsIds.PAYMENT_GATEWAY_VIEW_SPACE)
       .insertAdjacentElement("beforeend", payForm(makePayment));
   };
 
   /**
-   * Responsible for making the payment using the driver's pay method, and
-   *     shows the result for the user on the payment form.
+   * Responsible for making the payment using the driver's pay method passed
+   *     by the controller, and shows the result for the user on
+   *     the payment form.
    *
    * @param {function(Number): Object} makePayment Responsible for making the
    *     payment transaction
@@ -253,16 +259,10 @@ export const mainView = (function () {
   };
 
   /**
-   * @typedef {Object} PaymentGateway
-   * @property {String} label
-   * @property {BaseDriver} driver
-   */
-
-  /**
    * Responsible for showing the available payment gateways for user to choose.
    *
-   * @param {Array<PaymentGateway>} paymentGateways Represents the supported
-   *     payment gateways that can be used to make transactions
+   * @param {Array<string>} paymentGateways Represents the labels of supported
+   *     payment gateways
    * @param {function} showPaymentGateway The callback function to be executed
    *     in order to show the payment gateway chosen
    */
@@ -291,7 +291,7 @@ export const mainView = (function () {
     section.appendChild(divWrapper);
 
     document
-      .getElementById(HTML_ELEMENTS_IDS.PAYMENT_GATEWAY_VIEW_SPACE)
+      .getElementById(HTMLElementsIds.PAYMENT_GATEWAY_VIEW_SPACE)
       .appendChild(section);
   };
 
@@ -312,7 +312,7 @@ export const mainView = (function () {
    */
   function clearPaymentGatewaySpace() {
     document.getElementById(
-      HTML_ELEMENTS_IDS.PAYMENT_GATEWAY_VIEW_SPACE
+      HTMLElementsIds.PAYMENT_GATEWAY_VIEW_SPACE
     ).innerHTML = "";
   }
 
@@ -324,7 +324,7 @@ export const mainView = (function () {
    */
   function renderMultiStepForm(form) {
     document
-      .getElementById(HTML_ELEMENTS_IDS.PAYMENT_GATEWAY_VIEW_SPACE)
+      .getElementById(HTMLElementsIds.PAYMENT_GATEWAY_VIEW_SPACE)
       .insertAdjacentElement("beforeend", form);
   }
 

@@ -1,3 +1,5 @@
+import { MultipleStepsFormSelection } from "../constants/ui-components-selection.js";
+
 const multipleStepsForms = (function () {
   /**
    * @typedef {Object} StepForm
@@ -12,10 +14,10 @@ const multipleStepsForms = (function () {
    *
    * @param {Array<StepForm>} forms Represents the array of forms to be grouped
    *     in a multi step form
-   * @param {function(undefined): undefined} renderNextView Represents function
+   * @param {function(): undefined} renderNextView Represents function
    *     that is expected to render the view wanted after finishing the multi
    *     step form
-   * @returns {HTMLElement} the Multi step form
+   * @returns {HTMLElement} the Multi-step form created
    */
   const createMultiStepForm = (forms, renderNextView) => {
     let formStepsNum = 0;
@@ -187,5 +189,5 @@ const multipleStepsForms = (function () {
  * Contains different multi step forms.
  */
 export const MULTIPLE_STEPS_FORM_GENERATION = {
-  DEFAULT: multipleStepsForms.createMultiStepForm,
+  [MultipleStepsFormSelection.DEFAULT]: multipleStepsForms.createMultiStepForm,
 };

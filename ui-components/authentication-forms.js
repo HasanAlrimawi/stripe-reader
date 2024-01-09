@@ -1,11 +1,18 @@
-import { HTML_ELEMENTS_IDS } from "../constants/elements-ids.js";
+import { HTMLElementsIds } from "../constants/elements-ids.js";
+import { AuthenticationMethod } from "../constants/ui-components-selection.js";
 
 const authenticationForms = (function () {
+  /**
+   * @typedef {Object} Account
+   * @property {string} customerId
+   * @property {string} password
+   */
+
   /**
    * Creates and returns form for taking account credentials, the customer
    *     id and password.
    *
-   * @param {function(string, string): undefined} saveAccountCredentials
+   * @param {function(Account): undefined} saveAccountCredentials
    *     Responsible for saving the account credentials to the driver and
    *     local storage
    * @param {?string} usedAccount The account credentials already saved and used
@@ -35,9 +42,7 @@ const authenticationForms = (function () {
       setTimeout(() => {
         submitButton.removeAttribute("disabled");
         submitButton.value = "Save";
-        document
-          .getElementById(HTML_ELEMENTS_IDS.CURRENT_MODAL_SHOWN)
-          ?.remove();
+        document.getElementById(HTMLElementsIds.CURRENT_MODAL_SHOWN)?.remove();
       }, 1500);
     });
     customerIdLabel.setAttribute("class", "subtitle");
@@ -78,7 +83,7 @@ const authenticationForms = (function () {
 
   /**
    * Creates and returns form for taking secret key that the driver will use
-   *     for making transctions.
+   *     for making transactions.
    *
    * @param {function(string): undefined} saveKey Responsible for saving the
    *     secret key on local storage and the driver using it
@@ -103,9 +108,7 @@ const authenticationForms = (function () {
       setTimeout(() => {
         submitButton.removeAttribute("disabled");
         submitButton.value = "Save";
-        document
-          .getElementById(HTML_ELEMENTS_IDS.CURRENT_MODAL_SHOWN)
-          ?.remove();
+        document.getElementById(HTMLElementsIds.CURRENT_MODAL_SHOWN)?.remove();
       }, 1500);
     });
     keyLabel.setAttribute("class", "subtitle");
@@ -146,6 +149,7 @@ const authenticationForms = (function () {
  * Contains authentication methods accompanied with their forms
  */
 export const AUTHENTICATION_METHODS_FORMS = {
-  USER_AND_PASSWORD: authenticationForms.accountCredentialsForm,
-  KEY: authenticationForms.keyForm,
+  [AuthenticationMethod.USERNAME_AND_PASSWORD]:
+    authenticationForms.accountCredentialsForm,
+  [AuthenticationMethod.API_KEY]: authenticationForms.keyForm,
 };

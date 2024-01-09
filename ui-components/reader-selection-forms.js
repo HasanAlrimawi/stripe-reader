@@ -1,4 +1,5 @@
-import { HTML_ELEMENTS_IDS } from "../constants/elements-ids.js";
+import { HTMLElementsIds } from "../constants/elements-ids.js";
+import { ReaderSelectionMethod } from "../constants/ui-components-selection.js";
 
 const readerChoosingForms = (function () {
   /**
@@ -6,7 +7,7 @@ const readerChoosingForms = (function () {
    *     in order for the driver to save and use it in transactions.
    *
    * @param {function(string): undefined} saveReader The function responsible
-   *     for saving the new reader to local storage to be used by the driver
+   *     for saving the new reader
    * @param {?string} usedReader Represents the reader that is under use
    *     by the driver
    * @returns {HTMLElement} Form for the user to enter the reader details
@@ -26,9 +27,7 @@ const readerChoosingForms = (function () {
       submitButton.setAttribute("disabled", true);
       submitButton.value = "Saved successfully";
       setTimeout(() => {
-        document
-          .getElementById(HTML_ELEMENTS_IDS.CURRENT_MODAL_SHOWN)
-          ?.remove();
+        document.getElementById(HTMLElementsIds.CURRENT_MODAL_SHOWN)?.remove();
         submitButton.removeAttribute("disabled");
         submitButton.value = "Save";
       }, 1500);
@@ -66,9 +65,9 @@ const readerChoosingForms = (function () {
    *     readers so that the user chooses the reader he/she wants.
    *
    * @param {function(string): undefined} saveReader The function responsible
-   *     for saving the new reader to local storage to be used by the driver
-   * @param {?string} usedReaderId Represents the reader that is under use
-   *     by the driver
+   *     for saving the new reader
+   * @param {?string} usedReaderId Represents the reader that is already
+   *     under use
    * @param {function(): object} getReaders The function that calls API that
    *     retrieves the readers registered to the account used
    * @returns {HTMLElement} The form that will show the list of readers
@@ -87,16 +86,16 @@ const readerChoosingForms = (function () {
       readersHolderElement.innerHTML = "";
       listReadersButton.setAttribute("disabled", true);
       listReadersButton.value = "Getting readers...";
-      listReadersButton.value = "List readers registered";
-      listReadersButton.removeAttribute("disabled");
 
       getReaders().then((availableReaders) => {
+        listReadersButton.value = "List readers registered";
+        listReadersButton.removeAttribute("disabled");
         if (availableReaders?.error) {
           console.log();
           alert(availableReaders.error.message);
         }
 
-        if (availableReaders) {
+        if (availableReaders.data) {
           for (const reader of availableReaders.data) {
             const readerWrapper = document.createElement("div");
             const readerLabel = document.createElement("label");
@@ -160,19 +159,18 @@ const readerChoosingForms = (function () {
       setTimeout(() => {
         submitButton.removeAttribute("disabled");
         submitButton.value = "Save";
-        document
-          .getElementById(HTML_ELEMENTS_IDS.CURRENT_MODAL_SHOWN)
-          ?.remove();
+        document.getElementById(HTMLElementsIds.CURRENT_MODAL_SHOWN)?.remove();
       }, 1500);
     });
     return form;
   };
 
   /**
-   * Creates HTML connect button with event listener to connect to the wanted
+   * Creates HTML select button with event listener to select to the wanted
    *     reader when selected.
    *
-   * @param {string} readerName Represents the name to be given for the reader
+   * @param {string} readerId Represents the id to be given for the selection
+   *     button
    * @returns {HTMLElement}
    */
   function createUseReaderButton(readerId) {
@@ -194,6 +192,7 @@ const readerChoosingForms = (function () {
  * Contains readers selection methods accompanied with their forms
  */
 export const READER_SELECTION_METHODS_FORMS = {
-  MANUAL_ENTRY: readerChoosingForms.manual,
-  PICK_FROM_LIST_BY_API: readerChoosingForms.pickFromListByAPI,
+  [ReaderSelectionMethod.MANUAL_ENTRY]: readerChoosingForms.manual,
+  [ReaderSelectionMethod.PICK_FROM_LIST_BY_API]:
+    readerChoosingForms.pickFromListByAPI,
 };

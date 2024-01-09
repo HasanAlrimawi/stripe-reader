@@ -1,8 +1,16 @@
+import {
+  AuthenticationMethod,
+  MultipleStepsFormSelection,
+  ReaderSelectionMethod,
+} from "../constants/ui-components-selection.js";
 import { BaseDriver } from "./base-driver.js";
 
 export class TCDriver extends BaseDriver {
   constructor() {
     super("https://drab-puce-ladybug-coat.cyclic.app/tc-proxy");
+    this.#LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY =
+      "TC_RETAIL_ACCOUNT_CREDENTIALS";
+    this.#LOCAL_STORAGE_READER_UNDER_USE_KEY = "TC_READER";
   }
   static #tcDriver;
 
@@ -13,18 +21,20 @@ export class TCDriver extends BaseDriver {
     return this.#tcDriver;
   }
 
-  #LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY = "TC_RETAIL_ACCOUNT_CREDENTIALS";
-  #LOCAL_STORAGE_READER_UNDER_USE_KEY = "TC_READER";
+  #LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY;
+  #LOCAL_STORAGE_READER_UNDER_USE_KEY;
 
   /**
    * Returns what authentication method this driver needs so that the
    *     controller knows what form to show so the
    *     user enters his/her credentials.
    *
+   * @override
+   *
    * @returns {string} The authentication method type
    */
   getAuthenticationMethod = () => {
-    return "USER_AND_PASSWORD";
+    return AuthenticationMethod.USERNAME_AND_PASSWORD;
   };
 
   /**
@@ -32,23 +42,29 @@ export class TCDriver extends BaseDriver {
    *     controller knows what form to show so the user
    *     can enter or choose his/her reader device.
    *
+   * @override
+   *
    * @returns {string} The reader selection method
    */
   getReaderChoosingMethod = () => {
-    return "MANUAL_ENTRY";
+    return ReaderSelectionMethod.MANUAL_ENTRY;
   };
 
   /**
    * Returns the method this driver uses for making multi steps form
    *
+   * @override
+   *
    * @returns {string}
    */
   getMultipleStepsFormMethod = () => {
-    return "DEFAULT";
+    return MultipleStepsFormSelection.DEFAULT;
   };
 
   /**
    * Returns what reader is under use.
+   *
+   * @override
    *
    * @returns {string} reader under use
    */
@@ -58,6 +74,8 @@ export class TCDriver extends BaseDriver {
 
   /**
    * Returns the account credentials that are under use.
+   *
+   * @override
    *
    * @returns {Object} account credentials attribute
    */
@@ -71,6 +89,8 @@ export class TCDriver extends BaseDriver {
    * Saves the reader device name and modelNumber to be used for transactions
    *     in the local storage and for this driver's attribute.
    *
+   * @override
+   *
    * @param {string} readerModel Represents the reader to be used for
    *     transactions
    */
@@ -80,10 +100,18 @@ export class TCDriver extends BaseDriver {
   };
 
   /**
+   * @typedef {Object} TrustCommerceRetailAccount
+   * @property {string} customerId
+   * @property {string} password
+   */
+
+  /**
    * Saves the credentials which are the customer id and the password
    *     that shall be used for making transactions on the account's behalf.
    *
-   * @param {Object} credentials Represents the customer id and password
+   * @override
+   *
+   * @param {TrustCommerceRetailAccount} credentials Represents the customer id and password
    *     wrapped in an object
    */
   saveAuthenticationDetails = (credentials) => {
@@ -97,6 +125,8 @@ export class TCDriver extends BaseDriver {
   /**
    * Loads any saved values the driver needs from local storage and any
    *     todos the driver should do first.
+   *
+   * @override
    */
   load = () => {
     if (localStorage.getItem(this.#LOCAL_STORAGE_ACCOUNT_CREDENTIALS_KEY)) {
@@ -116,6 +146,8 @@ export class TCDriver extends BaseDriver {
 
   /**
    * Responsible for making payment transaction.
+   *
+   * @override
    *
    * @param {number} amount The amount of transaction in cents
    * @returns object
