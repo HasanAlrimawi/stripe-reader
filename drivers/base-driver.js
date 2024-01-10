@@ -318,7 +318,7 @@ export class BaseDriver {
         return res.text();
       })
       .then((text) => {
-        return this.#textToJSON(text);
+        return this.textToJSON(text);
       });
   };
 
@@ -350,7 +350,7 @@ export class BaseDriver {
         return res.text();
       })
       .then((text) => {
-        return this.#textToJSON(text);
+        return this.textToJSON(text);
       });
   };
 
@@ -376,13 +376,12 @@ export class BaseDriver {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: `custid=${customerId}&password=${password}&action=transstatus&device_name=${deviceName}&cloudpayid=${cloudPayId}&demo=y`,
-      // body: `custid=${customerId}&password=${password}&action=transstatus&device_name=${deviceName}&cloudpayid=${cloudPayId}&long_polling=y&demo=y`,
     })
       .then((res) => {
         return res.text();
       })
       .then((text) => {
-        return this.#textToJSON(text);
+        return this.textToJSON(text);
       });
   };
 
@@ -471,7 +470,7 @@ export class BaseDriver {
         return res.text();
       })
       .then((text) => {
-        return this.#textToJSON(text);
+        return this.textToJSON(text);
       });
   };
 
@@ -551,7 +550,7 @@ export class BaseDriver {
    * @param {string} text
    * @returns {Object} JSON version of the key/value pairs of the text passed
    */
-  #textToJSON = (text) => {
+  textToJSON = (text) => {
     const lines = text.split("\n");
     const result = {};
 

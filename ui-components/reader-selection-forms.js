@@ -87,45 +87,55 @@ const readerChoosingForms = (function () {
       listReadersButton.setAttribute("disabled", true);
       listReadersButton.value = "Getting readers...";
 
-      getReaders().then((availableReaders) => {
-        listReadersButton.value = "List readers registered";
-        listReadersButton.removeAttribute("disabled");
-        if (availableReaders?.error) {
-          console.log();
-          alert(availableReaders.error.message);
-        }
-
-        if (availableReaders.data) {
-          for (const reader of availableReaders.data) {
-            const readerWrapper = document.createElement("div");
-            const readerLabel = document.createElement("label");
-            const useReaderButton = createUseReaderButton(reader.id);
-
-            if (usedReaderId == reader.id) {
-              useReaderButton.setAttribute("value", "Chosen");
-              readerSelected = usedReaderId;
-              submitButton.removeAttribute("disabled");
-            }
-            useReaderButton.addEventListener("click", () => {
-              document
-                .querySelectorAll(".connect-button")
-                .forEach((connectButton) => {
-                  connectButton.setAttribute("value", "Select");
-                });
-              useReaderButton.value = "Chosen";
-              submitButton.removeAttribute("disabled");
-              readerSelected = reader.id;
-            });
-
-            readerWrapper.setAttribute("class", "vertical-wrapper");
-            readerLabel.textContent = reader.label;
-
-            readerWrapper.appendChild(readerLabel);
-            readerWrapper.appendChild(useReaderButton);
-            readersHolderElement.appendChild(readerWrapper);
+      getReaders()
+        .then((availableReaders) => {
+          listReadersButton.value = "List readers registered";
+          listReadersButton.removeAttribute("disabled");
+          if (availableReaders?.error) {
+            console.log();
+            alert(availableReaders.error.message);
           }
-        }
-      });
+
+          if (availableReaders.data) {
+            for (const reader of availableReaders.data) {
+              const readerWrapper = document.createElement("div");
+              const readerLabel = document.createElement("label");
+              const useReaderButton = createUseReaderButton(reader.id);
+
+              if (usedReaderId == reader.id) {
+                useReaderButton.setAttribute("value", "Chosen");
+                readerSelected = usedReaderId;
+                submitButton.removeAttribute("disabled");
+              }
+              useReaderButton.addEventListener("click", () => {
+                document
+                  .querySelectorAll(".connect-button")
+                  .forEach((connectButton) => {
+                    connectButton.setAttribute("value", "Select");
+                  });
+                useReaderButton.value = "Chosen";
+                submitButton.removeAttribute("disabled");
+                readerSelected = reader.id;
+              });
+
+              readerWrapper.setAttribute("class", "vertical-wrapper");
+              readerLabel.textContent = reader.label;
+
+              readerWrapper.appendChild(readerLabel);
+              readerWrapper.appendChild(useReaderButton);
+              readersHolderElement.appendChild(readerWrapper);
+            }
+          }
+        })
+        .catch((err) => {
+          listReadersButton.value = "List readers registered";
+          listReadersButton.removeAttribute("disabled");
+          if (err == "TypeError: Failed to fetch") {
+            alert("Check your internet connection and try again.");
+          } else {
+            alert("error occured, try again later");
+          }
+        });
     });
 
     submitButton.setAttribute("type", "submit");
