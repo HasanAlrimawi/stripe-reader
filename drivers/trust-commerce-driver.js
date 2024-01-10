@@ -150,11 +150,11 @@ export class TCDriver extends BaseDriver {
    * @override
    *
    * @param {number} amount The amount of transaction in cents
-   * @returns object
+   * @returns {Promise<object>}
    */
-  pay = async (amount) => {
+  pay = (amount) => {
     try {
-      return await this.payAccountBased(amount);
+      return this.payAccountBased(amount);
     } catch (error) {
       throw error;
     }

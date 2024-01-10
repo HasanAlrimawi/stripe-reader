@@ -13,6 +13,7 @@
   --dropdown-hover: #a09f9f;
   --dropdown-content: #f4f4f4;
   --dropdown-elements-hover: #007bff;
+  --settings-dropdown-font-color: #007bff;
 }
 
 [page-theme="dark"] {
@@ -30,6 +31,7 @@
   --dropdown-hover: #000000;
   --dropdown-content: #636262;
   --dropdown-elements-hover: #333;
+  --settings-dropdown-font-color: #fb0000;
 }
 
 * {
@@ -609,7 +611,7 @@ textarea {
 }
 
 .settings-dropdown .settings-dropdown-elements:hover {
-  color: var(--button-background-color);
+  color: var(--settings-dropdown-font-color);
 }
 
 .modal {

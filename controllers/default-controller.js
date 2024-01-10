@@ -1,6 +1,6 @@
-import { AUTHENTICATION_METHODS_FORMS } from "../ui-components/authentication-forms.js";
-import { READER_SELECTION_METHODS_FORMS } from "../ui-components/reader-selection-forms.js";
-import { MULTIPLE_STEPS_FORM_GENERATION } from "../ui-components/multiple-steps-forms.js";
+import { AuthenticationForms } from "../ui-components/authentication-forms.js";
+import { ReaderSelectionForms } from "../ui-components/reader-selection-forms.js";
+import { MultipleStepsForms } from "../ui-components/multiple-steps-forms.js";
 import { mainView } from "../views/main-view.js";
 
 export class DefaultController {
@@ -18,20 +18,20 @@ export class DefaultController {
       {
         name: "Change credentials",
         callbackFunction: () => {
-          return AUTHENTICATION_METHODS_FORMS[
+          return AuthenticationForms[
             this.driver.getAuthenticationMethod()
-          ](this.#saveAuthentication, this.driver.getAuthenticationUnderUse());
+          ](this.saveAuthentication, this.driver.getAuthenticationUnderUse());
         },
       },
       {
         name: "Change reader",
         callbackFunction: () => {
-          return READER_SELECTION_METHODS_FORMS[
+          return ReaderSelectionForms[
             this.driver.getReaderChoosingMethod()
           ](
-            this.#saveReader,
+            this.saveReader,
             this.driver.getReaderUnderUse(),
-            this.#getReadersByAPI()
+            this.getReadersByAPI()
           );
         },
       },
@@ -44,31 +44,31 @@ export class DefaultController {
       this.driver.getReaderUnderUse() &&
       this.driver.getAuthenticationUnderUse()
     ) {
-      mainView.renderPayForm(this.#pay);
+      mainView.renderPayForm(this.pay);
     } else {
       // wraps the forms to be grouped in a multi-step form
       const forms = [
         {
           title: "Account",
-          form: AUTHENTICATION_METHODS_FORMS[
+          form: AuthenticationForms[
             this.driver.getAuthenticationMethod()
-          ](this.#saveAuthentication, this.driver.getAuthenticationUnderUse()),
+          ](this.saveAuthentication, this.driver.getAuthenticationUnderUse()),
         },
         {
           title: "Reader",
-          form: READER_SELECTION_METHODS_FORMS[
+          form: ReaderSelectionForms[
             this.driver.getReaderChoosingMethod()
           ](
-            this.#saveReader,
+            this.saveReader,
             this.driver.getReaderUnderUse(),
-            this.#getReadersByAPI()
+            this.getReadersByAPI()
           ),
         },
       ];
-      const multipleStepsForm = MULTIPLE_STEPS_FORM_GENERATION[
+      const multipleStepsForm = MultipleStepsForms[
         this.driver.getMultipleStepsFormMethod()
       ](forms, () => {
-        mainView.renderPayForm(this.#pay);
+        mainView.renderPayForm(this.pay);
       });
 
       mainView.renderMultiStepForm(multipleStepsForm);
@@ -82,7 +82,7 @@ export class DefaultController {
    * @param {object} authenticationDetails Represents the authentication details
    *     needed for the payment gateway driver under use
    */
-  #saveAuthentication = (authenticationDetails) => {
+  saveAuthentication = (authenticationDetails) => {
     this.driver.saveAuthenticationDetails(authenticationDetails);
   };
 
@@ -92,18 +92,29 @@ export class DefaultController {
    *
    * @param {string} reader The reader to use when making transactions
    */
-  #saveReader = (reader) => {
+  saveReader = (reader) => {
     this.driver.saveReader(reader);
   };
+
+  /**
+   * @typedef {Object} payErrorResult
+   * @property {string} error
+   */
+
+  /**
+   * @typedef {Object} payNormalResult
+   * @property {string} status
+   * @property {number} amount
+   */
 
   /**
    * Calls the payment gateway's driver pay method and passes the amount of
    *    transaction.
    *
    * @param {number} amount The amount of the transaction
-   * @returns {Object}
+   * @returns {payNormalResult | payErrorResult}
    */
-  #pay = async (amount) => {
+  pay = async (amount) => {
     return await this.driver.pay(amount);
   };
 
@@ -113,7 +124,7 @@ export class DefaultController {
    *
    * @returns {function(): object} Holds the readers registered to the account used
    */
-  #getReadersByAPI = () => {
+  getReadersByAPI = () => {
     try {
       return this.driver?.getReadersAvailable
         ? this.driver?.getReadersAvailable

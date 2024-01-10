@@ -136,16 +136,27 @@ export class StripeDriver extends BaseDriver {
   };
 
   /**
+   * @typedef {Object} payErrorResult
+   * @property {string} error
+   */
+
+  /**
+   * @typedef {Object} payNormalResult
+   * @property {string} status
+   * @property {number} amount
+   */
+
+  /**
    * Responsible for making payment transaction.
    *
    * @override
    *
    * @param {number} amount The amount of transaction in cents
-   * @returns object
+   * @returns {Promise<object>}
    */
-  pay = async (amount) => {
+  pay = (amount) => {
     try {
-      return await this.payBasedOnKey(amount);
+      return this.payBasedOnKey(amount);
     } catch (error) {
       throw error;
     }

@@ -18,7 +18,8 @@ let CURRENT_ACTIVE_CONTROLLER = undefined;
 
 /**
  * Responsible for calling the needed controller with the needed payment
- *     gateway driver initiated in it.
+ *     gateway driver initiated in it, after clearing the preceding
+ *     controller's related view.
  *
  * @param {String} paymentGatewaySelected Represents the label of the driver
  *     selected

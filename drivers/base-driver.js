@@ -39,7 +39,8 @@ export class BaseDriver {
    * Gets the readers that are registered to the stripe terminal
    *     and saves them in the reader model.
    *
-   * @returns {object} The availabe readers registered to stripe terminal
+   * @returns {Promise<object>} Prmoise resolving to the availabe readers
+   *     registered to your stripe account
    */
   async getReadersAvailableKeyBased() {
     return await fetch(`${this.#baseUrl}/terminal/readers`, {
@@ -58,7 +59,7 @@ export class BaseDriver {
    *
    * @param {string} apiSecretKey
    * @param {string} amount represents the amount of the transaction to take place
-   * @returns {object}
+   * @returns {Promise<object>}
    */
   async #startIntentKeyBased(apiSecretKey, amount) {
     return await fetch(`${this.#baseUrl}/payment_intents`, {
@@ -68,7 +69,6 @@ export class BaseDriver {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: `amount=${amount}&currency=usd&payment_method_types[]=card_present`,
-      // body: `amount=${amount}&currency=usd&payment_method=pm_card_cvcCheckFail&capture_method=automatic_async&automatic_payment_methods[enabled]=true&automatic_payment_methods[allow_redirects]=never`,
     }).then((res) => {
       return res.json();
     });
@@ -81,8 +81,9 @@ export class BaseDriver {
    * @param {string} paymentIntentId Represents the payment intent returned from
    *     the collect payment API
    * @param {string} readerId
-   * @returns {object} intent Represents the returned intent from the process
-   *     payment if successful, and the error object if it failed
+   * @returns {Prmoise<object>} Prmoise resolving to intent Represents the
+   *     returned intent from the process payment if successful, and the
+   *     error object if it failed
    */
   async #processPaymentKeyBased(apiSecretKey, paymentIntentId, readerId) {
     return await fetch(
@@ -106,7 +107,8 @@ export class BaseDriver {
    *
    * @param {string} apiSecretKey
    * @param {string} intentId
-   * @returns {object} The intent that has been canceled
+   * @returns {Prmoise<object>} Promise resolving to the intent that has
+   *     been canceled
    */
   async #cancelIntentKeyBased(apiSecretKey, intentId) {
     return await fetch(`${this.#baseUrl}/payment_intents/${intentId}/cancel`, {
@@ -122,11 +124,23 @@ export class BaseDriver {
   }
 
   /**
+   * @typedef {Object} payErrorResult
+   * @property {string} error
+   */
+
+  /**
+   * @typedef {Object} payNormalResult
+   * @property {string} status Conveys the result of payment
+   * @property {number} amount The amount of payment in dollars
+   */
+
+  /**
    * Takes the responsibility of the payment flow from intent making to
    *     payment processing and cancelling if needed.
    *
    * @param {number} amount Represents the transaction amount
-   * @returns {object}
+   * @returns {Promise<payNormalResult | payErrorResult>} A promise resolving
+   *     to payment normal flow or payment error occurred
    */
   payBasedOnKey = async (amount) => {
     const intent = await this.#startIntentKeyBased(
@@ -170,7 +184,7 @@ export class BaseDriver {
               error: transactionResult.last_payment_error.message.split(".")[0],
             };
           }
-          return transactionResult.status;
+          return { status: transactionResult.status, amount: amount / 100 };
         } catch (error) {
           throw error;
         }
@@ -183,7 +197,7 @@ export class BaseDriver {
    *
    * @param {string} apiSecretKey
    * @param {string} intentId
-   * @returns {object} The intent required
+   * @returns {Promise<object>} Promise resolving to the intent required
    */
   #retrieveTransactionKeyBased = async (apiSecretKey, intentId) => {
     return await fetch(`${this.#baseUrl}/payment_intents/${intentId}`, {
@@ -205,7 +219,7 @@ export class BaseDriver {
    *
    * @param {string} apiSecretKey
    * @param {string} readerId
-   * @returns {Object}
+   * @returns {Promise<Object>}
    */
   #cancelReaderActionKeyBased = async (apiSecretKey, readerId) => {
     return await fetch(
@@ -231,7 +245,7 @@ export class BaseDriver {
    * @param {string} apiSecretKey
    * @param {Object} intentId
    * @param {string} readerId
-   * @returns {Promise}
+   * @returns {Promise<object>}
    */
   #transactionCheckerKeyBased = async (apiSecretKey, intentId, readerId) => {
     return new Promise(async (resolve, reject) => {
@@ -290,7 +304,7 @@ export class BaseDriver {
    * @param {string} password Trust commerce password
    * @param {string} deviceName Represents the reader's model and serial number
    *     to be used
-   * @returns {object}
+   * @returns {Promise<object>}
    */
   #checkDeviceAccountBased = async (customerId, password, deviceName) => {
     return await fetch(`${this.#baseUrl}`, {
@@ -317,7 +331,7 @@ export class BaseDriver {
    * @param {string} deviceName The used reader device model name and
    *     serial number
    * @param {number} amount The amount of the transaction in cents
-   * @returns {object}
+   * @returns {Promise<object>}
    */
   #makeTransactionAccountBased = async (
     customerId,
@@ -348,7 +362,7 @@ export class BaseDriver {
    * @param {string} password
    * @param {string} deviceName
    * @param {string} cloudPayId
-   * @returns {Object}
+   * @returns {Promise<Object>}
    */
   #checkTransactionAccountBased = async (
     customerId,
@@ -382,7 +396,7 @@ export class BaseDriver {
    *     customer canceled the transaction himself.
    *
    * @param {number} amount Transaction amount in cents
-   * @returns {Object}
+   * @returns {Promise<payNormalResult | payErrorResult>} payment normal flow or payment error occurred
    */
   payAccountBased = async (amount) => {
     const deviceCheckResult = await this.#checkDeviceAccountBased(
@@ -416,7 +430,10 @@ export class BaseDriver {
             this.#readerUnderUse,
             currentcloudPayId
           );
-        return transactionResult.cloudpaystatus;
+        return {
+          status: transactionResult.cloudpaystatus,
+          amount: amount / 100,
+        };
       } catch (error) {
         throw error;
       }
@@ -435,7 +452,7 @@ export class BaseDriver {
    * @param {string} password
    * @param {string} deviceName
    * @param {string} cloudPayId
-   * @returns {Object}
+   * @returns {Promise<Object>}
    */
   #cancelTransactionAccountBased = async (
     customerId,
@@ -467,7 +484,7 @@ export class BaseDriver {
    * @param {string} password
    * @param {number} amount Transaction amount in cents
    * @param {string} deviceName
-   * @returns {Object}
+   * @returns {Promise<Object>}
    */
   #getTransactionFinalStateAccountBased = async (
     customerId,

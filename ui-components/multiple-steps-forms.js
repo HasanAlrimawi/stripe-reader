@@ -188,6 +188,6 @@ const multipleStepsForms = (function () {
 /**
  * Contains different multi step forms.
  */
-export const MULTIPLE_STEPS_FORM_GENERATION = {
+export const MultipleStepsForms = {
   [MultipleStepsFormSelection.DEFAULT]: multipleStepsForms.createMultiStepForm,
 };

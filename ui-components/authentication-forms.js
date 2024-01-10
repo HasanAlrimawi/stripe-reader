@@ -148,7 +148,7 @@ const authenticationForms = (function () {
 /**
  * Contains authentication methods accompanied with their forms
  */
-export const AUTHENTICATION_METHODS_FORMS = {
+export const AuthenticationForms = {
   [AuthenticationMethod.USERNAME_AND_PASSWORD]:
     authenticationForms.accountCredentialsForm,
   [AuthenticationMethod.API_KEY]: authenticationForms.keyForm,

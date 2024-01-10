@@ -191,7 +191,7 @@ const readerChoosingForms = (function () {
 /**
  * Contains readers selection methods accompanied with their forms
  */
-export const READER_SELECTION_METHODS_FORMS = {
+export const ReaderSelectionForms = {
   [ReaderSelectionMethod.MANUAL_ENTRY]: readerChoosingForms.manual,
   [ReaderSelectionMethod.PICK_FROM_LIST_BY_API]:
     readerChoosingForms.pickFromListByAPI,

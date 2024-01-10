@@ -243,7 +243,7 @@ export const mainView = (function () {
       if (transactionResponse?.error) {
         message = `Transaction failure\nCause: ${transactionResponse.error}.`;
       } else {
-        message = `Transaction is ${transactionResponse}`;
+        message = `Transaction is ${transactionResponse.status}\nAmount intended: ${transactionResponse.amount}$`;
       }
     } catch (faultyTransaction) {
       payButton.removeAttribute("disabled");
