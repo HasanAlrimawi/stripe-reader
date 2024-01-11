@@ -1,6 +1,8 @@
 export class BaseDriver {
   constructor(url) {
     this.#baseUrl = url;
+    this.#authentication = undefined;
+    this.#readerUnderUse = undefined;
   }
 
   #baseUrl;
@@ -57,15 +59,14 @@ export class BaseDriver {
   /**
    * Creates payment intent with the specifed amount in cents.
    *
-   * @param {string} apiSecretKey
    * @param {string} amount represents the amount of the transaction to take place
    * @returns {Promise<object>}
    */
-  async #startIntentKeyBased(apiSecretKey, amount) {
+  async startIntentKeyBased(amount) {
     return await fetch(`${this.#baseUrl}/payment_intents`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiSecretKey}`,
+        Authorization: `Bearer ${this.#authentication}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: `amount=${amount}&currency=usd&payment_method_types[]=card_present`,
@@ -77,23 +78,23 @@ export class BaseDriver {
   /**
    * Handles the process of the payment
    *
-   * @param {string} apiSecretKey
    * @param {string} paymentIntentId Represents the payment intent returned from
    *     the collect payment API
-   * @param {string} readerId
    * @returns {Prmoise<object>} Prmoise resolving to intent Represents the
    *     returned intent from the process payment if successful, and the
    *     error object if it failed
    */
-  async #processPaymentKeyBased(apiSecretKey, paymentIntentId, readerId) {
+  async processPaymentKeyBased(paymentIntentId) {
     return await fetch(
-      `${this.#baseUrl}/terminal/readers/${readerId}/process_payment_intent`,
+      `${this.#baseUrl}/terminal/readers/${
+        this.#readerUnderUse
+      }/process_payment_intent`,
       {
         method: "POST",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Bearer ${apiSecretKey}`,
+          Authorization: `Bearer ${this.#authentication}`,
         },
         body: `payment_intent=${paymentIntentId}`,
       }
@@ -105,18 +106,17 @@ export class BaseDriver {
   /**
    * Cancels the specified intent in some failure cases.
    *
-   * @param {string} apiSecretKey
    * @param {string} intentId
    * @returns {Prmoise<object>} Promise resolving to the intent that has
    *     been canceled
    */
-  async #cancelIntentKeyBased(apiSecretKey, intentId) {
+  async cancelIntentKeyBased(intentId) {
     return await fetch(`${this.#baseUrl}/payment_intents/${intentId}/cancel`, {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Bearer ${apiSecretKey}`,
+        Authorization: `Bearer ${this.#authentication}`,
       },
     }).then((res) => {
       return res.json();
@@ -142,27 +142,20 @@ export class BaseDriver {
    * @returns {Promise<payNormalResult | payErrorResult>} A promise resolving
    *     to payment normal flow or payment error occurred
    */
-  payBasedOnKey = async (amount) => {
-    const intent = await this.#startIntentKeyBased(
-      this.#authentication,
-      amount
-    );
+  async payBasedOnKey(amount) {
+    const intent = await this.startIntentKeyBased(amount);
 
     if (intent?.error) {
       // In this case the intent has been created but should be canceled
       if (intent.error.code == !"amount_too_small") {
-        await this.#cancelIntentKeyBased(this.#authentication, intent.id);
+        await this.cancelIntentKeyBased(intent.id);
       }
       return { error: intent.error.message.split(".")[0] };
     } else {
-      const result = await this.#processPaymentKeyBased(
-        this.#authentication,
-        intent.id,
-        this.#readerUnderUse
-      );
+      const result = await this.processPaymentKeyBased(intent.id);
 
       if (result?.error) {
-        await this.#cancelIntentKeyBased(this.#authentication, intent.id);
+        await this.cancelIntentKeyBased(intent.id);
 
         if (result.error.code === "terminal_reader_timeout") {
           return {
@@ -173,11 +166,8 @@ export class BaseDriver {
         return { error: result.error.message.split(".")[0] };
       } else {
         try {
-          const transactionResult = await this.#transactionCheckerKeyBased(
-            this.#authentication,
-            intent.id,
-            this.#readerUnderUse
-          );
+          const transactionResult =
+            await this.#getTransactionFinalStateKeyBased(intent.id);
 
           if (transactionResult.last_payment_error) {
             return {
@@ -190,71 +180,65 @@ export class BaseDriver {
         }
       }
     }
-  };
+  }
 
   /**
    * Retrieves the intent defined, to check the payment intent status.
    *
-   * @param {string} apiSecretKey
    * @param {string} intentId
    * @returns {Promise<object>} Promise resolving to the intent required
    */
-  #retrieveTransactionKeyBased = async (apiSecretKey, intentId) => {
+  async retrieveTransactionKeyBased(intentId) {
     return await fetch(`${this.#baseUrl}/payment_intents/${intentId}`, {
       method: "GET",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Bearer ${apiSecretKey}`,
+        Authorization: `Bearer ${this.#authentication}`,
       },
     }).then((res) => {
       return res.json();
     });
-  };
+  }
 
   /**
    * Cancels the action the reader is doing at the moment of calling the API
    *     in order to clear the screen and make the reader
    *     ready for transaction.
    *
-   * @param {string} apiSecretKey
-   * @param {string} readerId
    * @returns {Promise<Object>}
    */
-  #cancelReaderActionKeyBased = async (apiSecretKey, readerId) => {
+  async cancelReaderActionKeyBased() {
     return await fetch(
-      `${this.#baseUrl}/terminal/readers/${readerId}/cancel_action`,
+      `${this.#baseUrl}/terminal/readers/${this.#readerUnderUse}/cancel_action`,
       {
         method: "POST",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Bearer ${apiSecretKey}`,
+          Authorization: `Bearer ${this.#authentication}`,
         },
       }
     ).then((res) => {
       return res.json();
     });
-  };
+  }
 
   /**
    * Checks the transaction state every 3 second if the cardholder interacted,
    *     and if the transaction is successful, and it gets canceled if the
    *     cardholder didn't interacted for more than 20 seconds.
    *
-   * @param {string} apiSecretKey
    * @param {Object} intentId
-   * @param {string} readerId
    * @returns {Promise<object>}
    */
-  #transactionCheckerKeyBased = async (apiSecretKey, intentId, readerId) => {
+  async #getTransactionFinalStateKeyBased(intentId) {
     return new Promise(async (resolve, reject) => {
       let paymentFinished = false;
       let retrievedTransaction = undefined;
       const transactionCheckInterval = setInterval(async () => {
         try {
-          retrievedTransaction = await this.#retrieveTransactionKeyBased(
-            apiSecretKey,
+          retrievedTransaction = await this.retrieveTransactionKeyBased(
             intentId
           );
         } catch (error) {
@@ -265,7 +249,7 @@ export class BaseDriver {
         }
 
         if (retrievedTransaction.last_payment_error) {
-          await this.#cancelIntentKeyBased(apiSecretKey, intentId);
+          await this.cancelIntentKeyBased(intentId);
           paymentFinished = true;
         } else if (
           retrievedTransaction?.status === "succeeded" ||
@@ -283,10 +267,9 @@ export class BaseDriver {
       // took so much time to interact and insert the card to the reader
       setTimeout(async () => {
         if (!paymentFinished) {
-          this.#cancelReaderActionKeyBased(apiSecretKey, readerId);
-          await this.#cancelIntentKeyBased(apiSecretKey, intentId);
-          retrievedTransaction = await this.#retrieveTransactionKeyBased(
-            apiSecretKey,
+          this.cancelReaderActionKeyBased();
+          await this.cancelIntentKeyBased(intentId);
+          retrievedTransaction = await this.retrieveTransactionKeyBased(
             intentId
           );
           clearInterval(retrievedTransaction);
@@ -294,25 +277,23 @@ export class BaseDriver {
         }
       }, 20000);
     });
-  };
+  }
 
   /**
    * Provides ability to check whether the device is ready for transaction
    *     and in what state it is.
    *
-   * @param {string} customerId Trust commerce customer id
-   * @param {string} password Trust commerce password
-   * @param {string} deviceName Represents the reader's model and serial number
-   *     to be used
    * @returns {Promise<object>}
    */
-  #checkDeviceAccountBased = async (customerId, password, deviceName) => {
+  async checkDeviceAccountBased() {
     return await fetch(`${this.#baseUrl}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: `custid=${customerId}&password=${password}&action=devicestatus&device_name=${deviceName}&demo=y`,
+      body: `custid=${this.#authentication.customerId}&password=${
+        this.#authentication.password
+      }&action=devicestatus&device_name=${this.#readerUnderUse}&demo=y`,
     })
       .then((res) => {
         return res.text();
@@ -320,31 +301,26 @@ export class BaseDriver {
       .then((text) => {
         return this.textToJSON(text);
       });
-  };
+  }
 
   /**
    * Makes a cloud payment request to trust commerce in order to get the device
    *     to receive customer's card to collect his/her card details.
    *
-   * @param {number} customerId Trust commerce customer id
-   * @param {string} password Trust commerce password
-   * @param {string} deviceName The used reader device model name and
-   *     serial number
    * @param {number} amount The amount of the transaction in cents
    * @returns {Promise<object>}
    */
-  #makeTransactionAccountBased = async (
-    customerId,
-    password,
-    deviceName,
-    amount
-  ) => {
+  async makeTransactionAccountBased(amount) {
     return await fetch(`${this.#baseUrl}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: `custid=${customerId}&password=${password}&action=sale&device_name=${deviceName}&amount=${amount}&demo=y`,
+      body: `custid=${this.#authentication.customerId}&password=${
+        this.#authentication.password
+      }&action=sale&device_name=${
+        this.#readerUnderUse
+      }&amount=${amount}&demo=y`,
     })
       .then((res) => {
         return res.text();
@@ -352,30 +328,26 @@ export class BaseDriver {
       .then((text) => {
         return this.textToJSON(text);
       });
-  };
+  }
 
   /**
    * Checks the requested transaction state whether it's completed or canceled
    *     or other state.
    *
-   * @param {number} customerId
-   * @param {string} password
-   * @param {string} deviceName
    * @param {string} cloudPayId
    * @returns {Promise<Object>}
    */
-  #checkTransactionAccountBased = async (
-    customerId,
-    password,
-    deviceName,
-    cloudPayId
-  ) => {
+  async checkTransactionAccountBased(cloudPayId) {
     return await fetch(`${this.#baseUrl}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: `custid=${customerId}&password=${password}&action=transstatus&device_name=${deviceName}&cloudpayid=${cloudPayId}&demo=y`,
+      body: `custid=${this.#authentication.customerId}&password=${
+        this.#authentication.password
+      }&action=transstatus&device_name=${
+        this.#readerUnderUse
+      }&cloudpayid=${cloudPayId}&demo=y`,
     })
       .then((res) => {
         return res.text();
@@ -383,7 +355,7 @@ export class BaseDriver {
       .then((text) => {
         return this.textToJSON(text);
       });
-  };
+  }
 
   /**
    * Wraps the flow of making Trust Commerce transaction from beginning to end.
@@ -397,38 +369,24 @@ export class BaseDriver {
    * @param {number} amount Transaction amount in cents
    * @returns {Promise<payNormalResult | payErrorResult>} payment normal flow or payment error occurred
    */
-  payAccountBased = async (amount) => {
-    const deviceCheckResult = await this.#checkDeviceAccountBased(
-      this.#authentication.customerId,
-      this.#authentication.password,
-      this.#readerUnderUse
-    );
+  async payAccountBased(amount) {
+    const deviceCheckResult = await this.checkDeviceAccountBased();
 
     if (deviceCheckResult?.message) {
       return { error: deviceCheckResult.message };
     }
 
     if (deviceCheckResult?.devicestatus !== "connected") {
-      return { error: deviceCheckResult.description }; // can be returned as object containing error msg not just deviceCheckResult
+      return { error: deviceCheckResult.description };
     }
 
-    const transactionResponse = await this.#makeTransactionAccountBased(
-      this.#authentication.customerId,
-      this.#authentication.password,
-      this.#readerUnderUse,
-      amount
-    );
+    const transactionResponse = await this.makeTransactionAccountBased(amount);
     const currentcloudPayId = transactionResponse.cloudpayid;
 
     if (transactionResponse.cloudpaystatus === "submitted") {
       try {
         let transactionResult =
-          await this.#getTransactionFinalStateAccountBased(
-            this.#authentication.customerId,
-            this.#authentication.password,
-            this.#readerUnderUse,
-            currentcloudPayId
-          );
+          await this.#getTransactionFinalStateAccountBased(currentcloudPayId);
         return {
           status: transactionResult.cloudpaystatus,
           amount: amount / 100,
@@ -442,29 +400,25 @@ export class BaseDriver {
       }
       return transactionResponse;
     }
-  };
+  }
 
   /**
    * Cancels Trust Commerce transaction that was requested before.
    *
-   * @param {number} customerId
-   * @param {string} password
-   * @param {string} deviceName
    * @param {string} cloudPayId
    * @returns {Promise<Object>}
    */
-  #cancelTransactionAccountBased = async (
-    customerId,
-    password,
-    deviceName,
-    cloudPayId
-  ) => {
+  async cancelTransactionAccountBased(cloudPayId) {
     return await fetch(`${this.#baseUrl}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: `custid=${customerId}&password=${password}&action=cancel&device_name=${deviceName}&cloudpayid=${cloudPayId}&demo=y`,
+      body: `custid=${this.#authentication.customerId}&password=${
+        this.#authentication.password
+      }&action=cancel&device_name=${
+        this.#readerUnderUse
+      }&cloudpayid=${cloudPayId}&demo=y`,
     })
       .then((res) => {
         return res.text();
@@ -472,34 +426,23 @@ export class BaseDriver {
       .then((text) => {
         return this.textToJSON(text);
       });
-  };
+  }
 
   /**
    * Checks the transaction state every 3 second if the cardholder interacted,
    *     and if the transaction is successful, and it gets canceled if the
    *     cardholder didn't interacted for more than 20 seconds.
    *
-   * @param {number} customerId
-   * @param {string} password
-   * @param {number} amount Transaction amount in cents
-   * @param {string} deviceName
+   * @param {string} cloudPayId
    * @returns {Promise<Object>}
    */
-  #getTransactionFinalStateAccountBased = async (
-    customerId,
-    password,
-    deviceName,
-    cloudPayId
-  ) => {
+  async #getTransactionFinalStateAccountBased(cloudPayId) {
     return new Promise(async (resolve, reject) => {
       let paymentFinished = false;
       let transactionCheckResult = undefined;
       const transactionCheckInterval = setInterval(async () => {
         try {
-          transactionCheckResult = await this.#checkTransactionAccountBased(
-            customerId,
-            password,
-            deviceName,
+          transactionCheckResult = await this.checkTransactionAccountBased(
             cloudPayId
           );
         } catch (error) {
@@ -525,16 +468,8 @@ export class BaseDriver {
       // took so much time to interact and insert the card to the reader
       setTimeout(async () => {
         if (!paymentFinished) {
-          await this.#cancelTransactionAccountBased(
-            customerId,
-            password,
-            deviceName,
-            cloudPayId
-          );
-          transactionCheckResult = await this.#checkTransactionAccountBased(
-            customerId,
-            password,
-            deviceName,
+          await this.cancelTransactionAccountBased(cloudPayId);
+          transactionCheckResult = await this.checkTransactionAccountBased(
             cloudPayId
           );
           clearInterval(transactionCheckResult);
@@ -542,7 +477,7 @@ export class BaseDriver {
         }
       }, 20000);
     });
-  };
+  }
 
   /**
    * Converts text based key=value pairs to json objects.

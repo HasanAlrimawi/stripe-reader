@@ -136,17 +136,6 @@ export class StripeDriver extends BaseDriver {
   };
 
   /**
-   * @typedef {Object} payErrorResult
-   * @property {string} error
-   */
-
-  /**
-   * @typedef {Object} payNormalResult
-   * @property {string} status
-   * @property {number} amount
-   */
-
-  /**
    * Responsible for making payment transaction.
    *
    * @override
