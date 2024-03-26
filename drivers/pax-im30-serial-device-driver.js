@@ -70,7 +70,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
    * @returns {PAXResponseCaptureSuccess | PAXResponseCaptureFailure}
    */
   read = async () => {
-    const reader = this.device.readable.getReader();
+    const reader = this.reader.readable.getReader();
     let completeResponse = [];
     const decoder = new TextDecoder();
     const allResponsesExtracted = [];
@@ -87,7 +87,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
         const valueAsArray = Array.from(value);
 
         if (done) {
-          console.log(this.device);
+          console.log(this.reader);
           console.log(reader);
           await reader.cancel();
           await reader.releaseLock();
