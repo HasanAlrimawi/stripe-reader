@@ -533,15 +533,18 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
     if (response?.error) {
       await this.clearBatch();
       return { error: `${response.message}\nError stage: POST-AUTH` };
-    } else if (response?.responseCode != "000000") {
+    } else if (parseInt(response?.responseCode) < 100) {
       //   await this.clearBatch();
       return {
-        error: `${response.hostInformation[1]}\nFailure stage: POST_AUTH`,
+        error: `${response.responseMessage}\nHost message:${response.hostInformation[1]}\nFailure stage: POST_AUTH`,
       };
     }
     return {
       success: true,
-      status: response.hostInformation[1],
+      status:
+        response.hostInformation[1] == "000000"
+          ? "Complete"
+          : response.hostCredentialInformation[1],
       amount: response.amountInformation[0] / 100,
       command: response.command,
       responseCode: response.responseCode,
