@@ -12,6 +12,7 @@ export const AuthenticationMethod = Object.freeze({
 export const ReaderSelectionMethod = Object.freeze({
   MANUAL_ENTRY: "MANUAL_ENTRY",
   PICK_FROM_LIST_BY_API: "PICK_FROM_LIST_BY_API",
+  WEB_SERIAL: "WEB_SERIAL",
 });
 
 export const MultipleStepsFormSelection = Object.freeze({

@@ -192,9 +192,83 @@ const readerChoosingForms = (function () {
     return useReaderButton;
   }
 
+  const webSerialConnect = (setConnectReader, usedReader) => {
+    const form = document.createElement("form");
+    const readerConnectedField = document.createElement("input");
+    const connectReaderButton = document.createElement("input");
+    const submitButton = document.createElement("input");
+    const buttonsWrapper = document.createElement("div");
+
+    form.setAttribute("class", "input-group");
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submitButton.setAttribute("value", "Successfully saved");
+      submitButton.setAttribute("disabled", true);
+      setTimeout(() => {
+        submitButton.removeAttribute("disabled");
+        submitButton.value = "Save";
+        document.getElementById(HTMLElementsIds.CURRENT_MODAL_SHOWN)?.remove();
+      }, 1500);
+    });
+    readerConnectedField.setAttribute("disabled", true);
+    readerConnectedField.setAttribute("type", "text");
+    readerConnectedField.setAttribute("id", "reader-selected-field");
+    readerConnectedField.setAttribute(
+      "placeholder",
+      "No reader connected yet."
+    );
+    connectReaderButton.setAttribute("class", "button");
+    connectReaderButton.setAttribute("value", "Select reader to connect");
+    connectReaderButton.setAttribute("type", "button");
+    submitButton.setAttribute("type", "submit");
+    submitButton.setAttribute("class", "button ml-auto");
+    submitButton.setAttribute("id", "submit-button");
+    submitButton.setAttribute("disabled", true);
+    submitButton.setAttribute("value", "Save");
+    buttonsWrapper.classList.add("buttons-group");
+
+    buttonsWrapper.appendChild(submitButton);
+    form.appendChild(readerConnectedField);
+    form.appendChild(connectReaderButton);
+    form.appendChild(buttonsWrapper);
+
+    if (usedReader) {
+      submitButton.removeAttribute("disabled");
+      readerConnectedField.setAttribute(
+        "value",
+        `Reader of VID ${usedReader.vendorId} and PID ${usedReader.productId} successfully connected`
+      );
+    }
+
+    connectReaderButton.addEventListener("click", async () => {
+      try {
+        const device = await navigator.serial.requestPort({ filters: [] });
+        console.log(device);
+        const readerConnectionResult = await setConnectReader(device);
+        if (readerConnectionResult.success) {
+          readerConnectedField.setAttribute(
+            "value",
+            `Reader of VID ${device.vendorId} and PID ${device.productId} successfully connected`
+          );
+          submitButton.removeAttribute("disabled");
+        } else {
+          readerConnectedField.setAttribute(
+            "value",
+            `Device selected couldn't be connected to.\n
+          Check permissions then try again.`
+          );
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    });
+    return form;
+  };
+
   return {
     manual,
     pickFromListByAPI,
+    webSerialConnect,
   };
 })();
 
@@ -205,4 +279,5 @@ export const ReaderSelectionForms = {
   [ReaderSelectionMethod.MANUAL_ENTRY]: readerChoosingForms.manual,
   [ReaderSelectionMethod.PICK_FROM_LIST_BY_API]:
     readerChoosingForms.pickFromListByAPI,
+  [ReaderSelectionMethod.WEB_SERIAL]: readerChoosingForms.webSerialConnect,
 };
