@@ -546,7 +546,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
       status:
         response.hostInformation[1] == "000000"
           ? "Complete"
-          : response.hostCredentialInformation[1],
+          : response.hostInformation[1],
       amount: response.amountInformation[0] / 100,
       command: response.command,
       responseCode: response.responseCode,
