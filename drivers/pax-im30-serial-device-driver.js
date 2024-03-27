@@ -479,9 +479,21 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
   };
 
   /**
+   * @typedef {Object} payErrorResult
+   * @property {string} error Holds message conveying what went wrong
+   */
+
+  /**
+   * @typedef {Object} PaySuccessResult
+   * @property {boolean} success Conveys the success of the payment
+   * @property {string} status Holds details of the payment/transaction
+   * @property {DoCreditResponse} doCreditResponse
+   */
+
+  /**
    *
    * @param {number} amount
-   * @returns {DoCreditResponse | ErrorObject}
+   * @returns {PaySuccessResult | payErrorResult}
    */
   pay = async (amount) => {
     // [1c] means <FS> which is the separator of request/response fields
@@ -548,22 +560,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
           ? "Complete"
           : response.hostInformation[1],
       amount: response.amountInformation[0] / 100,
-      command: response.command,
-      responseCode: response.responseCode,
-      responseMessage: response.responseMessage,
-      hostInformation: response.hostInformation,
-      transactionType: response.transactionType,
-      amountInformation: response.amountInformation,
-      accountInformation: response.accountInformation,
-      traceInformation: response.traceInformation,
-      AVSInformation: response.AVSInformation,
-      commercialInfomration: response.commercialInfomration,
-      eCommerce: response.eCommerce,
-      additionalInformation: response.additionalInformation,
-      VASInfromation: response.VASInfromation,
-      TORInformation: response.TORInformation,
-      payloadData: response.payloadData,
-      hostCredentialInformation: response.hostCredentialInformation,
+      doCreditResponse: response,
     };
   };
 

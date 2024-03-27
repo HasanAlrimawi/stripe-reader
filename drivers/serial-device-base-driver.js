@@ -4,7 +4,7 @@ export class SerialDeviceBaseDriver {
   }
 
   #baudRate;
-  reader = undefined;
+  #reader = undefined;
 
   load() {}
   getReaderChoosingMethod() {}
@@ -19,7 +19,7 @@ export class SerialDeviceBaseDriver {
    * @returns {FunctionalitySuccess | ErrorObject}
    */
   setConnectReaderUnderUse = async (reader) => {
-    this.reader = reader;
+    this.#reader = reader;
     return await this.connectReader();
   };
 
@@ -29,7 +29,7 @@ export class SerialDeviceBaseDriver {
    * @returns {SerialPort}
    */
   getReaderUnderUse = () => {
-    return this.reader;
+    return this.#reader;
   };
 
   /**
@@ -57,12 +57,12 @@ export class SerialDeviceBaseDriver {
    */
   connectReader = async () => {
     try {
-      await this.reader.open({ baudRate: this.#baudRate });
-      this.reader.addEventListener("disconnect", (event) => {
+      await this.#reader.open({ baudRate: this.#baudRate });
+      this.#reader.addEventListener("disconnect", (event) => {
         alert(
           `Device of VID ${device.vendorId} and PID ${device.productId} has been disconnected`
         );
-        this.reader = undefined;
+        this.#reader = undefined;
       });
       return {
         success: true,
@@ -83,7 +83,7 @@ export class SerialDeviceBaseDriver {
    * @returns {ReadingSuccess | ErrorObject}
    */
   read = async () => {
-    const reader = this.reader.readable.getReader();
+    const reader = this.#reader.readable.getReader();
     let completeResponse = [];
     while (true) {
       try {
@@ -117,7 +117,7 @@ export class SerialDeviceBaseDriver {
   write = async (data) => {
     // TODO: Wrap with tryCatch
     try {
-      const writer = this.reader.writable.getWriter();
+      const writer = this.#reader.writable.getWriter();
       console.log("started sending to terminal");
       await writer.write(data);
       console.log("finished sending to terminal");
