@@ -70,6 +70,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
    * @returns {PAXResponseCaptureSuccess | PAXResponseCaptureFailure}
    */
   read = async () => {
+    // const reader = this.getReaderUnderUse().readable.getReader();
     const reader = this.reader.readable.getReader();
     let completeResponse = [];
     const decoder = new TextDecoder();
@@ -87,7 +88,6 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
         const valueAsArray = Array.from(value);
 
         if (done) {
-          console.log(this.reader);
           console.log(reader);
           await reader.cancel();
           await reader.releaseLock();
@@ -262,7 +262,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
    * @returns {boolean} Indicates if the response is corrupt
    */
   isResponseCorrupt = (response) => {
-    const responseWithCorrectLRC = this.#lrcAppender(
+    const responseWithCorrectLRC = this.lrcAppender(
       Uint8Array.from(response.slice(0, response.length - 1))
     );
 
@@ -286,7 +286,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
    *     representation.
    * @returns {Uint8Array} Data entered but in its Uint8Array representation
    */
-  #convertToUint8Array = (data) => {
+  convertToUint8Array = (data) => {
     const encoder = new TextEncoder();
     if (typeof data === "number") {
       console.log("num");
@@ -309,7 +309,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
    * @returns {Uint8Array} The same passed command with the LRC byte appended
    *     to it
    */
-  #lrcAppender = (command) => {
+  lrcAppender = (command) => {
     const lrc = command
       .subarray(1)
       .reduce((acc, currentValue) => (acc ^= currentValue), 0);
@@ -380,7 +380,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
       ...this.PROTOCOL_VERSION,
       this.PAX_CONSTANTS.ETX,
     ]);
-    commandArray = this.#lrcAppender(commandArray);
+    commandArray = this.lrcAppender(commandArray);
     const response = await this.sendCommand(commandArray);
     // await this.write(commandArray);
     // const response = await this.read();
@@ -454,7 +454,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
       ...signatureImageOffset,
       this.PAX_CONSTANTS.ETX,
     ]);
-    getSignatureCommand = this.#lrcAppender(getSignatureCommand);
+    getSignatureCommand = this.lrcAppender(getSignatureCommand);
     const response = await this.sendCommand(getSignatureCommand);
     // await this.write(getSignatureCommand);
     // const response = await this.read();
@@ -486,7 +486,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
   pay = async (amount) => {
     // [1c] means <FS> which is the separator of request/response fields
     // [1f] means <US> which is the separator of the request amount information
-    amount = this.#convertToUint8Array(amount);
+    amount = this.convertToUint8Array(amount);
     amount = Array.from(amount);
     amount = [...amount];
 
@@ -515,7 +515,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
       0x1f,
       0x1f,
       0x1f,
-      ...Array.from(this.#convertToUint8Array(response.traceInformation[0])),
+      ...Array.from(this.convertToUint8Array(response.traceInformation[0])),
     ];
     const zero = [0x30];
     doCreditFields.requestAmountInformation = [
@@ -533,10 +533,12 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
     if (response?.error) {
       await this.clearBatch();
       return { error: `${response.message}\nError stage: POST-AUTH` };
-    } else if (parseInt(response?.responseCode) < 100) {
+    } else if (parseInt(response?.responseCode) >= 100) {
+      // refering to documentation, response codes below 100 convey success
+      // or partial success while codes above 100 convey failure
       //   await this.clearBatch();
       return {
-        error: `${response.responseMessage}\nHost message:${response.hostInformation[1]}\nFailure stage: POST_AUTH`,
+        error: `${response.responseMessage}\nHost message: ${response.hostInformation[1]}\nFailure stage: POST_AUTH`,
       };
     }
     return {
@@ -654,7 +656,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
     let doCreditRequest = Uint8Array.from(
       doCreditRequestArray.filter((element) => element !== "na")
     );
-    doCreditRequest = this.#lrcAppender(doCreditRequest);
+    doCreditRequest = this.lrcAppender(doCreditRequest);
     console.log(doCreditRequest);
     const response = await this.sendCommand(doCreditRequest);
     // await this.write(doCreditRequest);
@@ -756,7 +758,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
   //     0x1c,
   //     this.PAX_CONSTANTS.ETX,
   //   ]);
-  //   getInputCommand = this.#lrcAppender(getInputCommand);
+  //   getInputCommand = this.lrcAppender(getInputCommand);
   //   await this.write(getInputCommand);
   //   const response = await this.read();
 
@@ -799,8 +801,8 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
    * @returns {CommandShallowResponse | ErrorObject}
    */
   showMessage = async (message) => {
-    const messageBody = this.#convertToUint8Array(message.body);
-    const messageTitle = this.#convertToUint8Array(message.title);
+    const messageBody = this.convertToUint8Array(message.body);
+    const messageTitle = this.convertToUint8Array(message.title);
     let showMessageCommand = new Uint8Array([
       this.PAX_CONSTANTS.STX,
       0x41,
@@ -823,7 +825,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
       0x1c,
       this.PAX_CONSTANTS.ETX,
     ]);
-    showMessageCommand = this.#lrcAppender(showMessageCommand);
+    showMessageCommand = this.lrcAppender(showMessageCommand);
     const response = await this.sendCommand(showMessageCommand);
     // await this.write(showMessageCommand);
     // const response = await this.read();
@@ -875,7 +877,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
       ...this.PROTOCOL_VERSION,
       this.PAX_CONSTANTS.ETX,
     ]);
-    clearMessageCommand = this.#lrcAppender(clearMessageCommand);
+    clearMessageCommand = this.lrcAppender(clearMessageCommand);
     const response = await this.sendCommand(clearMessageCommand);
     // await this.write(clearMessageCommand);
     // const response = await this.read();
@@ -925,7 +927,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
       0x1c,
       this.PAX_CONSTANTS.ETX,
     ]);
-    clearBatchCommand = this.#lrcAppender(clearBatchCommand);
+    clearBatchCommand = this.lrcAppender(clearBatchCommand);
     const response = await this.sendCommand(clearBatchCommand);
     // await this.write(clearBatchCommand);
     // const response = await this.read();

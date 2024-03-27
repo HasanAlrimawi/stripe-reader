@@ -234,10 +234,7 @@ const readerChoosingForms = (function () {
 
     if (usedReader) {
       submitButton.removeAttribute("disabled");
-      readerConnectedField.setAttribute(
-        "value",
-        `Reader of VID ${usedReader.vendorId} and PID ${usedReader.productId} successfully connected`
-      );
+      readerConnectedField.setAttribute("value", "Reader is connected.");
     }
 
     connectReaderButton.addEventListener("click", async () => {
@@ -248,7 +245,7 @@ const readerChoosingForms = (function () {
         if (readerConnectionResult.success) {
           readerConnectedField.setAttribute(
             "value",
-            `Reader of VID ${device.vendorId} and PID ${device.productId} successfully connected`
+            "Reader has been successfully connected."
           );
           submitButton.removeAttribute("disabled");
         } else {
