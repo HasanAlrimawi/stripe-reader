@@ -1,9 +1,9 @@
 export class SerialDeviceBaseDriver {
   constructor(baudRate) {
-    this.baudRate = baudRate;
+    this.#baudRate = baudRate;
   }
 
-  baudRate;
+  #baudRate;
   reader = undefined;
 
   load() {}
@@ -57,7 +57,7 @@ export class SerialDeviceBaseDriver {
    */
   connectReader = async () => {
     try {
-      await this.reader.open({ baudRate: this.baudRate });
+      await this.reader.open({ baudRate: this.#baudRate });
       this.reader.addEventListener("disconnect", (event) => {
         alert(
           `Device of VID ${device.vendorId} and PID ${device.productId} has been disconnected`

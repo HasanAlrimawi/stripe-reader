@@ -70,8 +70,8 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
    * @returns {PAXResponseCaptureSuccess | PAXResponseCaptureFailure}
    */
   read = async () => {
-    // const reader = this.getReaderUnderUse().readable.getReader();
-    const reader = this.reader.readable.getReader();
+    const reader = this.getReaderUnderUse().readable.getReader();
+    // const reader = this.reader.readable.getReader();
     let completeResponse = [];
     const decoder = new TextDecoder();
     const allResponsesExtracted = [];
@@ -536,7 +536,7 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
     } else if (parseInt(response?.responseCode) >= 100) {
       // refering to documentation, response codes below 100 convey success
       // or partial success while codes above 100 convey failure
-      //   await this.clearBatch();
+      await this.clearBatch();
       return {
         error: `${response.responseMessage}\nHost message: ${response.hostInformation[1]}\nFailure stage: POST_AUTH`,
       };
