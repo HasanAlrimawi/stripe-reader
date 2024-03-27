@@ -21,17 +21,17 @@ export class PaxIM30SerialDriver extends SerialDeviceBaseDriver {
   PROTOCOL_VERSION;
   ECR_REFERENCE_NUMBER;
 
-  load = () => {
-    const savedDevice = navigator.serial.getPorts().filter((deviceElement) => {
-      return (
-        deviceElement.productId == this.productId &&
-        deviceElement.vendorId == this.vendorId
-      );
-    })[0];
-    if (savedDevice) {
-      this.setDeviceUnderUse(savedDevice);
-    }
-  };
+  // load = () => {
+  //   const savedDevice = navigator.serial.getPorts().filter((deviceElement) => {
+  //     return (
+  //       deviceElement.productId == this.productId &&
+  //       deviceElement.vendorId == this.vendorId
+  //     );
+  //   })[0];
+  //   if (savedDevice) {
+  //     this.setDeviceUnderUse(savedDevice);
+  //   }
+  // };
 
   getReaderChoosingMethod = () => {
     return ReaderSelectionMethod.WEB_SERIAL;

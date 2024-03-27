@@ -6,7 +6,7 @@ export class SerialDeviceBaseDriver {
   #baudRate;
   #reader = undefined;
 
-  load() {}
+  // load() {}
   getReaderChoosingMethod() {}
   getMultipleStepsFormMethod() {}
   pay() {}
