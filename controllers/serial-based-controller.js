@@ -54,7 +54,7 @@ export class SerialBasedController {
    * Saves the reader passed through the function by using
    *     the payment gateway's driver saving method of the reader to use.
    *
-   * @param {string} reader The reader to use when making transactions
+   * @param {SerialPort} reader The reader to use when making transactions
    */
   setConnectReaderUnderUse = async (reader) => {
     return await this.driver.setConnectReaderUnderUse(reader);
